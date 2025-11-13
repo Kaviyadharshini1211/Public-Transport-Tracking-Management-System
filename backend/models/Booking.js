@@ -1,4 +1,11 @@
+// backend/models/Booking.js
 const mongoose = require("mongoose");
+
+const boardingStopSchema = new mongoose.Schema({
+  name: { type: String },
+  lat: { type: Number },
+  lng: { type: Number },
+}, { _id: false });
 
 const bookingSchema = new mongoose.Schema(
   {
@@ -20,6 +27,16 @@ const bookingSchema = new mongoose.Schema(
     seats: {
       type: Number,
       required: true
+    },
+    // Array of seat identifiers chosen by passenger (optional)
+    seatNumbers: {
+      type: [String],
+      default: []
+    },
+    // passenger's chosen boarding stop (object w/ coords)
+    boardingStop: {
+      type: boardingStopSchema,
+      default: null
     },
     totalFare: {
       type: Number,

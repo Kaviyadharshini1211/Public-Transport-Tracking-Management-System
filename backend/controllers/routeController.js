@@ -1,4 +1,6 @@
 const Route = require("../models/Route");
+const { geocodePlace } = require("../utils/geocode");
+
 
 // GET /api/routes
 exports.listRoutes = async (req, res) => {
@@ -25,14 +27,34 @@ exports.getRoute = async (req, res) => {
 // POST /api/routes
 exports.createRoute = async (req, res) => {
   try {
-    const route = await Route.create(req.body);
-    res.status(201).json(route);
+    const { name, origin, destination, stops, avgSpeedKmph } = req.body;
+
+    // 1. Geocode both origin & destination
+    const originGeo = await geocodePlace(origin);
+    const destGeo = await geocodePlace(destination);
+
+    if (!originGeo || !destGeo) {
+      return res.status(400).json({ message: "Invalid origin or destination." });
+    }
+
+    const newRoute = await Route.create({
+      name,
+      origin,
+      destination,
+      originLat: originGeo.lat,
+      originLng: originGeo.lng,
+      destinationLat: destGeo.lat,
+      destinationLng: destGeo.lng,
+      stops: stops || [],
+      avgSpeedKmph: avgSpeedKmph || 50,
+    });
+
+    res.status(201).json(newRoute);
   } catch (err) {
-    console.error("createRoute:", err);
-    res.status(500).json({ message: "Failed to create route" });
+    console.error("Route creation failed:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
-
 // PUT /api/routes/:id
 exports.updateRoute = async (req, res) => {
   try {

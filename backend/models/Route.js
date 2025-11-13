@@ -10,8 +10,16 @@ const routeSchema = new mongoose.Schema({
   name: { type: String, required: true },
   origin: { type: String, required: true },
   destination: { type: String, required: true },
+
+  // ★ NEW FIELDS (auto-generated)
+  originLat: Number,
+  originLng: Number,
+  destinationLat: Number,
+  destinationLng: Number,
+
   distanceKm: Number,
   avgSpeedKmph: { type: Number, default: 50 },
+
   stops: [stopSchema],
 }, { timestamps: true });
 

@@ -9,9 +9,11 @@ import Vehicles from "./pages/Vehicles";
 import Navbar from "./components/Navbar";
 import NotFound from "./pages/NotFound";
 import AuthSuccess from "./pages/AuthSuccess";
-import DriverDashboard from "./pages/driverDashboard";
 
-// ADMIN MODULE (only layouts + pages)
+// DRIVER MODULE (NEW)
+import DriverLayout from "./pages/driver/DriverLayout";
+
+// ADMIN MODULE
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -58,24 +60,29 @@ function App() {
       <Navbar user={user} setUser={setUser} />
 
       <Routes>
+
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginForm setUser={setUser} />} />
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/auth/success" element={<AuthSuccess />} />
 
-        {/* DASHBOARDS */}
+        {/* PASSENGER DASHBOARD */}
         <Route path="/dashboard" element={<Dashboard user={user} />} />
-        <Route path="/vehicles" element={<Vehicles user={user} />} />
-        <Route path="/driver" element={<DriverDashboard />} />
 
-        {/* BOOKING SYSTEM */}
+        {/* VEHICLES (visible to non-admin too) */}
+        <Route path="/vehicles" element={<Vehicles user={user} />} />
+
+        {/* DRIVER MODULE */}
+        <Route path="/driver" element={<DriverLayout />} />
+
+        {/* BOOKING MODULE */}
         <Route path="/book" element={<Book />} />
         <Route path="/book/confirm" element={<ConfirmBooking />} />
         <Route path="/bookings" element={<MyBookings />} />
         <Route path="/track/:vehicleId" element={<Track />} />
 
-        {/* ADMIN — TRUE NESTED ROUTE */}
+        {/* ADMIN NESTED ROUTE */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<AdminUsers />} />
@@ -85,8 +92,9 @@ function App() {
           <Route path="assign" element={<AdminAssignDriver />} />
         </Route>
 
-        {/* NOT FOUND */}
+        {/* FALLBACK */}
         <Route path="*" element={<NotFound />} />
+
       </Routes>
     </Router>
   );

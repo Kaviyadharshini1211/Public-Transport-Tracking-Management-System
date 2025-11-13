@@ -11,7 +11,7 @@ export default function ConfirmBooking() {
 
   if (!state) return <Container><Typography>No booking data. Start from /book</Typography></Container>;
 
-  const { vehicle, routeId, seatNumbers = [], totalFare } = state;
+  const { vehicle, routeId, seatNumbers = [], totalFare, boardingStop } = state;
 
   const handleConfirm = async () => {
     if (!user) return navigate("/login");
@@ -22,7 +22,8 @@ export default function ConfirmBooking() {
         routeId,
         seats: seatNumbers.length,
         seatNumbers,
-        totalFare
+        totalFare,
+        boardingStop, // send boarding stop object {name, lat, lng}
       };
       const res = await API.post("/bookings", payload);
       // success -> redirect to My Bookings
@@ -42,6 +43,7 @@ export default function ConfirmBooking() {
           <Typography>Vehicle: {vehicle.regNumber} — {vehicle.model}</Typography>
           <Typography>Driver: {vehicle.driverName || "N/A"}</Typography>
           <Typography>Route ID: {routeId}</Typography>
+          <Typography>Boarding Stop: {boardingStop ? boardingStop.name : "—"}</Typography>
           <Typography>Seats: {seatNumbers.join(", ")}</Typography>
           <Typography>Total Fare: ₹{totalFare}</Typography>
           <Button variant="contained" sx={{ mt: 2 }} onClick={handleConfirm}>Pay & Book (Simulated)</Button>

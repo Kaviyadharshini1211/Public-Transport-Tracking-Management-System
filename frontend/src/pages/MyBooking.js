@@ -28,9 +28,10 @@ export default function MyBookings() {
                 <Typography>Booking ID: {b._id}</Typography>
                 <Typography>Vehicle: {b.vehicleId?.regNumber || "—"}</Typography>
                 <Typography>Route: {b.routeId?.name || "—"}</Typography>
+                <Typography>Boarding Stop: {b.boardingStop?.name || "—"}</Typography>
                 <Typography>Seats: {b.seatNumbers?.join(", ") || b.seats}</Typography>
                 <Typography>Fare: ₹{b.totalFare}</Typography>
-                <Button sx={{ mt: 1, mr:1 }} onClick={() => navigate(`/track/${b.vehicleId?._id}`)}>Track Bus</Button>
+                <Button sx={{ mt: 1, mr:1 }} onClick={() => navigate(`/track/${b.vehicleId?._id}?bookingId=${b._id}`)}>Track Bus</Button>
               </CardContent>
             </Card>
           </Grid>
