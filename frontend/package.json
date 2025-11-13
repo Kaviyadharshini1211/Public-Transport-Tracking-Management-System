@@ -4,6 +4,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
+    "@react-oauth/google": "^0.12.2",
     "axios": "^1.13.1",
     "formik": "^2.4.6",
     "mapbox-gl": "^3.16.0",

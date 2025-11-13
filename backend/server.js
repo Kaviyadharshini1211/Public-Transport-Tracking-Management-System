@@ -1,16 +1,23 @@
 const express = require("express");
 const dotenv = require("dotenv");
+dotenv.config();                        // 1️⃣ Load env FIRST 🔥
+
 const connectDB = require("./config/db");
 const cors = require("cors");
 const morgan = require("morgan");
 
-dotenv.config();
+const passport = require("passport");
+require("./config/passport");           // 2️⃣ Load passport AFTER env
+
+
 connectDB();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(passport.initialize());
+
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));

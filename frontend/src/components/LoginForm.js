@@ -10,6 +10,12 @@ const LoginForm = ({ setUser }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const backendURL = process.env.REACT_APP_API_URL;
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${backendURL}/auth/google`;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -18,8 +24,10 @@ const LoginForm = ({ setUser }) => {
     try {
       const res = await API.post("/auth/login", { email, password });
       setUser(res.data.user);
+
       localStorage.setItem("user", JSON.stringify(res.data.user));
       localStorage.setItem("token", res.data.token);
+
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -31,6 +39,7 @@ const LoginForm = ({ setUser }) => {
   return (
     <div className="login-container">
       <div className="login-card">
+
         <h1 className="login-title">Welcome Back</h1>
         <p className="login-subtitle">Login to your account</p>
         
@@ -68,29 +77,21 @@ const LoginForm = ({ setUser }) => {
             </div>
           )}
 
-          <button 
-            type="submit" 
-            className="submit-button" 
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner"></span>
-                Logging in...
-              </>
-            ) : (
-              "Login"
-            )}
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? <> <span className="spinner"></span> Logging in... </> : "Login"}
           </button>
         </form>
 
+        {/* 🚀 GOOGLE LOGIN BUTTON */}
+        <div className="google-login-container">
+          <button className="google-login-btn" onClick={handleGoogleLogin}>
+            Continue with Google
+          </button>
+        </div>
+
         <div className="register-link">
           Don't have an account?{" "}
-          <button 
-            type="button"
-            className="link-button" 
-            onClick={() => navigate("/register")}
-          >
+          <button type="button" className="link-button" onClick={() => navigate("/register")}>
             Register
           </button>
         </div>

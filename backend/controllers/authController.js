@@ -68,3 +68,32 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.generateTokenAndRedirect = (req, res) => {
+  const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+
+  const redirectURL = `${process.env.FRONTEND_URL}/auth/success?token=${token}`;
+
+  return res.redirect(redirectURL);
+};
+
+
+// controllers/authController.js
+exports.getMe = async (req, res) => {
+  // prevent caching/proxy caching so clients always get fresh JSON (no 304)
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.set("Surrogate-Control", "no-store");
+
+  if (!req.user) {
+    return res.status(401).json({ message: "User not found" });
+  }
+
+  // send user (password removed by protect middleware)
+  return res.status(200).json({ user: req.user });
+};
+
+

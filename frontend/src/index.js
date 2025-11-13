@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const theme = createTheme({
   palette: {
@@ -14,9 +15,11 @@ const theme = createTheme({
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <App />
-    </ThemeProvider>
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <App />
+      </ThemeProvider>
+    </GoogleOAuthProvider>
   </React.StrictMode>
 );
