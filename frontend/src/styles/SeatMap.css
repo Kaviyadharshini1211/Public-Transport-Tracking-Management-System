@@ -1,0 +1,435 @@
+/* src/styles/SeatMap.css */
+
+/* Main Wrapper */
+.seat-map-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+  background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+/* Header Section */
+.seat-map-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.bus-icon {
+  font-size: 48px !important;
+  color: #3b82f6;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.4));
+}
+
+.seat-map-title {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 20px !important;
+}
+
+/* Driver Section */
+.driver-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+}
+
+.steering-wheel {
+  width: 60px;
+  height: 60px;
+  border: 6px solid #64748b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.wheel-center {
+  width: 20px;
+  height: 20px;
+  background: #94a3b8;
+  border-radius: 50%;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.driver-label {
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Seat Map Container */
+.seat-map-container {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 20px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* Seat Row */
+.seat-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  padding: 8px;
+  border-radius: 12px;
+  transition: background 0.3s ease;
+}
+
+.seat-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.seat-row::before {
+  content: attr(data-row);
+  position: absolute;
+  left: -45px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  opacity: 0.7;
+}
+
+/* Seat Groups */
+.seat-group {
+  display: flex;
+  gap: 12px;
+}
+
+/* Seat Button Base */
+.seat-button {
+  min-width: 56px !important;
+  min-height: 56px !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+  position: relative !important;
+  overflow: visible !important;
+  border: 2px solid !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.seat-number {
+  position: relative;
+  z-index: 2;
+}
+
+/* Available Seat */
+.seat-button.available {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.seat-button.available:hover {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+  border-color: #6366f1 !important;
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  color: #4f46e5 !important;
+}
+
+/* Selected Seat */
+.seat-button.selected {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  border-color: #1d4ed8 !important;
+  color: white !important;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+  animation: seatPulse 0.4s ease;
+}
+
+.seat-button.selected:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.6);
+}
+
+.seat-check-icon {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  font-size: 16px !important;
+  color: white !important;
+  background: rgba(16, 185, 129, 0.9);
+  border-radius: 50%;
+  padding: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Reserved Seat */
+.seat-button.reserved {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+  border-color: #64748b !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+.seat-cross-icon {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  font-size: 28px !important;
+  color: #ef4444 !important;
+  opacity: 0.7;
+}
+
+/* Aisle */
+.aisle-spacer {
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.aisle-line {
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(148, 163, 184, 0.3) 20%,
+    rgba(148, 163, 184, 0.5) 50%,
+    rgba(148, 163, 184, 0.3) 80%,
+    transparent 100%
+  );
+  border-radius: 1px;
+}
+
+/* Legend */
+.seat-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 28px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-item .MuiTypography-root {
+  color: #cbd5e1 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.legend-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.legend-box:hover {
+  transform: scale(1.1);
+}
+
+.legend-box.available {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-color: #cbd5e1;
+}
+
+.legend-box.selected {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.legend-box.reserved {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  border-color: #64748b;
+}
+
+/* Selection Summary */
+.selection-summary {
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  animation: slideUp 0.4s ease;
+}
+
+.summary-text {
+  color: white !important;
+  font-weight: 600 !important;
+  margin-bottom: 12px !important;
+  font-size: 14px !important;
+}
+
+.selected-seats-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-seat-tag {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.selected-seat-tag:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes seatPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .seat-map-wrapper {
+    padding: 16px;
+  }
+
+  .seat-map-container {
+    padding: 16px 8px;
+  }
+
+  .seat-button {
+    min-width: 48px !important;
+    min-height: 48px !important;
+    font-size: 13px !important;
+  }
+
+  .seat-group {
+    gap: 8px;
+  }
+
+  .seat-row {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .seat-row::before {
+    left: -35px;
+    font-size: 10px;
+  }
+
+  .aisle-spacer {
+    width: 32px;
+  }
+
+  .steering-wheel {
+    width: 50px;
+    height: 50px;
+    border-width: 5px;
+  }
+
+  .wheel-center {
+    width: 16px;
+    height: 16px;
+  }
+
+  .seat-legend {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .legend-box {
+    width: 32px;
+    height: 32px;
+  }
+
+  .selection-summary {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .seat-button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    font-size: 12px !important;
+  }
+
+  .seat-row::before {
+    display: none;
+  }
+
+  .bus-icon {
+    font-size: 36px !important;
+  }
+
+  .seat-map-title {
+    font-size: 18px !important;
+  }
+}
+
+/* Accessibility */
+.seat-button:focus-visible {
+  outline: 3px solid #60a5fa !important;
+  outline-offset: 3px !important;
+  z-index: 10;
+}
+
+/* Dark theme enhancement */
+@media (prefers-color-scheme: dark) {
+  .seat-map-wrapper {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+}

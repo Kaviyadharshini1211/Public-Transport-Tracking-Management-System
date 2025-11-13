@@ -1,6 +1,8 @@
 // src/components/SeatMap.jsx
 import React, { useMemo } from "react";
-import { Box, Grid, Button } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
+import { EventSeat, CheckCircle, Close } from "@mui/icons-material";
+import "../styles/SeatMap.css";
 
 /**
  * SeatMap props:
@@ -21,24 +23,22 @@ export default function SeatMap({ capacity, reserved = [], selected = [], onTogg
   const renderSeat = (num) => {
     const isReserved = reserved.includes(num);
     const isSelected = selected.includes(num);
+    
+    const seatClass = `seat-button ${
+      isReserved ? "reserved" : isSelected ? "selected" : "available"
+    }`;
 
     return (
       <Button
         key={num}
         onClick={() => !isReserved && onToggle(num)}
-        variant={isSelected ? "contained" : "outlined"}
         disabled={isReserved}
-        size="small"
-        sx={{
-          minWidth: 44,
-          minHeight: 44,
-          m: 0.5,
-          bgcolor: isReserved ? "grey.300" : isSelected ? "primary.main" : "transparent",
-          color: isReserved ? "text.disabled" : isSelected ? "white" : "text.primary",
-          borderColor: "grey.400"
-        }}
+        className={seatClass}
+        title={isReserved ? "Reserved" : isSelected ? "Selected" : "Available"}
       >
-        {num}
+        <span className="seat-number">{num}</span>
+        {isSelected && <CheckCircle className="seat-check-icon" />}
+        {isReserved && <Close className="seat-cross-icon" />}
       </Button>
     );
   };
@@ -50,23 +50,82 @@ export default function SeatMap({ capacity, reserved = [], selected = [], onTogg
   }
 
   return (
-    <Box>
-      {rows.map((row, idx) => (
-        <Grid container key={idx} alignItems="center" sx={{ mb: 1 }}>
-          <Grid item xs="auto">
-            <Box display="flex">{row.slice(0, 2).map(renderSeat)}</Box>
-          </Grid>
+    <Box className="seat-map-wrapper">
+      {/* Header */}
+      <Box className="seat-map-header">
+        <EventSeat className="bus-icon" />
+        <Typography variant="h6" className="seat-map-title">
+          Select Your Seats
+        </Typography>
+      </Box>
 
-          {/* aisle */}
-          <Grid item xs>
-            <Box textAlign="center" color="text.secondary">aisle</Box>
-          </Grid>
+      {/* Driver Area */}
+      <Box className="driver-section">
+        <Box className="steering-wheel">
+          <Box className="wheel-center" />
+        </Box>
+        <Typography variant="caption" className="driver-label">
+          Driver
+        </Typography>
+      </Box>
 
-          <Grid item xs="auto">
-            <Box display="flex" justifyContent="flex-end">{row.slice(2, 4).map(renderSeat)}</Box>
-          </Grid>
-        </Grid>
-      ))}
+      {/* Seat Grid */}
+      <Box className="seat-map-container">
+        {rows.map((row, idx) => (
+          <Box key={idx} className="seat-row" data-row={`Row ${idx + 1}`}>
+            {/* Left Side Seats */}
+            <Box className="seat-group left-seats">
+              {row.slice(0, 2).map(renderSeat)}
+            </Box>
+
+            {/* Aisle */}
+            <Box className="aisle-spacer">
+              <Box className="aisle-line" />
+            </Box>
+
+            {/* Right Side Seats */}
+            <Box className="seat-group right-seats">
+              {row.slice(2, 4).map(renderSeat)}
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      {/* Legend */}
+      <Box className="seat-legend">
+        <Box className="legend-item">
+          <Box className="legend-box available" />
+          <Typography variant="body2">Available</Typography>
+        </Box>
+        <Box className="legend-item">
+          <Box className="legend-box selected">
+            <CheckCircle sx={{ fontSize: 14, color: "white" }} />
+          </Box>
+          <Typography variant="body2">Selected</Typography>
+        </Box>
+        <Box className="legend-item">
+          <Box className="legend-box reserved">
+            <Close sx={{ fontSize: 14, color: "#ef4444" }} />
+          </Box>
+          <Typography variant="body2">Reserved</Typography>
+        </Box>
+      </Box>
+
+      {/* Selection Summary */}
+      {selected.length > 0 && (
+        <Box className="selection-summary">
+          <Typography variant="body2" className="summary-text">
+            {selected.length} {selected.length === 1 ? "seat" : "seats"} selected:
+          </Typography>
+          <Box className="selected-seats-list">
+            {selected.map((seat) => (
+              <span key={seat} className="selected-seat-tag">
+                {seat}
+              </span>
+            ))}
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }
