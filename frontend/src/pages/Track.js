@@ -170,22 +170,26 @@ export default function Track() {
   }, [remainingCoords]);
 
   // ---------- ETA TO BOARDING STOP ----------
-  useEffect(() => {
-    if (!booking?.boardingStop || !vehicle?.currentLocation) return;
+ useEffect(() => {
+  if (!booking?.boardingStop) return;
+  if (!vehicle?.currentLocation) return;
+  if (!vehicle?.route?.avgSpeedKmph) return;
 
-    const stop = booking.boardingStop;
-    const d = distance(
-      vehicle.currentLocation.lat,
-      vehicle.currentLocation.lng,
-      stop.lat,
-      stop.lng
-    );
+  const stop = booking.boardingStop;
 
-    const speed = vehicle.route.avgSpeedKmph || 50;
-    const min = (d / speed) * 60;
+  const d = distance(
+    vehicle.currentLocation.lat,
+    vehicle.currentLocation.lng,
+    stop.lat,
+    stop.lng
+  );
 
-    setEtaBoarding(formatETA(min));
-  }, [booking, vehicle]);
+  const speed = vehicle.route.avgSpeedKmph || 50;
+  const minutes = (d / speed) * 60;
+
+  setEtaBoarding(formatETA(minutes));
+}, [booking?.boardingStop, vehicle?.currentLocation, vehicle?.route?.avgSpeedKmph]);
+
 
   // ---------- FOLLOW BUS AUTO ----------
   useEffect(() => {

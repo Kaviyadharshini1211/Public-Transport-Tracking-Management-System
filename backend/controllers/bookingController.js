@@ -1,26 +1,30 @@
-// backend/controllers/bookingController.js
 const Booking = require("../models/Booking");
 const Vehicle = require("../models/Vehicle");
 const Route = require("../models/Route");
-const User = require("../models/User");
 
-// Create booking
+// Create Booking
 exports.createBooking = async (req, res) => {
   try {
-    const { userId, vehicleId, routeId, seats, seatNumbers = [], totalFare, boardingStop } = req.body;
+    const {
+      userId,
+      vehicleId,
+      routeId,
+      seats,
+      seatNumbers = [],
+      totalFare,
+      boardingStop,
+    } = req.body;
 
     if (!userId || !vehicleId || !routeId || !seats) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // basic validation: ensure vehicle & route exist
     const vehicle = await Vehicle.findById(vehicleId);
     if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });
 
     const route = await Route.findById(routeId);
     if (!route) return res.status(404).json({ message: "Route not found" });
 
-    // Create booking
     const booking = await Booking.create({
       userId,
       vehicleId,
@@ -29,10 +33,8 @@ exports.createBooking = async (req, res) => {
       seatNumbers,
       totalFare,
       boardingStop: boardingStop || null,
+      emailAlerts: false,
     });
-
-    // optional: you can decrement vehicle available seats here (not implemented)
-    // e.g. vehicle.availableSeats = (vehicle.availableSeats || vehicle.capacity) - seats; await vehicle.save();
 
     const populated = await Booking.findById(booking._id)
       .populate("userId", "-password")
@@ -46,7 +48,7 @@ exports.createBooking = async (req, res) => {
   }
 };
 
-// Get bookings for a user
+// User bookings
 exports.getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ userId: req.params.userId })
@@ -78,18 +80,39 @@ exports.getBooking = async (req, res) => {
   }
 };
 
-// Get bookings for a vehicle (used by seat-map to know reserved seats)
+// Get bookings by vehicle (used for seat map)
 exports.getBookingsByVehicle = async (req, res) => {
   try {
-    const vehicleId = req.params.vehicleId;
-    const bookings = await Booking.find({ vehicleId, status: "Confirmed" })
-      .select("seatNumbers seats boardingStop userId createdAt")
-      .populate("userId", "name email")
-      .sort({ createdAt: -1 });
+    const bookings = await Booking.find({
+      vehicleId: req.params.vehicleId,
+      status: "Confirmed",
+    })
+      .select("seatNumbers seats boardingStop userId emailAlerts")
+      .populate("userId", "name email");
 
     res.json(bookings);
   } catch (err) {
     console.error("getBookingsByVehicle error:", err);
     res.status(500).json({ message: "Failed to fetch vehicle bookings" });
+  }
+};
+
+// ⭐ NEW — Toggle Email Alerts
+exports.toggleEmailAlerts = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking)
+      return res.status(404).json({ message: "Booking not found" });
+
+    booking.emailAlerts = !booking.emailAlerts;
+    await booking.save();
+
+    res.json({
+      success: true,
+      emailAlerts: booking.emailAlerts,
+    });
+  } catch (err) {
+    console.error("toggleEmailAlerts error:", err);
+    res.status(500).json({ message: "Failed to toggle alerts" });
   }
 };

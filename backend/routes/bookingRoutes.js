@@ -1,4 +1,3 @@
-// backend/routes/bookingRoutes.js
 const express = require("express");
 const router = express.Router();
 
@@ -6,19 +5,23 @@ const {
   createBooking,
   getUserBookings,
   getBooking,
-  getBookingsByVehicle
+  getBookingsByVehicle,
+  toggleEmailAlerts,
 } = require("../controllers/bookingController");
 
-// public (or protect with auth middleware if desired)
+// Create booking
 router.post("/", createBooking);
 
-// user bookings
+// User bookings
 router.get("/user/:userId", getUserBookings);
 
-// vehicle bookings (for seat-blocking)
+// Vehicle bookings for seat map
 router.get("/vehicle/:vehicleId", getBookingsByVehicle);
 
-// single booking
+// Get single booking
 router.get("/:id", getBooking);
+
+// ⭐ Toggle email alerts
+router.put("/:id/toggle-alerts", toggleEmailAlerts);
 
 module.exports = router;

@@ -7,7 +7,9 @@ const cors = require("cors");
 const morgan = require("morgan");
 
 const passport = require("passport");
-require("./config/passport");           // 2️⃣ Load passport AFTER env
+require("./config/passport");  
+require("./jobs/etaEmailJob");
+         // 2️⃣ Load passport AFTER env
 
 
 connectDB();
@@ -34,4 +36,5 @@ app.use("/api/bookings", require("./routes/bookingRoutes"));
 
 
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
