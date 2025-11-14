@@ -38,7 +38,7 @@ const formatETA = (min) => {
 
 // ---------------- CRON JOB ----------------
 // Runs every 5 minutes (adjust as needed)
-cron.schedule("*/1440 * * * *", async () => {
+cron.schedule("*/1 * * * *", async () => {
   console.log("🚀 Running ETA Email Job");
 
   try {
