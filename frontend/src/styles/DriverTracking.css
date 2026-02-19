@@ -1,0 +1,115 @@
+/* DriverTracking.css */
+
+.driver-tracking-container {
+  padding: 0;
+}
+
+.tracking-header {
+  margin-bottom: 24px;
+  color: #1565c0;
+  font-weight: 700;
+  font-size: 1.75rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tracking-controls {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.tracking-button {
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.tracking-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.tracking-button:active {
+  transform: translateY(0);
+}
+
+.start-button {
+  background: green;
+}
+
+.start-button:hover {
+  background: #006400;
+}
+
+.stop-button {
+  background: red;
+}
+
+.stop-button:hover {
+  background: #b71c1c;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #1565c0;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-text {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #616161;
+}
+
+/* Loading state */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e3f2fd;
+  border-top: 4px solid #1565c0;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+  .tracking-header {
+    font-size: 1.5rem;
+  }
+
+  .tracking-controls {
+    padding: 30px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tracking-button {
+    width: 100%;
+    padding: 14px 20px;
+  }
+}

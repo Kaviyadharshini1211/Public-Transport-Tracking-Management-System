@@ -1,0 +1,128 @@
+/* ============================================
+   LIQUID GLASS EFFECTS — STATIC & STRUCTURAL
+   Light: 7px blur, higher opacity, crisp edges
+   Dark: 10px blur, soft borders, gentle shadows
+   ============================================ */
+
+/* Liquid glass base — structural, no animation */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(7px) saturate(140%);
+  -webkit-backdrop-filter: blur(7px) saturate(140%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dark mode */
+[data-theme="dark"] .liquid-glass {
+  background: rgba(26, 31, 38, 0.82);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Liquid glass card — clean, static, subtle depth */
+.liquid-glass-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(7px) saturate(140%);
+  -webkit-backdrop-filter: blur(7px) saturate(140%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  padding: 1.75rem;
+}
+
+.liquid-glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+[data-theme="dark"] .liquid-glass-card {
+  background: rgba(26, 31, 38, 0.82);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .liquid-glass-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   3D ICON WRAPPERS (Google Material Style)
+   ============================================ */
+
+.icon-3d-wrapper {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #ffffff, #f5f6f8);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.03);
+  position: relative;
+  transition: all var(--transition-base);
+}
+
+.icon-3d-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.icon-3d-emoji {
+  font-size: 1.625rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  transition: all var(--transition-base);
+}
+
+/* Dark mode 3D icons */
+[data-theme="dark"] .icon-3d-wrapper {
+  background: linear-gradient(145deg, #334155, #1e293b);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] .icon-3d-wrapper:hover {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+/* Colored 3D icon variants */
+.icon-3d-primary {
+  background: linear-gradient(145deg, #f87171, #dc2626);
+  color: white;
+}
+
+.icon-3d-success {
+  background: linear-gradient(145deg, #4ade80, #16a34a);
+  color: white;
+}
+
+.icon-3d-info {
+  background: linear-gradient(145deg, #60a5fa, #2563eb);
+  color: white;
+}
+
+.icon-3d-warning {
+  background: linear-gradient(145deg, #fbbf24, #f59e0b);
+  color: white;
+}

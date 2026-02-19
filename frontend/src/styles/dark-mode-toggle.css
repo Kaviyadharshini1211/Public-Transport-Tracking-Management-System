@@ -1,0 +1,41 @@
+/* ============================================
+   DARK MODE TOGGLE — COMPACT, NO DECORATION
+   ============================================ */
+
+.dark-mode-toggle {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-gray-50);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.dark-mode-toggle:hover {
+  background: var(--color-gray-100);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.dark-mode-toggle:active {
+  transform: scale(0.96);
+}
+
+/* Dark mode */
+[data-theme="dark"] .dark-mode-toggle {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .dark-mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}

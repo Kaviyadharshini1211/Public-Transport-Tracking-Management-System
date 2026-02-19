@@ -1,0 +1,411 @@
+/* ============================================
+   BOOK PAGE - PREMIUM REDBUS-STYLE DESIGN
+   ============================================ */
+
+.book-page-wrapper {
+  min-height: 100vh;
+  background: var(--gradient-background);
+  padding: 2rem 0;
+}
+
+.book-container {
+  max-width: 1200px !important;
+  padding: 0 1.5rem !important;
+  margin: 0 auto;
+}
+
+/* ========== TITLE SECTION ========== */
+
+.book-title {
+  font-weight: var(--font-weight-extrabold) !important;
+  font-size: 2.25rem !important;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin-bottom: 2rem !important;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  padding: 1.5rem 2rem;
+  border-radius: var(--radius-xl);
+  box-shadow: 
+    0 8px 32px 0 rgba(31, 38, 135, 0.15),
+    inset 0 0 60px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="dark"] .book-title {
+  background: rgba(26, 31, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.4),
+    inset 0 0 60px rgba(255, 255, 255, 0.02);
+}
+
+/* ========== FORM SECTION ========== */
+
+.form-section {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  box-shadow: 
+    0 8px 32px 0 rgba(31, 38, 135, 0.15),
+    inset 0 0 60px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  margin-bottom: 2rem;
+  transition: all var(--transition-base);
+}
+
+[data-theme="dark"] .form-section {
+  background: rgba(26, 31, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.4),
+    inset 0 0 60px rgba(255, 255, 255, 0.02);
+}
+
+.form-section:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.form-label {
+  font-size: var(--font-size-sm) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem !important;
+  display: block;
+}
+
+.route-select,
+.stop-select {
+  background: var(--color-background);
+  border-radius: var(--radius-lg) !important;
+  transition: all var(--transition-base);
+}
+
+.route-select .MuiOutlinedInput-notchedOutline,
+.stop-select .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border) !important;
+  border-width: 1.5px !important;
+}
+
+.route-select:hover .MuiOutlinedInput-notchedOutline,
+.stop-select:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary-600) !important;
+}
+
+.route-select.Mui-focused .MuiOutlinedInput-notchedOutline,
+.stop-select.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary-600) !important;
+  border-width: 2px !important;
+}
+
+.stop-select-form {
+  margin-top: 1rem;
+}
+
+/* ========== VEHICLE CARDS ========== */
+
+.vehicle-card {
+  border-radius: var(--radius-xl) !important;
+  box-shadow: 
+    0 8px 32px 0 rgba(31, 38, 135, 0.15),
+    inset 0 0 60px rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  overflow: hidden;
+  transition: all var(--transition-base) !important;
+  animation: fadeInUp 0.6s var(--ease-out);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+[data-theme="dark"] .vehicle-card {
+  background: rgba(26, 31, 38, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.4),
+    inset 0 0 60px rgba(255, 255, 255, 0.02) !important;
+}
+
+.vehicle-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-card-hover) !important;
+  border-color: var(--color-primary-200) !important;
+}
+
+.vehicle-card .MuiCardContent-root {
+  padding: 1.5rem !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Vehicle Card Content */
+.vehicle-title {
+  font-weight: var(--font-weight-bold) !important;
+  color: var(--color-text-primary);
+  margin-bottom: 0 !important;
+  font-size: 1.125rem !important;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--color-gray-100);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vehicle-info {
+  font-size: var(--font-size-sm) !important;
+  color: var(--color-text-secondary);
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.vehicle-info strong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Select Seats Button */
+.select-seats-btn {
+  width: 100%;
+  height: 44px !important;
+  border-radius: var(--radius-lg) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  font-size: var(--font-size-base) !important;
+  background: var(--gradient-primary) !important;
+  box-shadow: var(--shadow-primary) !important;
+  transition: all var(--transition-base) !important;
+  text-transform: none !important;
+  margin-top: auto !important;
+  font-family: var(--font-primary) !important;
+}
+
+.select-seats-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(216, 78, 85, 0.35) !important;
+}
+
+.select-seats-btn:active {
+  transform: translateY(0);
+}
+
+/* ========== SEAT DIALOG ========== */
+
+.seat-dialog .MuiDialog-paper {
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-xl) !important;
+  border: 1px solid var(--color-border);
+  max-width: 600px !important;
+}
+
+.dialog-title {
+  background: var(--gradient-primary);
+  color: white !important;
+  font-weight: var(--font-weight-bold) !important;
+  padding: 1.25rem 1.5rem !important;
+  font-size: 1.25rem !important;
+}
+
+.dialog-content {
+  padding: 1.5rem !important;
+  background: var(--color-gray-50);
+}
+
+.selected-seats-text {
+  font-size: var(--font-size-sm) !important;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold) !important;
+  background: white;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--color-primary-600);
+  box-shadow: var(--shadow-sm);
+}
+
+.fare-input {
+  background: white;
+  border-radius: var(--radius-lg) !important;
+}
+
+.fare-input .MuiOutlinedInput-root {
+  border-radius: var(--radius-lg) !important;
+}
+
+.fare-input .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border) !important;
+  border-width: 1.5px !important;
+}
+
+.fare-input:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary-600) !important;
+}
+
+.total-fare-text {
+  font-size: 1.5rem !important;
+  font-weight: var(--font-weight-extrabold) !important;
+  color: var(--color-success-700);
+  text-align: right;
+  background: linear-gradient(135deg, var(--color-success-50) 0%, var(--color-success-100) 100%);
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dialog-actions {
+  padding: 1rem 1.5rem !important;
+  background: var(--color-gray-50);
+  border-top: 1px solid var(--color-border);
+  gap: 0.75rem;
+}
+
+.dialog-cancel-btn {
+  color: var(--color-text-secondary) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  text-transform: none !important;
+  padding: 0.625rem 1.5rem !important;
+  border-radius: var(--radius-lg) !important;
+  font-size: var(--font-size-base) !important;
+}
+
+.dialog-cancel-btn:hover {
+  background: var(--color-gray-200) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.dialog-confirm-btn {
+  background: var(--gradient-success) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  text-transform: none !important;
+  padding: 0.625rem 2rem !important;
+  border-radius: var(--radius-lg) !important;
+  font-size: var(--font-size-base) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+
+.dialog-confirm-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35) !important;
+}
+
+.dialog-confirm-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.dialog-confirm-btn:disabled {
+  background: var(--color-gray-300) !important;
+  color: var(--color-gray-500) !important;
+  box-shadow: none !important;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+
+@media (max-width: 768px) {
+  .book-page-wrapper {
+    padding: 1rem 0;
+  }
+
+  .book-container {
+    padding: 0 1rem !important;
+  }
+
+  .book-title {
+    font-size: 1.75rem !important;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .form-section {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .vehicle-card .MuiCardContent-root {
+    padding: 1.25rem !important;
+  }
+
+  .dialog-title {
+    font-size: 1.125rem !important;
+    padding: 1rem 1.25rem !important;
+  }
+
+  .dialog-content {
+    padding: 1.25rem !important;
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+    padding: 1rem 1.25rem !important;
+  }
+
+  .dialog-cancel-btn,
+  .dialog-confirm-btn {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-title {
+    font-size: 1.5rem !important;
+    padding: 0.875rem 1rem;
+  }
+
+  .vehicle-title {
+    font-size: 1rem !important;
+  }
+
+  .vehicle-info {
+    font-size: var(--font-size-xs) !important;
+  }
+
+  .select-seats-btn {
+    font-size: var(--font-size-sm) !important;
+  }
+}
+
+/* ========== ANIMATIONS ========== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== EMPTY STATE ========== */
+
+.vehicles-grid:empty::after {
+  content: '🚌 No vehicles available for this route';
+  display: block;
+  text-align: center;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: var(--radius-xl);
+  color: var(--color-text-secondary);
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-medium);
+  box-shadow: var(--shadow-card);
+  border: 2px dashed var(--color-border);
+  grid-column: 1 / -1;
+}
+
+/* ========== ACCESSIBILITY ========== */
+
+.select-seats-btn:focus-visible,
+.dialog-confirm-btn:focus-visible,
+.dialog-cancel-btn:focus-visible {
+  outline: 3px solid var(--color-primary-300);
+  outline-offset: 2px;
+}

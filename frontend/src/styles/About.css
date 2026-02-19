@@ -1,0 +1,95 @@
+/* ============================================
+   ABOUT PAGE STYLES
+   ============================================ */
+
+.about-container {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 4rem 2rem 4rem;
+}
+
+[data-theme="dark"] .about-container {
+  background: linear-gradient(135deg, #0a0a0c 0%, #18181b 100%);
+}
+
+.about-content {
+  max-width: 1200px;
+  width: 100%;
+}
+
+.about-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+[data-theme="dark"] .about-title {
+  color: rgba(255, 255, 255, 0.98);
+}
+
+.about-subtitle {
+  font-size: 1.25rem;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+[data-theme="dark"] .about-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.about-card {
+  padding: 3rem 2rem;
+  transition: all 0.3s ease;
+}
+
+.about-card:hover {
+  transform: translateY(-8px);
+}
+
+.about-card h3 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 1rem;
+}
+
+[data-theme="dark"] .about-card h3 {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.about-card p {
+  font-size: 1.125rem;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+[data-theme="dark"] .about-card p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 768px) {
+  .about-title {
+    font-size: 2rem;
+  }
+
+  .about-subtitle {
+    font-size: 1rem;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+}
