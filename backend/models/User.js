@@ -6,11 +6,16 @@ const userSchema = new mongoose.Schema({
 
   email: { type: String, required: true, unique: true },
 
-  // Password required for normal accounts AND driver accounts
+  phone: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
   password: {
     type: String,
     required: function () {
-      return !this.googleId; 
+      return !this.googleId;
     },
   },
 
@@ -21,10 +26,11 @@ const userSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ["admin", "passenger", "driver"],  // <--- ADDED DRIVER
+    enum: ["admin", "passenger", "driver"],
     default: "passenger",
   },
 });
+
 
 // Hash password
 userSchema.pre("save", async function (next) {

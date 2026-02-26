@@ -48,7 +48,7 @@ export default function ConfirmBooking() {
     setLoading(true);
     try {
       const payload = {
-        userId: user._id,
+        userId: user?._id || user?.id,
         vehicleId: vehicle._id,
         routeId,
         seats: seatNumbers.length,

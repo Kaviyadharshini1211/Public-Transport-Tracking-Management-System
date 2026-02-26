@@ -69,7 +69,15 @@ export default function Track() {
 
   const mapRef = useRef(null);
 
-  // Read bookingId (?bookingId=XXX)
+  // Default fallback center (India)
+  const defaultCenter = [28.6139, 77.2090];
+
+  // Safe bus position
+  const busPosition = vehicle?.currentLocation
+    ? [vehicle.currentLocation.lat, vehicle.currentLocation.lng]
+    : defaultCenter;
+
+  // Read bookingId
   const params = new URLSearchParams(window.location.search);
   const bookingId = params.get("bookingId");
 
@@ -97,7 +105,7 @@ export default function Track() {
     return () => clearInterval(iv);
   }, []);
 
-  // ---------- LOAD ROUTE FROM OSRM ----------
+  // ---------- LOAD ROUTE ----------
   useEffect(() => {
     if (!vehicle?.route?.stops) return;
 
@@ -117,9 +125,10 @@ export default function Track() {
         const coords = decoded.map(([lat, lng]) => [lat, lng]);
         setRouteCoords(coords);
 
-        // Auto zoom to route
         if (mapRef.current) {
-          mapRef.current.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
+          mapRef.current.fitBounds(L.latLngBounds(coords), {
+            padding: [40, 40],
+          });
         }
       } catch (e) {
         console.error("Route load failed:", e);
@@ -129,7 +138,7 @@ export default function Track() {
     loadRoute();
   }, [vehicle]);
 
-  // ---------- SPLIT COVERED / REMAINING ----------
+  // ---------- SPLIT ROUTE ----------
   useEffect(() => {
     if (!vehicle?.currentLocation || !routeCoords.length) return;
 
@@ -150,7 +159,7 @@ export default function Track() {
     setRemainingCoords(routeCoords.slice(index));
   }, [vehicle, routeCoords]);
 
-  // ---------- ETA TO FINAL DESTINATION ----------
+  // ---------- ETA FINAL ----------
   useEffect(() => {
     if (!remainingCoords.length || !vehicle?.route) return;
 
@@ -169,29 +178,27 @@ export default function Track() {
     setEtaFinal(formatETA(minutes));
   }, [remainingCoords]);
 
-  // ---------- ETA TO BOARDING STOP ----------
- useEffect(() => {
-  if (!booking?.boardingStop) return;
-  if (!vehicle?.currentLocation) return;
-  if (!vehicle?.route?.avgSpeedKmph) return;
+  // ---------- ETA BOARDING ----------
+  useEffect(() => {
+    if (!booking?.boardingStop) return;
+    if (!vehicle?.currentLocation) return;
 
-  const stop = booking.boardingStop;
+    const stop = booking.boardingStop;
 
-  const d = distance(
-    vehicle.currentLocation.lat,
-    vehicle.currentLocation.lng,
-    stop.lat,
-    stop.lng
-  );
+    const d = distance(
+      vehicle.currentLocation.lat,
+      vehicle.currentLocation.lng,
+      stop.lat,
+      stop.lng
+    );
 
-  const speed = vehicle.route.avgSpeedKmph || 50;
-  const minutes = (d / speed) * 60;
+    const speed = vehicle.route?.avgSpeedKmph || 50;
+    const minutes = (d / speed) * 60;
 
-  setEtaBoarding(formatETA(minutes));
-}, [booking?.boardingStop, vehicle?.currentLocation, vehicle?.route?.avgSpeedKmph]);
+    setEtaBoarding(formatETA(minutes));
+  }, [booking, vehicle]);
 
-
-  // ---------- FOLLOW BUS AUTO ----------
+  // ---------- FOLLOW BUS ----------
   useEffect(() => {
     if (!vehicle?.currentLocation || !mapRef.current) return;
 
@@ -208,11 +215,21 @@ export default function Track() {
     <div style={{ height: "100vh" }}>
       <h2 style={{ padding: 20 }}>
         Live Tracking 🚍
+        <span
+          style={{
+            marginLeft: 15,
+            color: vehicle.currentLocation ? "green" : "orange",
+          }}
+        >
+          {vehicle.currentLocation ? "● Live" : "● Not Started"}
+        </span>
+
         {etaFinal && (
           <span style={{ marginLeft: 20, color: "green" }}>
             | ETA (Destination): {etaFinal}
           </span>
         )}
+
         {etaBoarding && (
           <span style={{ marginLeft: 20, color: "blue" }}>
             | ETA (Your Stop): {etaBoarding}
@@ -220,61 +237,71 @@ export default function Track() {
         )}
       </h2>
 
+      {!vehicle.currentLocation && (
+        <div style={{ padding: 20, color: "red" }}>
+          Bus has not started yet. Tracking will appear once the driver goes
+          online.
+        </div>
+      )}
+
       <MapContainer
-        center={[vehicle.currentLocation.lat, vehicle.currentLocation.lng]}
+        center={busPosition}
         zoom={14}
         style={{ height: "85vh" }}
         whenCreated={(map) => (mapRef.current = map)}
       >
-        {/* BASE OSM MAP */}
+        {/* BASE MAP */}
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-        {/* LIVE TRAFFIC (TomTom) */}
+        {/* TRAFFIC */}
         <TileLayer
           url={`https://api.tomtom.com/traffic/map/4/tile/flow/{z}/{x}/{y}.png?key=YOUR_TOMTOM_KEY`}
           opacity={0.7}
         />
 
-        {/* Covered route (dark grey) */}
+        {/* Covered */}
         <Polyline
           positions={coveredCoords}
           pathOptions={{ color: "#555", weight: 8, opacity: 0.9 }}
         />
 
-        {/* Remaining route (blue) */}
+        {/* Remaining */}
         <Polyline
           positions={remainingCoords}
           pathOptions={{ color: "blue", weight: 6 }}
         />
 
         {/* Stops */}
-        {vehicle.route.stops.map((stop, i) => (
+        {vehicle.route?.stops?.map((stop, i) => (
           <Marker key={i} position={[stop.lat, stop.lng]}>
             <Popup>{stop.name}</Popup>
           </Marker>
         ))}
 
         {/* Bus Marker */}
-        <Marker
-          position={[
-            vehicle.currentLocation.lat,
-            vehicle.currentLocation.lng,
-          ]}
-          icon={busIcon}
-        >
-          <Popup>
-            <strong>{vehicle.regNumber}</strong>
-            <br />
-            Driver: {vehicle.driverName}
-            <br />
-            Last Updated:{" "}
-            {new Date(vehicle.lastSeenAt).toLocaleTimeString("en-IN", {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            })}
-          </Popup>
-        </Marker>
+        {vehicle.currentLocation && (
+          <Marker
+            position={[
+              vehicle.currentLocation.lat,
+              vehicle.currentLocation.lng,
+            ]}
+            icon={busIcon}
+          >
+            <Popup>
+              <strong>{vehicle.regNumber}</strong>
+              <br />
+              Driver: {vehicle.driverName}
+              <br />
+              Last Updated:{" "}
+              {vehicle.lastSeenAt &&
+                new Date(vehicle.lastSeenAt).toLocaleTimeString("en-IN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
+            </Popup>
+          </Marker>
+        )}
       </MapContainer>
     </div>
   );

@@ -5,7 +5,7 @@ import Route from "../models/Route.js";
 import Vehicle from "../models/Vehicle.js";
 
 dotenv.config();
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/ptdb";
+const MONGO_URI = process.env.MONGO_URI ;
 
 // ===========================
 // REALISTIC ROUTES DATA

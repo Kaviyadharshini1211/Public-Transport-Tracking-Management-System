@@ -7,6 +7,7 @@ const RegisterForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState(""); // ✅ NEW
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -14,10 +15,23 @@ const RegisterForm = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+
+    // ✅ Basic frontend validation
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      setError("Enter valid 10-digit Indian mobile number");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await API.post("/auth/register", { name, email, password });
+      await API.post("/auth/register", {
+        name,
+        email,
+        password,
+        phone, // ✅ Send phone to backend
+      });
+
       navigate("/login");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
@@ -31,8 +45,10 @@ const RegisterForm = () => {
       <div className="register-card">
         <h1 className="register-title">Create Account</h1>
         <p className="register-subtitle">Join us today</p>
-        
+
         <form onSubmit={handleRegister} className="register-form">
+
+          {/* NAME */}
           <div className="form-group">
             <label htmlFor="name" className="form-label">Name</label>
             <input
@@ -46,6 +62,7 @@ const RegisterForm = () => {
             />
           </div>
 
+          {/* EMAIL */}
           <div className="form-group">
             <label htmlFor="email" className="form-label">Email</label>
             <input
@@ -59,6 +76,37 @@ const RegisterForm = () => {
             />
           </div>
 
+          {/* PHONE */}
+          <div className="form-group">
+            <label htmlFor="phone" className="form-label">Phone Number</label>
+            <div style={{ display: "flex" }}>
+              <span
+                style={{
+                  padding: "10px",
+                  background: "#eee",
+                  border: "1px solid #ccc",
+                  borderRight: "none",
+                  display: "flex",
+                  alignItems: "center"
+                }}
+              >
+                +91
+              </span>
+              <input
+                id="phone"
+                type="tel"
+                className="form-input"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Enter 10-digit number"
+                maxLength={10}
+                required
+                style={{ borderLeft: "none" }}
+              />
+            </div>
+          </div>
+
+          {/* PASSWORD */}
           <div className="form-group">
             <label htmlFor="password" className="form-label">Password</label>
             <input
@@ -79,9 +127,9 @@ const RegisterForm = () => {
             </div>
           )}
 
-          <button 
-            type="submit" 
-            className="submit-button" 
+          <button
+            type="submit"
+            className="submit-button"
             disabled={loading}
           >
             {loading ? (
@@ -97,9 +145,9 @@ const RegisterForm = () => {
 
         <div className="login-link">
           Already have an account?{" "}
-          <button 
+          <button
             type="button"
-            className="link-button" 
+            className="link-button"
             onClick={() => navigate("/login")}
           >
             Login

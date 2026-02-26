@@ -27,29 +27,33 @@ export default function MyBookings() {
 
   const navigate = useNavigate();
 
-  // Read user ONCE (outside state)
+  // Read user once
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
+  // Support both _id and id
+  const userId = user?._id || user?.id;
+
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setLoading(false);
       return;
     }
 
-    API.get(`/bookings/user/${user._id}`)
+    API.get(`/bookings/user/${userId}`)
       .then((res) => {
-        setBookings(res.data);
+        setBookings(res.data || []);
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        console.error("Failed to load bookings:", err);
         setLoading(false);
       });
+  }, [userId]);
 
-  }, []); // <--- FIXED: Removed `user` to stop infinite requests
-
+  // =============================
   // User not logged in
-  if (!user) {
+  // =============================
+  if (!userId) {
     return (
       <div className="my-bookings-container">
         <div className="login-prompt">
@@ -65,7 +69,9 @@ export default function MyBookings() {
     );
   }
 
+  // =============================
   // Loading state
+  // =============================
   if (loading) {
     return (
       <div className="my-bookings-container">
@@ -76,7 +82,9 @@ export default function MyBookings() {
     );
   }
 
-  // Empty bookings state
+  // =============================
+  // Empty bookings
+  // =============================
   if (bookings.length === 0) {
     return (
       <div className="my-bookings-container">
@@ -102,7 +110,9 @@ export default function MyBookings() {
     );
   }
 
+  // =============================
   // Display bookings
+  // =============================
   return (
     <div className="my-bookings-container">
       <div className="bookings-header">
@@ -110,7 +120,8 @@ export default function MyBookings() {
           My Bookings
         </Typography>
         <Typography className="bookings-subtitle">
-          {bookings.length} {bookings.length === 1 ? "booking" : "bookings"} found
+          {bookings.length}{" "}
+          {bookings.length === 1 ? "booking" : "bookings"} found
         </Typography>
       </div>
 
@@ -124,7 +135,9 @@ export default function MyBookings() {
                 <Typography className="booking-id">
                   #{booking._id.slice(-8).toUpperCase()}
                 </Typography>
-                <Typography className="booking-status">Confirmed</Typography>
+                <Typography className="booking-status">
+                  {booking.status || "Confirmed"}
+                </Typography>
               </div>
 
               {/* Vehicle */}
@@ -153,7 +166,9 @@ export default function MyBookings() {
               <div className="booking-detail">
                 <LocationOnIcon className="detail-icon" />
                 <div className="detail-content">
-                  <Typography className="detail-label">Boarding Stop</Typography>
+                  <Typography className="detail-label">
+                    Boarding Stop
+                  </Typography>
                   <Typography className="detail-text">
                     {booking.boardingStop?.name || "Not Specified"}
                   </Typography>
@@ -183,15 +198,19 @@ export default function MyBookings() {
 
               {/* Fare */}
               <div className="fare-info">
-                <Typography className="fare-label">Total Fare</Typography>
+                <Typography className="fare-label">
+                  Total Fare
+                </Typography>
                 <Typography className="fare-amount">
                   ₹{booking.totalFare}
                 </Typography>
               </div>
 
-              {/* ⭐ Email Alert Toggle */}
+              {/* Email Alerts */}
               <div style={{ marginTop: 10 }}>
-                <Typography className="detail-label">Email Alerts</Typography>
+                <Typography className="detail-label">
+                  Email Alerts
+                </Typography>
                 <BookingAlertToggle booking={booking} />
               </div>
 
