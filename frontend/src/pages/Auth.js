@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/Auth.css';
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const Auth = ({ setUser }) => {
   const location = useLocation();
   const [isLogin, setIsLogin] = useState(location.pathname !== '/register');
@@ -30,20 +32,21 @@ const Auth = ({ setUser }) => {
     try {
       if (isLogin) {
         // Login
-        const response = await axios.post('http://localhost:5000/api/auth/login', {
+        const response = await axios.post(`${API_URL}/api/auth/login`, {
           email: formData.email,
           password: formData.password,
           role
         });
-        
+
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         setUser(response.data.user);
         window.dispatchEvent(new Event('userChanged'));
-        
+
         if (role === 'admin') navigate('/admin');
         else if (role === 'driver') navigate('/driver');
         else navigate('/dashboard');
+
       } else {
         // Register
         if (formData.password !== formData.confirmPassword) {
@@ -52,7 +55,7 @@ const Auth = ({ setUser }) => {
           return;
         }
 
-        const response = await axios.post('http://localhost:5000/api/auth/register', {
+        const response = await axios.post(`${API_URL}/api/auth/register`, {
           name: formData.name,
           email: formData.email,
           password: formData.password,
@@ -63,8 +66,10 @@ const Auth = ({ setUser }) => {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         setUser(response.data.user);
         window.dispatchEvent(new Event('userChanged'));
+
         navigate('/dashboard');
       }
+
     } catch (err) {
       setError(err.response?.data?.message || 'Authentication failed');
     } finally {
@@ -73,13 +78,14 @@ const Auth = ({ setUser }) => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = `${API_URL}/api/auth/google`;
   };
 
   return (
     <div className="auth-container">
       <div className="auth-card liquid-glass-card">
-        {/* Tab Switcher */}
+
+        {/* Tabs */}
         <div className="auth-tabs">
           <button
             className={`auth-tab ${isLogin ? 'active' : ''}`}
@@ -104,11 +110,14 @@ const Auth = ({ setUser }) => {
         <h1 className="auth-title">
           {isLogin ? 'Welcome Back! 👋' : 'Create Account 🚀'}
         </h1>
+
         <p className="auth-subtitle">
-          {isLogin ? `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}` : 'Join us today'}
+          {isLogin
+            ? `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`
+            : 'Join us today'}
         </p>
 
-        {/* Role Switcher */}
+        {/* Role */}
         <div className="role-switcher">
           <button
             className={role === 'passenger' ? 'active' : ''}
@@ -131,6 +140,7 @@ const Auth = ({ setUser }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
+
           {!isLogin && (
             <div className="form-group">
               <label>Full Name</label>
@@ -194,6 +204,7 @@ const Auth = ({ setUser }) => {
             {loading ? <span className="spinner"></span> : null}
             {loading ? 'Please wait...' : isLogin ? 'Login' : 'Create Account'}
           </button>
+
         </form>
 
         <div className="google-login-container">
@@ -202,6 +213,7 @@ const Auth = ({ setUser }) => {
             Continue with Google
           </button>
         </div>
+
       </div>
     </div>
   );
