@@ -7,21 +7,59 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 const Auth = ({ setUser }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const [isLogin, setIsLogin] = useState(location.pathname !== '/register');
   const [role, setRole] = useState('passenger');
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: ''
   });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // Allow only numbers in phone
+    if (name === 'phone' && !/^\d*$/.test(value)) return;
+
+    setFormData({ ...formData, [name]: value });
     setError('');
+  };
+
+  const validateRegister = () => {
+    const { name, email, phone, password, confirmPassword } = formData;
+
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      return "All fields are required";
+    }
+
+    if (!/^[A-Za-z ]{3,}$/.test(name)) {
+      return "Name must be at least 3 characters";
+    }
+
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      return "Enter valid 10-digit Indian mobile number";
+    }
+
+    if (password.length < 6) {
+      return "Password must be at least 6 characters";
+    }
+
+    if (password !== confirmPassword) {
+      return "Passwords do not match";
+    }
+
+    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -31,7 +69,6 @@ const Auth = ({ setUser }) => {
 
     try {
       if (isLogin) {
-        // Login
         const response = await axios.post(`${API_URL}/api/auth/login`, {
           email: formData.email,
           password: formData.password,
@@ -48,9 +85,9 @@ const Auth = ({ setUser }) => {
         else navigate('/dashboard');
 
       } else {
-        // Register
-        if (formData.password !== formData.confirmPassword) {
-          setError('Passwords do not match');
+        const validationError = validateRegister();
+        if (validationError) {
+          setError(validationError);
           setLoading(false);
           return;
         }
@@ -58,6 +95,7 @@ const Auth = ({ setUser }) => {
         const response = await axios.post(`${API_URL}/api/auth/register`, {
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
           password: formData.password,
           role
         });
@@ -89,127 +127,86 @@ const Auth = ({ setUser }) => {
         <div className="auth-tabs">
           <button
             className={`auth-tab ${isLogin ? 'active' : ''}`}
-            onClick={() => {
-              setIsLogin(true);
-              setError('');
-            }}
+            onClick={() => { setIsLogin(true); setError(''); }}
           >
             Login
           </button>
           <button
             className={`auth-tab ${!isLogin ? 'active' : ''}`}
-            onClick={() => {
-              setIsLogin(false);
-              setError('');
-            }}
+            onClick={() => { setIsLogin(false); setError(''); }}
           >
             Register
           </button>
         </div>
 
         <h1 className="auth-title">
-          {isLogin ? 'Welcome Back! 👋' : 'Create Account 🚀'}
+          {isLogin ? 'Welcome Back 👋' : 'Create Account 🚀'}
         </h1>
 
         <p className="auth-subtitle">
           {isLogin
             ? `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`
-            : 'Join us today'}
+            : 'Join PT Tracker today'}
         </p>
 
-        {/* Role */}
+        {/* Role Switcher */}
         <div className="role-switcher">
-          <button
-            className={role === 'passenger' ? 'active' : ''}
-            onClick={() => setRole('passenger')}
-          >
-            🚶 Passenger
-          </button>
-          <button
-            className={role === 'driver' ? 'active' : ''}
-            onClick={() => setRole('driver')}
-          >
-            🚗 Driver
-          </button>
-          <button
-            className={role === 'admin' ? 'active' : ''}
-            onClick={() => setRole('admin')}
-          >
-            👨‍💼 Admin
-          </button>
+          <button className={role === 'passenger' ? 'active' : ''} onClick={() => setRole('passenger')}>🚶 Passenger</button>
+          <button className={role === 'driver' ? 'active' : ''} onClick={() => setRole('driver')}>🚗 Driver</button>
+          <button className={role === 'admin' ? 'active' : ''} onClick={() => setRole('admin')}>👨‍💼 Admin</button>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
 
           {!isLogin && (
-            <div className="form-group">
-              <label>Full Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your name"
-                required
-              />
-            </div>
+            <>
+              <div className="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Enter your name" />
+              </div>
+
+              <div className="form-group">
+                <label>Phone Number</label>
+                <div className="phone-wrapper">
+                  <span className="country-code">+91</span>
+                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} maxLength="10" placeholder="Enter 10-digit number" />
+                </div>
+              </div>
+            </>
           )}
 
           <div className="form-group">
             <label>Email Address</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-            />
+            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Enter your email" required />
           </div>
 
-          <div className="form-group">
+          <div className="form-group password-wrapper">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-            />
+            <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} placeholder="Enter your password" required />
+            <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? "🙈" : "👁"}
+            </button>
           </div>
 
           {!isLogin && (
-            <div className="form-group">
+            <div className="form-group password-wrapper">
               <label>Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm your password"
-                required
-              />
+              <input type={showConfirm ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm password" />
+              <button type="button" className="password-toggle" onClick={() => setShowConfirm(!showConfirm)}>
+                {showConfirm ? "🙈" : "👁"}
+              </button>
             </div>
           )}
 
-          {error && (
-            <div className="error-message">
-              <span className="error-icon">⚠️</span>
-              {error}
-            </div>
-          )}
+          {error && <div className="error-message">⚠️ {error}</div>}
 
           <button type="submit" className="submit-button" disabled={loading}>
-            {loading ? <span className="spinner"></span> : null}
-            {loading ? 'Please wait...' : isLogin ? 'Login' : 'Create Account'}
+            {loading ? "Please wait..." : isLogin ? "Login" : "Create Account"}
           </button>
-
         </form>
 
         <div className="google-login-container">
           <button onClick={handleGoogleLogin} className="google-login-btn">
-            <span className="google-icon">G</span>
             Continue with Google
           </button>
         </div>
