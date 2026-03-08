@@ -5,7 +5,7 @@
   margin: 0 auto;
   padding: 32px 16px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(160deg, #f5f7fa 0%, #eef1f6 40%, #f4f1f0 70%, #f5f7fa 100%);
 }
 
 /* Header Section */
@@ -103,7 +103,7 @@
 }
 
 .detail-icon {
-  color: #3b82f6;
+  color: var(--color-primary-500, #d84e55);
   font-size: 16px !important;
   margin-top: 2px;
   flex-shrink: 0;
@@ -140,13 +140,13 @@
 }
 
 .seat-chip {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  color: #3b82f6;
+  background: linear-gradient(135deg, var(--color-primary-50, #fef2f2) 0%, rgba(216,78,85,0.1) 100%);
+  color: var(--color-primary-600, #d84e55);
   font-weight: 700;
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 1px 3px rgba(216, 78, 85, 0.1);
 }
 
 /* Fare Section */
@@ -179,15 +179,15 @@
   border-radius: 8px !important;
   font-weight: 600 !important;
   font-size: 12px !important;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+  background: linear-gradient(135deg, var(--color-primary-500, #d84e55) 0%, var(--color-primary-700, #b83a42) 100%) !important;
+  box-shadow: 0 2px 8px rgba(216, 78, 85, 0.3) !important;
   transition: all 0.3s ease !important;
   text-transform: none !important;
 }
 
 .track-button:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+  background: linear-gradient(135deg, var(--color-primary-700, #b83a42) 0%, #991b1b 100%) !important;
+  box-shadow: 0 4px 12px rgba(216, 78, 85, 0.4) !important;
   transform: translateY(-2px);
 }
 
@@ -196,14 +196,26 @@
   text-align: center;
   padding: 64px 24px;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-xl, 1.5rem);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
   margin-top: 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-state::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-primary-500, #d84e55), #ef4444);
 }
 
 .empty-icon {
   font-size: 80px !important;
-  color: #d1d5db;
+  color: rgba(216, 78, 85, 0.2);
   margin-bottom: 16px;
 }
 
@@ -216,6 +228,27 @@
 .empty-subtitle {
   color: #6b7280;
   font-size: 14px !important;
+  margin-bottom: 20px !important;
+}
+
+/* Force MUI buttons to brand red */
+.empty-state .MuiButton-root,
+.empty-state .MuiButton-containedPrimary,
+.my-bookings-container .MuiButton-containedPrimary {
+  background: linear-gradient(135deg, var(--color-primary-500, #d84e55) 0%, var(--color-primary-700, #b83a42) 100%) !important;
+  box-shadow: 0 4px 12px rgba(216, 78, 85, 0.3) !important;
+  border-radius: var(--radius-lg, 12px) !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em;
+  transition: all 0.3s ease !important;
+}
+
+.empty-state .MuiButton-root:hover,
+.my-bookings-container .MuiButton-containedPrimary:hover {
+  background: linear-gradient(135deg, var(--color-primary-700, #b83a42) 0%, #991b1b 100%) !important;
+  box-shadow: 0 6px 20px rgba(216, 78, 85, 0.4) !important;
+  transform: translateY(-2px);
 }
 
 /* Login Prompt */
@@ -230,7 +263,7 @@
 
 .login-icon {
   font-size: 80px !important;
-  color: #3b82f6;
+  color: var(--color-primary-500, #d84e55);
   margin-bottom: 16px;
 }
 
@@ -309,6 +342,6 @@
 
 /* Accessibility */
 .track-button:focus-visible {
-  outline: 3px solid #60a5fa;
+  outline: 3px solid rgba(216, 78, 85, 0.5);
   outline-offset: 2px;
 }

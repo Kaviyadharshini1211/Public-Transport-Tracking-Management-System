@@ -2,7 +2,7 @@
 
 .admin-layout-wrapper {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(160deg, #f5f7fa 0%, #eef1f6 40%, #f4f1f0 70%, #f5f7fa 100%);
   padding: 24px 0;
 }
 
@@ -22,13 +22,14 @@
 }
 
 .admin-title {
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   color: #1f2937;
   margin-bottom: 8px !important;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, var(--color-primary-500, #d84e55) 0%, var(--color-primary-700, #b83a42) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  letter-spacing: -0.02em;
 }
 
 .admin-subtitle {
@@ -55,11 +56,11 @@
 .admin-tabs .MuiTabs-indicator {
   height: 3px !important;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  background: linear-gradient(135deg, var(--color-primary-500, #d84e55) 0%, var(--color-primary-700, #b83a42) 100%) !important;
 }
 
 .admin-tabs .MuiTabs-scrollButtons {
-  color: #3b82f6 !important;
+  color: var(--color-primary-500, #d84e55) !important;
 }
 
 .admin-tabs .MuiTabs-scrollButtons.Mui-disabled {
@@ -80,12 +81,12 @@
 }
 
 .admin-tab:hover {
-  background: #f3f4f6 !important;
-  color: #3b82f6 !important;
+  background: rgba(216, 78, 85, 0.04) !important;
+  color: var(--color-primary-500, #d84e55) !important;
 }
 
 .admin-tab.Mui-selected {
-  color: #3b82f6 !important;
+  color: var(--color-primary-500, #d84e55) !important;
   font-weight: 700 !important;
 }
 

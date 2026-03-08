@@ -8,8 +8,12 @@
 .home-container {
   min-height: calc(100vh - 52px);
   position: relative;
-  background: var(--color-background);
+  background: linear-gradient(160deg, var(--color-background) 0%, #eef1f6 40%, #f4f1f0 70%, var(--color-background) 100%);
   overflow: hidden;
+}
+
+[data-theme="dark"] .home-container {
+  background: linear-gradient(160deg, #0a0c10 0%, #111318 40%, #0d1117 70%, #131620 100%);
 }
 
 .home-content {
@@ -86,7 +90,10 @@
 
 .title-accent {
   font-weight: 800;
-  color: #d84e55;
+  background: linear-gradient(135deg, #d84e55 0%, #c43e45 50%, #b83a42 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Hero Description */
@@ -208,6 +215,13 @@
   width: 100%;
   max-width: 440px;
   height: auto;
+  animation: busFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.08));
+}
+
+@keyframes busFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
 [data-theme="dark"] .hero-bus-svg rect[fill="#e5e7eb"] {

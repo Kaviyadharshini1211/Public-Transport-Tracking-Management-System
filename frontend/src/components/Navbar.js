@@ -99,22 +99,6 @@ const Navbar = ({ user, setUser }) => {
             Home
           </NavLink>
 
-          <NavLink 
-            to="/about" 
-            className={({ isActive }) => `navbar-link ${isActive ? 'active' : ''}`}
-            onClick={closeMobileMenu}
-          >
-            About
-          </NavLink>
-
-          <NavLink 
-            to="/contact" 
-            className={({ isActive }) => `navbar-link ${isActive ? 'active' : ''}`}
-            onClick={closeMobileMenu}
-          >
-            Contact
-          </NavLink>
-
           {/* Not Logged In - Show Sign Up CTA */}
           {!user && (
             <NavLink 
