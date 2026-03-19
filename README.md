@@ -186,6 +186,45 @@ docker-compose down
 
 ---
 
+
+##  ENV EXAMPLE BACKEND
+
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Database
+MONGO_URI=your_mongodb_connection_string
+
+# Authentication
+JWT_SECRET=your_jwt_secret_key
+CORS_ORIGIN=http://localhost:3000
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
+
+# URL Configuration
+FRONTEND_URL=http://localhost:3000
+BACKEND_URL=http://localhost:5000
+
+# Email Service (Nodemailer)
+MAIL_USER=your_email@gmail.com
+MAIL_PASS=your_app_specific_password
+
+# SMS Service (Twilio)
+TWILIO_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE=your_twilio_phone_number
+
+## ENV EXAMPLE FRONTEND
+# API URL
+REACT_APP_API_URL=http://localhost:5000/api
+
+# Google OAuth
+REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id
+
 ## 🐳 Docker Configuration
 
 The project includes Docker support for easy deployment:
