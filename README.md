@@ -188,8 +188,7 @@ docker-compose down
 
 
 ##  ENV EXAMPLE BACKEND
-
-# Server Configuration
+```bash
 PORT=5000
 NODE_ENV=development
 
@@ -211,13 +210,13 @@ MAIL_PASS=your_app_specific_password
 TWILIO_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE=your_twilio_phone_number
-
+```
 ## ENV EXAMPLE FRONTEND
-
+```bash
 REACT_APP_API_URL=http://localhost:5000/api
 
 REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id
-
+```
 ## 🐳 Docker Configuration
 
 The project includes Docker support for easy deployment:
