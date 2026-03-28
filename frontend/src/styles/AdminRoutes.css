@@ -1,0 +1,269 @@
+/* ═══════════════════════════════════════════
+   ADMIN ROUTES — Route Management Cards
+   ═══════════════════════════════════════════ */
+
+.ar-container {
+  animation: fadeInContent 0.4s ease;
+}
+
+/* ─── Section Header ─── */
+.ar-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ar-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+}
+
+/* ─── Route Grid ─── */
+.ar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
+}
+
+/* ─── Route Card ─── */
+.ar-card {
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 24px;
+  transition: var(--admin-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.ar-card:hover {
+  border-color: var(--admin-border-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.ar-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--admin-warning), #fbbf24);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ar-card:hover::before {
+  opacity: 1;
+}
+
+/* Card Top */
+.ar-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.ar-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ar-card-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--admin-warning-bg);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.ar-card-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--admin-text);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.ar-card-distance {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Route Path Visual */
+.ar-route-path {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 16px;
+  background: var(--admin-surface-3);
+  border-radius: var(--admin-radius-xs);
+  margin-bottom: 18px;
+  position: relative;
+}
+
+.ar-route-point {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  z-index: 1;
+}
+
+.ar-route-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: var(--admin-surface-3);
+}
+
+.ar-route-dot.origin {
+  border-color: var(--admin-success);
+}
+
+.ar-route-dot.destination {
+  border-color: var(--admin-danger);
+}
+
+.ar-route-place {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--admin-text);
+  text-align: center;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ar-route-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ar-route-line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, var(--admin-success), var(--admin-text-muted) 50%, var(--admin-danger));
+  position: relative;
+  margin: 0 -8px;
+  z-index: 0;
+  margin-top: -20px;
+}
+
+.ar-route-line-arrow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  color: var(--admin-text-muted);
+  background: var(--admin-surface-3);
+  padding: 0 6px;
+}
+
+/* Route Stats */
+.ar-card-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.ar-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--admin-surface-3);
+  border-radius: 8px;
+}
+
+.ar-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ar-stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+/* Card Actions */
+.ar-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.ar-card-actions .admin-btn {
+  flex: 1;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .ar-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ar-card {
+    padding: 18px;
+  }
+
+  .ar-route-place {
+    font-size: 12px;
+    max-width: 90px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ar-card {
+    padding: 16px;
+  }
+
+  .ar-card-name {
+    font-size: 15px;
+  }
+
+  .ar-route-path {
+    padding: 12px;
+  }
+
+  .ar-card-stats {
+    grid-template-columns: 1fr;
+  }
+}

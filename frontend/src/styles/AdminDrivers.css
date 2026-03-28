@@ -1,0 +1,185 @@
+/* ═══════════════════════════════════════════
+   ADMIN DRIVERS — Driver Management Cards
+   ═══════════════════════════════════════════ */
+
+.ad-container {
+  animation: fadeInContent 0.4s ease;
+}
+
+/* ─── Section Header ─── */
+.ad-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ad-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+}
+
+/* ─── Driver Grid ─── */
+.ad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+/* ─── Driver Card ─── */
+.ad-card {
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 24px;
+  transition: var(--admin-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.ad-card:hover {
+  border-color: var(--admin-border-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.ad-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--admin-success), #34d399);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ad-card:hover::before {
+  opacity: 1;
+}
+
+/* Card Top */
+.ad-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ad-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ad-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--admin-success), #34d399);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.ad-card-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--admin-text);
+  margin: 0 0 2px;
+}
+
+.ad-card-email {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  font-weight: 500;
+}
+
+/* Driver Details */
+.ad-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 14px;
+  background: var(--admin-surface-3);
+  border-radius: var(--admin-radius-xs);
+}
+
+.ad-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ad-detail-label {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ad-detail-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+/* Card Actions */
+.ad-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.ad-card-actions .admin-btn {
+  flex: 1;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .ad-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ad-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ad-card {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ad-card {
+    padding: 16px;
+  }
+
+  .ad-card-name {
+    font-size: 15px;
+  }
+
+  .ad-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+}
