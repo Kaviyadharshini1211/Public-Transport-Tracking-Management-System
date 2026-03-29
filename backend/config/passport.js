@@ -11,14 +11,26 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ googleId: profile.id });
+        const email = profile.emails?.[0]?.value;
+        // Search by either googleId OR email
+        let user = await User.findOne({ 
+          $or: [{ googleId: profile.id }, { email }] 
+        });
 
         if (!user) {
+          // Complete new user
           user = await User.create({
             googleId: profile.id,
             name: profile.displayName,
-            email: profile.emails?.[0]?.value,
+            email,
           });
+        } else if (!user.googleId) {
+          // Linking existing email/password account to Google account
+          user.googleId = profile.id;
+          if (!user.name && profile.displayName) {
+             user.name = profile.displayName;
+          }
+          await user.save();
         }
 
         return done(null, user);
