@@ -19,6 +19,9 @@ export default function DriverLayout() {
   const [vehicle, setVehicle] = useState(null);
   const [loadingVehicle, setLoadingVehicle] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [triggeringPanic, setTriggeringPanic] = useState(false);
 
   // Load user from localStorage
   useEffect(() => {
@@ -74,6 +77,49 @@ export default function DriverLayout() {
     navigate("/");
   };
 
+  const fetchNotifications = async () => {
+    try {
+      const res = await API.get("/notifications");
+      setNotifications(res.data || []);
+    } catch(err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const handlePanic = async () => {
+    if (triggeringPanic) return;
+    if (window.confirm("⚠️ Initiate Emergency Protocol? This will alert control silently.")) {
+      setTriggeringPanic(true);
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          await API.post("/notifications/emergency", {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            reason: "Silent Panic Activated"
+          });
+          setTriggeringPanic(false);
+          alert("Emergency alert sent securely to Admin control.");
+        }, (err) => {
+          API.post("/notifications/emergency", { lat: 0, lng: 0, reason: "Silent Panic (Location Failed)" });
+          setTriggeringPanic(false);
+          alert("Emergency alert sent (without exact location).");
+        });
+      } else {
+        await API.post("/notifications/emergency", { lat: 0, lng: 0, reason: "Silent Panic (No GPS)" });
+        setTriggeringPanic(false);
+        alert("Emergency alert sent.");
+      }
+    }
+  };
+
   if (!user) return null;
 
   const greeting = () => {
@@ -98,12 +144,50 @@ export default function DriverLayout() {
             </div>
           </div>
 
-          <div className="drv-header__right">
-            <span className="drv-header__role-badge">
-              <span className="drv-badge-dot"></span>
-              Driver
-            </span>
-            <button className="drv-header__logout" onClick={handleLogout} title="Logout">
+          <div className="drv-header__right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button 
+              onClick={handlePanic}
+              className={`drv-header__panic ${triggeringPanic ? 'drv-header__panic--active' : ''}`}
+              title="Emergency SOS"
+              style={{ background: '#ef4444', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.3s' }}
+            >
+              <span>🚨</span> {triggeringPanic ? 'Sending...' : 'SOS'}
+            </button>
+
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                style={{ background: 'var(--drv-surface-2)', border: '1px solid var(--drv-border)', width: '40px', height: '40px', borderRadius: '50%', color: 'var(--drv-text)', cursor: 'pointer', position: 'relative' }}
+              >
+                🔔
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ef4444', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
+                    {notifications.filter(n => !n.read).length}
+                  </span>
+                )}
+              </button>
+              
+              {showNotifications && (
+                <div style={{ position: 'absolute', top: '50px', right: '0', width: '320px', background: 'var(--drv-surface)', border: '1px solid var(--drv-border)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 100, overflow: 'hidden' }}>
+                  <div style={{ padding: '16px', borderBottom: '1px solid var(--drv-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ margin: 0, fontSize: '14px' }}>Notifications</h3>
+                    <button style={{ background: 'none', border: 'none', color: 'var(--drv-primary)', fontSize: '12px', cursor: 'pointer' }} onClick={async () => { await API.put("/notifications/read"); fetchNotifications(); }}>Mark all read</button>
+                  </div>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--drv-text-muted)', fontSize: '13px' }}>No notifications</div>
+                    ) : notifications.map(n => (
+                      <div key={n._id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--drv-border)', background: n.read ? 'transparent' : 'var(--drv-surface-2)' }}>
+                        <div style={{ fontSize: '13px', fontWeight: n.read ? 'normal' : 'bold', color: 'var(--drv-text)', marginBottom: '4px' }}>{n.title}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--drv-text-muted)' }}>{n.message}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button className="drv-header__logout" onClick={handleLogout} title="Logout" style={{ background: 'var(--drv-surface-2)', border: '1px solid var(--drv-border)', width: '40px', height: '40px', borderRadius: '50%', color: 'var(--drv-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                 <polyline points="16 17 21 12 16 7"/>

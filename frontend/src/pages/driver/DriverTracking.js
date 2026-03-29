@@ -1,6 +1,26 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import API from "../../api/api";
 import "../../styles/DriverTracking.css";
+
+// Custom modern dot icon for driver
+const driverIcon = new L.DivIcon({
+  html: `<div style="width:24px;height:24px;background:#3b82f6;border-radius:50%;border:3px solid white;box-shadow:0 0 10px rgba(59,130,246,0.6);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;background:white;border-radius:50%;animation:pulse 1.5s infinite;"></div></div>`,
+  className: "custom-driver-icon",
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
+// Component to dynamically center map on driver location
+function RecenterAutomatically({ lat, lng }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lng], 15, { animate: true });
+  }, [lat, lng, map]);
+  return null;
+}
 
 export default function DriverTracking({ vehicle, loading }) {
   const [tracking, setTracking] = useState(false);
@@ -209,34 +229,38 @@ export default function DriverTracking({ vehicle, loading }) {
   /* ===== MAIN TRACKING UI ===== */
   return (
     <div className="drv-tracking">
-      {/* Map Placeholder */}
-      <div className="drv-tracking__map-container">
-        <div className="drv-tracking__map">
-          {/* Simulated map background */}
-          <div className="drv-tracking__map-bg">
-            <div className="drv-tracking__map-grid"></div>
-          </div>
-
-          {/* Location pin */}
+      {/* Map Implementation */}
+      <div className="drv-tracking__map-container" style={{ position: 'relative', width: '100%', minHeight: '400px', height: '100%', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--drv-border)' }}>
+        <MapContainer 
+          center={coords ? [coords.lat, coords.lng] : [28.6139, 77.2090]} 
+          zoom={15} 
+          scrollWheelZoom={true} 
+          style={{ height: "400px", minHeight: "100%", width: "100%", zIndex: 0 }}
+        >
+          {/* Elegant Dark Map Tiles */}
+          <TileLayer
+            attribution='&copy; <a href="https://carto.com/">Carto</a>'
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          />
           {coords && (
-            <div className="drv-tracking__map-pin">
-              <div className="drv-tracking__map-pin-pulse"></div>
-              <div className="drv-tracking__map-pin-dot">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
-                </svg>
-              </div>
-            </div>
+            <>
+              <Marker position={[coords.lat, coords.lng]} icon={driverIcon}>
+                <Popup>
+                  <strong>{vehicle?.regNumber}</strong><br/>
+                  Current assigned vehicle.
+                </Popup>
+              </Marker>
+              <RecenterAutomatically lat={coords.lat} lng={coords.lng} />
+            </>
           )}
+        </MapContainer>
 
-          {/* Checking state overlay */}
-          {locationState === "checking" && (
-            <div className="drv-tracking__map-overlay">
-              <div className="drv-tracking-spinner"></div>
-              <span>Checking location…</span>
-            </div>
-          )}
-        </div>
+        {!coords && tracking && (
+          <div className="drv-tracking__map-overlay">
+            <div className="drv-tracking-spinner"></div>
+            <span>Finding SAT Lock…</span>
+          </div>
+        )}
 
         {/* Coordinates display */}
         {coords && (

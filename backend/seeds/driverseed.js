@@ -18,18 +18,21 @@ async function seedDrivers() {
         name: "Driver One",
         email: "driver1@pt.com",
         password: "driver123",
+        phone: "9876543210",
         role: "driver",
       },
       {
         name: "Driver Two",
         email: "driver2@pt.com",
         password: "driver123",
+        phone: "9876543211",
         role: "driver",
       },
       {
         name: "Driver Three",
         email: "driver3@pt.com",
         password: "driver123",
+        phone: "9876543212",
         role: "driver",
       },
     ];

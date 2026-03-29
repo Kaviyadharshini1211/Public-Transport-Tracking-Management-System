@@ -333,8 +333,8 @@ export default function Track() {
         <MapContainer
           center={[vehicle.currentLocation.lat, vehicle.currentLocation.lng]}
           zoom={14}
-          style={{ height: "100%", width: "100%" }}
-          whenCreated={(map) => (mapRef.current = map)}
+          style={{ height: "100%", width: "100%", minHeight: "400px" }}
+          ref={mapRef}
         >
           {/* BASE OSM MAP */}
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

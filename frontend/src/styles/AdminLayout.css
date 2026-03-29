@@ -87,6 +87,8 @@
   margin-bottom: 28px;
   backdrop-filter: blur(20px);
   animation: slideDown 0.5s ease;
+  position: relative;
+  z-index: 50;
 }
 
 .admin-topbar-left {
@@ -183,6 +185,80 @@
   background: rgba(239, 68, 68, 0.2);
   border-color: rgba(239, 68, 68, 0.3);
   transform: translateY(-1px);
+}
+
+/* ─── Dropdown Menu ─── */
+.admin-dropdown-container {
+  position: relative;
+}
+
+.admin-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  padding: 8px 0;
+  min-width: 200px;
+  box-shadow: var(--admin-shadow-lg);
+  z-index: 100;
+  animation: modalSlideUp 0.2s ease;
+}
+
+.admin-dropdown-header {
+  padding: 8px 16px 12px;
+  border-bottom: 1px solid var(--admin-border);
+  margin-bottom: 6px;
+}
+
+.admin-dropdown-name {
+  font-weight: 600;
+  color: var(--admin-text);
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.admin-dropdown-email {
+  color: var(--admin-text-muted);
+  font-size: 11px;
+}
+
+.admin-dropdown-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--admin-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: var(--admin-transition);
+  font-family: inherit;
+}
+
+.admin-dropdown-item:hover {
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+  padding-left: 20px;
+}
+
+.admin-dropdown-item.danger {
+  color: var(--admin-danger);
+}
+
+.admin-dropdown-item.danger:hover {
+  background: var(--admin-danger-bg);
+}
+
+.admin-dropdown-divider {
+  height: 1px;
+  background: var(--admin-border);
+  margin: 6px 0;
 }
 
 /* ─── Dashboard Header ─── */
