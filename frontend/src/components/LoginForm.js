@@ -20,7 +20,7 @@ const LoginForm = ({ setUser }) => {
       setError("Google login is only available for passengers.");
       return;
     }
-    window.location.href = `${backendURL}/auth/google`;
+    window.location.href = "https://public-transport-system-8yox.onrender.com/api/auth/google";
   };
 
   const togglePasswordVisibility = () => {

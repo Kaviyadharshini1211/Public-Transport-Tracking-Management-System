@@ -5,8 +5,6 @@ import App from "./App";
 // MUI
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 
-// Google OAuth
-import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // LEAFLET (MAP) CSS — REQUIRED
 import "leaflet/dist/leaflet.css";
@@ -31,11 +29,9 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <App />
       </ThemeProvider>
-    </GoogleOAuthProvider>
   </React.StrictMode>,
 );

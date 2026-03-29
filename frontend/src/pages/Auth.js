@@ -86,7 +86,7 @@ const Auth = ({ setUser }) => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = 'https://public-transport-system-8yox.onrender.com/api/auth/google';
   };
 
   const switchTab = (toLogin) => {
