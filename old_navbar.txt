@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import "../styles/Navbar.css";
 
@@ -12,20 +12,6 @@ const Navbar = ({ user, setUser }) => {
     const saved = localStorage.getItem("darkMode");
     return saved === "true";
   });
-
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   // Apply dark mode on mount and when it changes
   useEffect(() => {
@@ -344,48 +330,19 @@ const Navbar = ({ user, setUser }) => {
                 </NavLink>
               )}
 
-              {/* Logged In — Profile Dropdown */}
+              {/* Logged In — User Info + Logout */}
               {user && (
-                <div className="passenger-dropdown-container" ref={dropdownRef}>
-                  <div 
-                    className="passenger-profile-chip" 
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                  >
-                    <div className="navbar-user-avatar">
-                      {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-                    </div>
-                    <span className="navbar-user-name">{user?.name || "User"}</span>
-                    <span className={`dropdown-arrow ${dropdownOpen ? 'open' : ''}`}>▼</span>
+                <>
+                  <div className="navbar-user-info">
+                    <span className="navbar-user-avatar">
+                      {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                    </span>
+                    <span className="navbar-user-name">{user.name || "User"}</span>
                   </div>
-
-                  {dropdownOpen && (
-                    <div className="passenger-dropdown-menu">
-                      <div className="passenger-dropdown-header">
-                        <div className="passenger-dropdown-name">{user?.name || "Passenger"}</div>
-                        <div className="passenger-dropdown-email">{user?.email || ""}</div>
-                      </div>
-                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/dashboard"); closeMobileMenu(); }}>
-                        <span>👤</span> My Profile
-                      </button>
-                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/dashboard"); closeMobileMenu(); }}>
-                        <span>⚙️</span> Settings
-                      </button>
-                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/bookings"); closeMobileMenu(); }}>
-                        <span>🎟️</span> My Bookings
-                      </button>
-                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/dashboard"); closeMobileMenu(); }}>
-                        <span>🔔</span> Notifications
-                      </button>
-                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/dashboard"); closeMobileMenu(); }}>
-                        <span>⭐</span> Favorite Routes
-                      </button>
-                      <div className="passenger-dropdown-divider"></div>
-                      <button className="passenger-dropdown-item danger" onClick={handleLogout}>
-                        <span>🚪</span> Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  <button onClick={handleLogout} className="navbar-button">
+                    Logout
+                  </button>
+                </>
               )}
             </div>
           </div>

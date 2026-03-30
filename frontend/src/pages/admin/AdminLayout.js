@@ -1,17 +1,40 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { io } from "socket.io-client";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import API from "../../api/api";
 import "../../styles/AdminLayout.css";
-
 import AdminVehicles from "./AdminVehicles";
 import AdminDrivers from "./AdminDrivers";
 import AdminRoutes from "./AdminRoutes";
 import AdminAssignDriver from "./AdminAssignDriver";
+import AdminSOSHistory from "./AdminSOSHistory";
+
+const SOSAlertMessage = ({ driverName, message, lat, lng }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <h3 style={{ margin: 0, color: '#ef4444', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+      🚨 SOS Alert
+    </h3>
+    <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '15px' }}>{driverName}</div>
+    <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '4px' }}>{message}</div>
+    {lat !== 0 && (
+      <a 
+        href={`https://www.google.com/maps?q=${lat},${lng}`} 
+        target="_blank" rel="noopener noreferrer"
+        style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', color: '#fca5a5', textAlign: 'center', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold', transition: 'all 0.2s' }}
+      >
+        📍 View Location
+      </a>
+    )}
+  </div>
+);
 
 const TAB_CONFIG = [
   { key: "vehicles", label: "Vehicles", icon: "🚐" },
   { key: "drivers", label: "Drivers", icon: "👤" },
   { key: "routes", label: "Routes", icon: "🗺️" },
   { key: "assign", label: "Assign Driver", icon: "🔗" },
+  { key: "sos", label: "Emergencies", icon: "🚨" },
 ];
 
 export default function AdminDashboard() {
@@ -21,7 +44,10 @@ export default function AdminDashboard() {
   const [drivers, setDrivers] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null);
+  const [toastMsg, setToastMsg] = useState(null); // Renamed internal toast to avoid conflict
+  const [sosCount, setSosCount] = useState(0);
+  const [latestSosEvent, setLatestSosEvent] = useState(null);
+
   
   // Modal states
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -54,6 +80,52 @@ export default function AdminDashboard() {
   // Fetch all data on mount
   useEffect(() => {
     fetchAllData();
+
+    // Connect to global Socket.IO backend (Strip /api off URL)
+    const baseServerUrl = (process.env.REACT_APP_API_URL || "").replace("/api", "");
+    const socket = io(baseServerUrl);
+
+    socket.on("sos_alert", (payload) => {
+      console.warn("🚨 EMERGENCY SOS RECEIVED:", payload);
+      setSosCount(prev => prev + 1);
+      setLatestSosEvent(Date.now());
+
+      // Play soft beep sound
+      try {
+        const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      } catch (e) {}
+
+      // Fire slick custom toast
+      toast.error(
+        <SOSAlertMessage 
+          driverName={payload.driverName} 
+          message={payload.message}
+          lat={payload.coordinates?.lat} 
+          lng={payload.coordinates?.lng} 
+        />, 
+        {
+          position: "top-right",
+          autoClose: false,
+          hideProgressBar: true,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "dark",
+          style: { background: "#1e1e2f", borderLeft: "4px solid #ef4444" }
+        }
+      );
+    });
+
+    socket.on("sos_resolved", (payload) => {
+      // Just update the timestamp to re-render the child History table
+      setLatestSosEvent(Date.now());
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const fetchAllData = async () => {
@@ -75,10 +147,10 @@ export default function AdminDashboard() {
     }
   };
 
-  // Toast helper
+  // Internal Toast helper
   const showToast = (message, type = "info") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
+    setToastMsg({ message, type });
+    setTimeout(() => setToastMsg(null), 3500);
   };
 
   // Stat calculations
@@ -118,7 +190,7 @@ export default function AdminDashboard() {
   }, [routes, search]);
 
   // Tab counts
-  const tabCounts = [vehicles.length, drivers.length, routes.length, vehicles.length];
+  const tabCounts = [vehicles.length, drivers.length, routes.length, vehicles.length, sosCount > 0 ? sosCount : "-"];
 
   // Render tab content
   const renderTabContent = () => {
@@ -171,6 +243,14 @@ export default function AdminDashboard() {
             showToast={showToast}
           />
         );
+      case 4:
+        return (
+          <AdminSOSHistory
+            search={search}
+            latestSosEvent={latestSosEvent}
+            showToast={showToast}
+          />
+        );
       default:
         return null;
     }
@@ -203,9 +283,12 @@ export default function AdminDashboard() {
             <div className="admin-dropdown-container" ref={dropdownRef}>
               <div 
                 className="admin-profile-chip" 
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                style={{ cursor: 'pointer', paddingRight: '12px' }}
+                onClick={() => { setDropdownOpen(!dropdownOpen); setSosCount(0); }}
+                style={{ cursor: 'pointer', paddingRight: '12px', position: 'relative' }}
               >
+                {sosCount > 0 && (
+                  <span style={{ position: 'absolute', top: -4, right: -4, width: 14, height: 14, background: '#ef4444', borderRadius: '50%', border: '2px solid var(--admin-base)', display: 'block', animation: 'sos-pulse 1.5s infinite' }}></span>
+                )}
                 <div className="admin-avatar">{user?.name ? user.name.charAt(0).toUpperCase() : "A"}</div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span className="admin-profile-name">System Admin</span>
@@ -416,13 +499,16 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ─── Toast Notification ─── */}
-      {toast && (
-        <div className={`admin-toast ${toast.type}`}>
+      {/* ─── REAL-TIME SOS TOAST OVERLAY (react-toastify) ─── */}
+      <ToastContainer />
+
+      {/* ─── Standard Internal Toast Notification ─── */}
+      {toastMsg && (
+        <div className={`admin-toast ${toastMsg.type}`}>
           <span>
-            {toast.type === "success" ? "✅" : toast.type === "error" ? "❌" : "ℹ️"}
+            {toastMsg.type === "success" ? "✅" : toastMsg.type === "error" ? "❌" : "ℹ️"}
           </span>
-          {toast.message}
+          {toastMsg.message}
         </div>
       )}
     </div>

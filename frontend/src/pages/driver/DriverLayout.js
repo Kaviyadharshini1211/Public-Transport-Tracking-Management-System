@@ -96,27 +96,34 @@ export default function DriverLayout() {
 
   const handlePanic = async () => {
     if (triggeringPanic) return;
-    if (window.confirm("⚠️ Initiate Emergency Protocol? This will alert control silently.")) {
-      setTriggeringPanic(true);
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-          await API.post("/notifications/emergency", {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            reason: "Silent Panic Activated"
-          });
-          setTriggeringPanic(false);
-          alert("Emergency alert sent securely to Admin control.");
-        }, (err) => {
-          API.post("/notifications/emergency", { lat: 0, lng: 0, reason: "Silent Panic (Location Failed)" });
-          setTriggeringPanic(false);
-          alert("Emergency alert sent (without exact location).");
+    // Engage silent SOS (removed window.confirm for instant trigger)
+    setTriggeringPanic(true);
+    
+    const broadcastSOS = async (lat, lng, reason) => {
+      try {
+        await API.post("/sos", {
+          driverId: user._id || user.id,
+          driverName: user.name || "Driver",
+          location: { lat, lng },
+          message: reason
         });
-      } else {
-        await API.post("/notifications/emergency", { lat: 0, lng: 0, reason: "Silent Panic (No GPS)" });
+        // Feedback toast replacing console logs
+        alert("🚨 EMERGENCY SOS BROADCASTED TO ADMIN 🚨");
+      } catch (err) {
+        console.error("SOS transmission failed", err);
+        alert("⚠️ Failed to transmit SOS! Attempt another channel.");
+      } finally {
         setTriggeringPanic(false);
-        alert("Emergency alert sent.");
       }
+    };
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => broadcastSOS(pos.coords.latitude, pos.coords.longitude, "Driver triggered silent SOS (GPS Tracked)"),
+        (err) => broadcastSOS(0, 0, "Driver triggered silent SOS (GPS Denied/Failed)")
+      );
+    } else {
+      broadcastSOS(0, 0, "Driver triggered silent SOS (No GPS Support)");
     }
   };
 
