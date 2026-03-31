@@ -1,15 +1,16 @@
-// src/pages/ConfirmBooking.jsx
 import React, { useState } from "react";
-import { Container, Typography, Card, CardContent, Button, Box, Divider, CircularProgress, Dialog, DialogContent } from "@mui/material";
+import { 
+  Container, Typography, Card, CardContent, Button, Box, Divider, 
+  CircularProgress, Dialog, DialogContent, Grid, Chip 
+} from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   CheckCircle, 
-  DirectionsBus, 
-  Person, 
-  EventSeat, 
-  AccountBalanceWallet,
+  ArrowForward,
   LocationOn,
-  Route as RouteIcon
+  EventSeat,
+  DirectionsBus,
+  Schedule
 } from "@mui/icons-material";
 import API from "../api/api";
 import "../styles/ConfirmBooking.css";
@@ -29,11 +30,7 @@ export default function ConfirmBooking() {
           <Typography color="text.secondary" sx={{ mt: 1 }}>
             Please start from the booking page
           </Typography>
-          <Button 
-            variant="contained" 
-            sx={{ mt: 2 }} 
-            onClick={() => navigate("/book")}
-          >
+          <Button variant="contained" sx={{ mt: 2 }} onClick={() => navigate("/book")}>
             Go to Booking
           </Button>
         </Box>
@@ -41,7 +38,9 @@ export default function ConfirmBooking() {
     );
   }
 
-  const { vehicle, routeId, seatNumbers = [], totalFare, boardingStop } = state;
+  const { vehicle, routeId, seatNumbers = [], totalFare, boardingStop, droppingStop, date } = state;
+  const fromCity = vehicle?.route?.origin || "Source"; 
+  const toCity = vehicle?.route?.destination || "Destination";
 
   const handleConfirm = async () => {
     if (!user) return navigate("/login");
@@ -57,7 +56,7 @@ export default function ConfirmBooking() {
         totalFare,
         boardingStop,
       };
-      const res = await API.post("/bookings", payload);
+      await API.post("/bookings", payload);
       setSuccessOpen(true);
     } catch (err) {
       console.error("Booking failed", err);
@@ -69,162 +68,142 @@ export default function ConfirmBooking() {
 
   const handleSuccessClose = () => {
     setSuccessOpen(false);
-    navigate("/bookings");
+    navigate("/bookings"); // Note: Assuming /bookings or similar route exists for past bookings.
   };
 
   return (
-    <Container className="confirm-booking-container">
-      <Box className="confirm-header">
-        <CheckCircle className="confirm-icon" />
-        <Typography variant="h4" className="confirm-title">
-          Confirm Your Booking
-        </Typography>
-        <Typography variant="body2" className="confirm-subtitle">
-          Review your booking details before confirming
-        </Typography>
+    <Container className="checkout-container" maxWidth="lg">
+      
+      {/* Checkout Header */}
+      <Box className="checkout-header">
+        <Typography variant="h4" className="checkout-title">Review & Pay</Typography>
+        <Typography variant="body2" className="checkout-subtitle">Secure your premium bus tickets</Typography>
       </Box>
 
-      <Card className="booking-details-card">
-        <CardContent>
-          {/* Vehicle Information */}
-          <Box className="detail-section">
-            <Box className="section-header">
-              <DirectionsBus className="section-icon" />
-              <Typography variant="h6" className="section-title">
-                Vehicle Details
-              </Typography>
-            </Box>
-            <Box className="detail-row">
-              <Typography className="detail-label">Registration</Typography>
-              <Typography className="detail-value">{vehicle.regNumber}</Typography>
-            </Box>
-            <Box className="detail-row">
-              <Typography className="detail-label">Model</Typography>
-              <Typography className="detail-value">{vehicle.model}</Typography>
-            </Box>
-          </Box>
-
-          <Divider className="section-divider" />
-
-          {/* Driver Information */}
-          <Box className="detail-section">
-            <Box className="section-header">
-              <Person className="section-icon" />
-              <Typography variant="h6" className="section-title">
-                Driver Information
-              </Typography>
-            </Box>
-            <Box className="detail-row">
-              <Typography className="detail-label">Driver Name</Typography>
-              <Typography className="detail-value">
-                {vehicle.driverName || "Not Assigned"}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Divider className="section-divider" />
-
-          {/* Route Information */}
-          <Box className="detail-section">
-            <Box className="section-header">
-              <RouteIcon className="section-icon" />
-              <Typography variant="h6" className="section-title">
-                Route Details
-              </Typography>
-            </Box>
-            <Box className="detail-row">
-              <Typography className="detail-label">Route ID</Typography>
-              <Typography className="detail-value">{routeId}</Typography>
-            </Box>
-            <Box className="detail-row">
-              <Typography className="detail-label">Boarding Point</Typography>
-              <Typography className="detail-value boarding-stop">
-                <LocationOn sx={{ fontSize: 18, mr: 0.5 }} />
-                {boardingStop ? boardingStop.name : "Not Selected"}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Divider className="section-divider" />
-
-          {/* Seat Information */}
-          <Box className="detail-section">
-            <Box className="section-header">
-              <EventSeat className="section-icon" />
-              <Typography variant="h6" className="section-title">
-                Seat Selection
-              </Typography>
-            </Box>
-            <Box className="seats-display">
-              {seatNumbers.map((seat) => (
-                <Box key={seat} className="seat-badge">
-                  {seat}
+      <Grid container spacing={4}>
+        
+        {/* Left Column - Journey Details */}
+        <Grid item xs={12} md={8}>
+          <Card className="checkout-card journey-card">
+            <CardContent>
+              
+              {/* Route & Date Header */}
+              <Box className="journey-header">
+                <Box className="route-tags">
+                  <Typography className="city-tag">{boardingStop?.name || fromCity}</Typography>
+                  <ArrowForward className="route-arrow" />
+                  <Typography className="city-tag">{droppingStop?.name || toCity}</Typography>
                 </Box>
-              ))}
-            </Box>
-            <Typography className="seat-count">
-              {seatNumbers.length} {seatNumbers.length === 1 ? "seat" : "seats"} selected
-            </Typography>
-          </Box>
+                <Typography className="journey-date">
+                  <Schedule fontSize="small" /> 
+                  {date || new Date().toISOString().split('T')[0]}
+                </Typography>
+              </Box>
 
-          <Divider className="section-divider" />
+              <Divider className="soft-divider" />
 
-          {/* Fare Summary */}
-          <Box className="detail-section fare-section">
-            <Box className="section-header">
-              <AccountBalanceWallet className="section-icon" />
-              <Typography variant="h6" className="section-title">
-                Fare Summary
+              {/* Vehicle Compact Bar */}
+              <Box className="vehicle-compact-bar">
+                <DirectionsBus className="vehicle-icon" />
+                <Box>
+                  <Typography className="vehicle-model">{vehicle.model}</Typography>
+                  <Typography className="vehicle-reg">{vehicle.regNumber} • AC Seater/Sleeper</Typography>
+                </Box>
+              </Box>
+
+              <Divider className="soft-divider" />
+
+              {/* Boarding / Dropping Journey Line */}
+              <Box className="journey-timeline">
+                <Box className="timeline-stop">
+                  <LocationOn color="primary" fontSize="small" />
+                  <Box>
+                    <Typography className="stop-label">Boarding Point</Typography>
+                    <Typography className="stop-name">{boardingStop?.name || "Pending"}</Typography>
+                  </Box>
+                </Box>
+                <Box className="timeline-dots">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                </Box>
+                <Box className="timeline-stop">
+                  <LocationOn color="error" fontSize="small" />
+                  <Box>
+                    <Typography className="stop-label">Dropping Point</Typography>
+                    <Typography className="stop-name">{droppingStop?.name || "Pending"}</Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Divider className="soft-divider" />
+
+              {/* Seat Compact View */}
+              <Box className="seats-compact-view">
+                <Box className="seats-header">
+                  <EventSeat className="seats-icon" />
+                  <Typography className="seats-title">Selected Seats ({seatNumbers.length})</Typography>
+                </Box>
+                <Box className="seats-chip-container">
+                  {seatNumbers.map((seat) => (
+                    <Chip key={seat} label={seat} className="seat-chip" color="primary" variant="outlined" />
+                  ))}
+                </Box>
+              </Box>
+
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Right Column - Fare Summary & Payment */}
+        <Grid item xs={12} md={4}>
+          <Box className="sticky-summary">
+            <Card className="checkout-card fare-card">
+              <CardContent>
+                <Typography className="fare-title">Fare Summary</Typography>
+                
+                <Box className="fare-row">
+                  <Typography className="fare-label">Base Fare ({seatNumbers.length} seats)</Typography>
+                  <Typography className="fare-value">₹{totalFare}</Typography>
+                </Box>
+                
+                <Box className="fare-row">
+                  <Typography className="fare-label">Taxes & Fees</Typography>
+                  <Typography className="fare-value green-text">Included</Typography>
+                </Box>
+                
+                <Divider sx={{ my: 2 }} />
+                
+                <Box className="fare-row total-row">
+                  <Typography className="fare-label total">Total Amount</Typography>
+                  <Typography className="fare-value total">₹{totalFare}</Typography>
+                </Box>
+              </CardContent>
+            </Card>
+
+            {/* Desktop & Sticky Mobile CTA */}
+            <Box className="payment-action-wrapper">
+              <Button 
+                variant="contained" 
+                className="premium-pay-btn"
+                onClick={handleConfirm}
+                disabled={loading}
+                fullWidth
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : (
+                  <>
+                    Pay ₹{totalFare} <ArrowForward className="btn-arrow" />
+                  </>
+                )}
+              </Button>
+              <Typography className="secure-payment-note">
+                🔒 Safe and secure automated payment
               </Typography>
             </Box>
-            <Box className="fare-breakdown">
-              <Box className="fare-row">
-                <Typography className="fare-label">
-                  Base Fare ({seatNumbers.length} × ₹{(totalFare / seatNumbers.length).toFixed(2)})
-                </Typography>
-                <Typography className="fare-amount">₹{totalFare}</Typography>
-              </Box>
-              <Box className="fare-row">
-                <Typography className="fare-label">Service Tax</Typography>
-                <Typography className="fare-amount">₹0</Typography>
-              </Box>
-              <Divider sx={{ my: 1.5 }} />
-              <Box className="fare-row total-fare">
-                <Typography className="fare-label total">Total Amount</Typography>
-                <Typography className="fare-amount total">₹{totalFare}</Typography>
-              </Box>
-            </Box>
+
           </Box>
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons */}
-      <Box className="action-buttons">
-        <Button 
-          variant="outlined" 
-          className="cancel-button"
-          onClick={() => navigate(-1)}
-          disabled={loading}
-        >
-          Go Back
-        </Button>
-        <Button 
-          variant="contained" 
-          className="confirm-button"
-          onClick={handleConfirm}
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} /> : <CheckCircle />}
-        >
-          {loading ? "Processing..." : "Confirm & Pay"}
-        </Button>
-      </Box>
-
-      {/* Payment Note */}
-      <Box className="payment-note">
-        <Typography variant="caption">
-          * This is a simulated payment. No actual charges will be made.
-        </Typography>
-      </Box>
+        </Grid>
+      </Grid>
 
       {/* Success Popup */}
       <Dialog
@@ -232,45 +211,36 @@ export default function ConfirmBooking() {
         onClose={handleSuccessClose}
         PaperProps={{
           sx: {
-            borderRadius: "16px",
-            padding: "24px",
+            borderRadius: "20px",
+            padding: "32px",
             textAlign: "center",
-            minWidth: "340px",
+            minWidth: "360px",
             background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+            boxShadow: "0 20px 50px rgba(34, 197, 94, 0.2)"
           },
         }}
       >
         <DialogContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-          <CheckCircle
-            sx={{
-              fontSize: 72,
-              color: "#22c55e",
-              animation: "popIn 0.5s ease-out",
-              "@keyframes popIn": {
-                "0%": { transform: "scale(0)", opacity: 0 },
-                "60%": { transform: "scale(1.2)" },
-                "100%": { transform: "scale(1)", opacity: 1 },
-              },
-            }}
-          />
-          <Typography variant="h5" sx={{ fontWeight: 700, color: "#166534" }}>
-            Ticket Booked Successfully!
+          <CheckCircle sx={{ fontSize: 80, color: "#22c55e", animation: "popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)" }} />
+          <Typography variant="h4" sx={{ fontWeight: 800, color: "#166534", mt: 1 }}>
+            Booking Confirmed!
           </Typography>
-          <Typography variant="body2" sx={{ color: "#4ade80", fontWeight: 500 }}>
-            Your seats have been reserved. Have a great journey!
+          <Typography variant="body1" sx={{ color: "#15803d", fontWeight: 500, mb: 1 }}>
+            Your {seatNumbers.length} seats have been successfully reserved. Have a premium journey!
           </Typography>
           <Button
             variant="contained"
             onClick={handleSuccessClose}
             sx={{
-              mt: 1,
-              borderRadius: "10px",
+              mt: 2,
+              borderRadius: "12px",
               textTransform: "none",
-              fontWeight: 600,
-              fontSize: "1rem",
-              px: 4,
-              py: 1,
+              fontWeight: 700,
+              fontSize: "1.1rem",
+              width: '100%',
+              py: 1.5,
               background: "linear-gradient(135deg, #22c55e, #16a34a)",
+              boxShadow: "0 8px 20px rgba(34, 197, 94, 0.3)",
               "&:hover": { background: "linear-gradient(135deg, #16a34a, #15803d)" },
             }}
           >
