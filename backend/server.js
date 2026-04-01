@@ -22,9 +22,10 @@ connectDB();
 
 const app = express();
 app.use(cors({
-  origin: "*",
+  origin: [process.env.FRONTEND_URL, "http://localhost:3000", "http://localhost:5173"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 }));
 
 app.use(express.json());
@@ -34,7 +35,6 @@ app.use(passport.initialize());
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
-// Add below routes later
 app.use("/api/vehicles", require("./routes/vehicleRoutes"));
 app.use("/api/routes", require("./routes/routeRoutes"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
@@ -42,6 +42,7 @@ app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/trips", require("./routes/tripRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/sos", require("./routes/sosRoutes"));
+app.use("/api/payments", require("./routes/paymentRoutes"));
 
 
 const PORT = process.env.PORT || 5000;
@@ -66,6 +67,15 @@ io.on("connection", (socket) => {
 
 server.listen(PORT, () => console.log(`Server & Socket.IO running on port ${PORT}`));
 
+
+// Better error handling for production
+app.use((err, req, res, next) => {
+  console.error(`[Error] ${req.method} ${req.url}:`, err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || "Internal Server Error",
+    error: process.env.NODE_ENV === "development" ? err : {},
+  });
+});
 
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");

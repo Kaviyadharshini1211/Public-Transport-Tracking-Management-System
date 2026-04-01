@@ -364,19 +364,19 @@ const Navbar = ({ user, setUser }) => {
                         <div className="passenger-dropdown-name">{user?.name || "Passenger"}</div>
                         <div className="passenger-dropdown-email">{user?.email || ""}</div>
                       </div>
-                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/dashboard"); closeMobileMenu(); }}>
+                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/profile"); closeMobileMenu(); }}>
                         <span>👤</span> My Profile
                       </button>
-                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/dashboard"); closeMobileMenu(); }}>
+                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/settings"); closeMobileMenu(); }}>
                         <span>⚙️</span> Settings
                       </button>
                       <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/bookings"); closeMobileMenu(); }}>
                         <span>🎟️</span> My Bookings
                       </button>
-                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/dashboard"); closeMobileMenu(); }}>
+                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/notifications"); closeMobileMenu(); }}>
                         <span>🔔</span> Notifications
                       </button>
-                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/dashboard"); closeMobileMenu(); }}>
+                      <button className="passenger-dropdown-item" onClick={() => { setDropdownOpen(false); navigate("/favorites"); closeMobileMenu(); }}>
                         <span>⭐</span> Favorite Routes
                       </button>
                       <div className="passenger-dropdown-divider"></div>

@@ -31,6 +31,13 @@ import Track from "./pages/Track";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 
+// NEW PASSENGER PAGES
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
+import Favorites from "./pages/Favorites";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 function App() {
   const [user, setUser] = useState(() => {
     try {
@@ -75,7 +82,11 @@ function App() {
           <Route path="/auth/success" element={<AuthSuccess />} />
 
           {/* PASSENGER DASHBOARD */}
-          <Route path="/dashboard" element={<Dashboard user={user} />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
 
           {/* VEHICLES (visible to non-admin too) */}
           <Route path="/vehicles" element={<Vehicles user={user} />} />
@@ -84,9 +95,9 @@ function App() {
           <Route path="/driver" element={<DriverLayout />} />
 
           {/* BOOKING MODULE */}
-          <Route path="/book" element={user ? <Book /> : <Auth setUser={setUser} />} />
-          <Route path="/book/confirm" element={user ? <ConfirmBooking /> : <Auth setUser={setUser} />} />
-          <Route path="/bookings" element={user ? <MyBookings /> : <Auth setUser={setUser} />} />
+          <Route path="/book" element={<ProtectedRoute><Book /></ProtectedRoute>} />
+          <Route path="/book/confirm" element={<ProtectedRoute><ConfirmBooking /></ProtectedRoute>} />
+          <Route path="/bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
           <Route path="/track/:vehicleId" element={<Track />} />
 
           {/* ADMIN NESTED ROUTES */}

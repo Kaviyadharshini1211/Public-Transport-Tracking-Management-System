@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import API from '../api/api';
 import '../styles/Auth.css';
 
 const Auth = ({ setUser }) => {
@@ -46,7 +47,7 @@ const Auth = ({ setUser }) => {
     try {
       if (isLogin) {
         // Login: only email + password — NO role from frontend
-        const response = await axios.post('http://localhost:5000/api/auth/login', {
+        const response = await API.post('/auth/login', {
           email: formData.email,
           password: formData.password,
         });
@@ -66,7 +67,7 @@ const Auth = ({ setUser }) => {
         }
 
         // Registration: backend ignores role and always sets 'passenger'
-        const response = await axios.post('http://localhost:5000/api/auth/register', {
+        const response = await API.post('/auth/register', {
           name: formData.name,
           email: formData.email,
           password: formData.password,
@@ -86,7 +87,8 @@ const Auth = ({ setUser }) => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'https://public-transport-system-8yox.onrender.com/api/auth/google';
+    const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    window.location.href = `${backendUrl}/auth/google`;
   };
 
   const switchTab = (toLogin) => {

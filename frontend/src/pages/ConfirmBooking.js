@@ -22,6 +22,17 @@ export default function ConfirmBooking() {
   const [loading, setLoading] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
 
+  // --- Razorpay Script Loader ---
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   if (!state) {
     return (
       <Container className="confirm-booking-container">
@@ -42,26 +53,94 @@ export default function ConfirmBooking() {
   const fromCity = vehicle?.route?.origin || "Source"; 
   const toCity = vehicle?.route?.destination || "Destination";
 
-  const handleConfirm = async () => {
+  const handlePayment = async () => {
     if (!user) return navigate("/login");
     
+    console.log("[Payment] Initiating payment for amount: ₹", totalFare);
     setLoading(true);
+
     try {
-      const payload = {
-        userId: user.id || user._id,
-        vehicleId: vehicle._id,
-        routeId,
-        seats: seatNumbers.length,
-        seatNumbers,
-        totalFare,
-        boardingStop,
+      // 1. Create Razorpay Order in Backend
+      console.log("[Payment] Calling backend to create order...");
+      
+      const apiBaseURL = process.env.REACT_APP_API_URL || process.env.VITE_API_URL || "http://localhost:5000/api";
+      console.log("[Payment] Using API Base URL:", apiBaseURL);
+
+      const orderRes = await API.post("/payments/create-order", {
+        amount: totalFare,
+      });
+
+      console.log("[Payment] Order created successfully:", orderRes.data.id);
+      const { id: order_id, amount, currency } = orderRes.data;
+
+      // 2. Load / Verify Razorpay SDK (already in index.html, but safety check)
+      if (!window.Razorpay) {
+        console.error("[Payment] Razorpay SDK not found on window object.");
+        alert("Razorpay checkout failed to initialize. Please check your internet connection.");
+        setLoading(false);
+        return;
+      }
+
+      // 3. Open Razorpay Checkout Modal
+      const razorpayKey = process.env.REACT_APP_RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || "rzp_test_YOUR_KEY";
+      console.log("[Payment] Opening Razorpay checkout modal with key:", razorpayKey);
+
+      const options = {
+        key: razorpayKey,
+        amount: amount,
+        currency: currency,
+        name: "PT Tracker",
+        description: `Bus Ticket: ${fromCity} to ${toCity}`,
+        order_id: order_id,
+        handler: async (response) => {
+          console.log("[Payment] Payment successful, verifying signature...");
+          // 4. Verify Payment in Backend
+          try {
+            const verifyRes = await API.post("/payments/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              bookingDetails: {
+                userId: user.id || user._id,
+                vehicleId: vehicle._id,
+                routeId,
+                seats: seatNumbers.length,
+                seatNumbers,
+                totalFare,
+                boardingStop,
+              },
+            });
+
+            if (verifyRes.data.success) {
+              console.log("[Payment] Verification successful, booking confirmed.");
+              setSuccessOpen(true);
+            }
+          } catch (err) {
+            console.error("[Payment] Verification API failed:", err);
+            alert("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: user.name,
+          email: user.email,
+        },
+        theme: {
+          color: "#d84e55",
+        },
+        modal: {
+          ondismiss: () => {
+            console.log("[Payment] Checkout modal closed by user.");
+            setLoading(false);
+          },
+        },
       };
-      await API.post("/bookings", payload);
-      setSuccessOpen(true);
+
+      const rzp1 = new window.Razorpay(options);
+      rzp1.open();
+
     } catch (err) {
-      console.error("Booking failed", err);
-      alert("Booking failed. Please try again.");
-    } finally {
+      console.error("[Payment] Critical Error during payment initiation:", err);
+      alert("Failed to initiate payment. Please check if the backend server is running.");
       setLoading(false);
     }
   };
@@ -186,7 +265,7 @@ export default function ConfirmBooking() {
               <Button 
                 variant="contained" 
                 className="premium-pay-btn"
-                onClick={handleConfirm}
+                onClick={handlePayment}
                 disabled={loading}
                 fullWidth
               >

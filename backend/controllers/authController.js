@@ -40,18 +40,24 @@ exports.register = async (req, res) => {
   }
 };
 
-// ------------------ LOGIN (ALL ROLES) ------------------
 exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
+  console.log(`[Auth] Login attempt for: ${email}`);
 
+  try {
     const user = await User.findOne({ email });
-    if (!user)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!user) {
+      console.warn(`[Auth] User not found: ${email}`);
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      console.warn(`[Auth] Passwords do not match for: ${email}`);
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    console.log(`[Auth] Login successful: ${email} (${user.role})`);
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
