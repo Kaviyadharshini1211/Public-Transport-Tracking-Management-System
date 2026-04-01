@@ -21,12 +21,38 @@ require("./jobs/etaEmailJob");
 connectDB();
 
 const app = express();
-app.use(cors({
-  origin: [process.env.FRONTEND_URL, "http://localhost:3000", "http://localhost:5173"],
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+// CORS Whitelist (Authorized origins)
+const whitelist = [
+  process.env.FRONTEND_URL,
+  "https://public-transport-system-qydu.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:5173",
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.error(`[CORS Error] Blocked origin: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type", 
+    "Authorization", 
+    "X-Requested-With", 
+    "Accept", 
+    "Origin"
+  ],
   credentials: true,
-}));
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(morgan("dev"));
@@ -80,3 +106,6 @@ app.use((err, req, res, next) => {
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
+
+
+
