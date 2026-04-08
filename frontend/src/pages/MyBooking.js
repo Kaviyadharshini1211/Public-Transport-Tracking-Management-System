@@ -15,38 +15,67 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 import API from "../api/api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import BookingAlertToggle from "../components/BookingAlertToggle";
 import LoadingSpinner from "../components/LoadingSpinner";
 import EmptyState from "../components/EmptyState";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 import "../styles/MyBooking.css";
 
 export default function MyBookings() {
+  const user = JSON.parse(localStorage.getItem("user") || "null");
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, bookingId: null });
+
+
 
   const navigate = useNavigate();
 
-  // Read user ONCE (outside state)
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-
-  useEffect(() => {
-    if (!user) {
+  const fetchBookings = () => {
+    if (!user?._id && !user?.id) {
       setLoading(false);
       return;
     }
 
-    API.get(`/bookings/user/${user._id || user.id}`)
+    API.get(`/bookings/user/${user?._id || user?.id}`)
       .then((res) => {
         setBookings(res.data);
         setLoading(false);
       })
+
       .catch((err) => {
         console.error(err);
         setLoading(false);
+        toast.error("Failed to load bookings");
       });
+  };
 
-  }, []); // <--- FIXED: Removed `user` to stop infinite requests
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const handleCancelClick = (id) => {
+    setModalConfig({ isOpen: true, bookingId: id });
+  };
+
+  const handleConfirmCancel = async () => {
+    setCancelLoading(true);
+    try {
+      await API.put(`/bookings/cancel/${modalConfig.bookingId}`);
+      toast.success("Booking cancelled successfully!");
+      fetchBookings(); // Refresh list
+    } catch (err) {
+      console.error("Cancel error:", err);
+      toast.error(err.response?.data?.message || "Failed to cancel booking");
+    } finally {
+      setCancelLoading(false);
+      setModalConfig({ isOpen: false, bookingId: null });
+    }
+  };
+
 
   // User not logged in
   if (!user) {
@@ -98,6 +127,7 @@ export default function MyBookings() {
 
   // Display bookings
   return (
+    <>
     <div className="my-bookings-container">
       <div className="bookings-header">
         <Typography variant="h4" className="bookings-title">
@@ -110,7 +140,7 @@ export default function MyBookings() {
 
       <div className="bookings-grid">
         {bookings.map((booking) => (
-          <Card key={booking._id} className="booking-card">
+          <Card key={booking._id} className={`booking-card ${booking.status === 'Cancelled' ? 'cancelled' : ''}`}>
             <CardContent className="booking-card-content">
 
               {/* Header */}
@@ -118,7 +148,9 @@ export default function MyBookings() {
                 <Typography className="booking-id">
                   #{booking._id.slice(-8).toUpperCase()}
                 </Typography>
-                <Typography className="booking-status">Confirmed</Typography>
+                <Typography className={`booking-status status-${booking.status.toLowerCase()}`}>
+                  {booking.status}
+                </Typography>
               </div>
 
               {/* Vehicle */}
@@ -174,7 +206,7 @@ export default function MyBookings() {
                   </div>
                 </div>
               </div>
-
+              
               {/* Fare */}
               <div className="fare-info">
                 <Typography className="fare-label">Total Fare</Typography>
@@ -189,24 +221,49 @@ export default function MyBookings() {
                 <BookingAlertToggle booking={booking} />
               </div>
 
-              {/* Track Button */}
-              <Button
-                variant="contained"
-                className="track-button"
-                onClick={() =>
-                  navigate(
-                    `/track/${booking.vehicleId?._id}?bookingId=${booking._id}`
-                  )
-                }
-                disabled={!booking.vehicleId?._id}
-              >
-                Track Bus
-              </Button>
+              {/* Actions */}
+              <div className="booking-actions">
+                <Button
+                  variant="contained"
+                  className="track-button"
+                  onClick={() =>
+                    navigate(
+                      `/track/${booking.vehicleId?._id}?bookingId=${booking._id}`
+                    )
+                  }
+                  disabled={!booking.vehicleId?._id || booking.status === 'Cancelled'}
+                >
+                  Track Bus
+                </Button>
+                
+                {booking.status === 'Confirmed' && (
+                  <Button
+                    variant="outlined"
+                    className="cancel-button"
+                    onClick={() => handleCancelClick(booking._id)}
+                    disabled={cancelLoading}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
 
             </CardContent>
           </Card>
         ))}
       </div>
     </div>
+
+    <ConfirmationModal 
+      isOpen={modalConfig.isOpen}
+      onClose={() => setModalConfig({ isOpen: false, bookingId: null })}
+      onConfirm={handleConfirmCancel}
+      title="Cancel Booking?"
+      message="Are you sure you want to cancel this booking? This action cannot be undone."
+      confirmText="Yes, Cancel"
+      loading={cancelLoading}
+    />
+    </>
+
   );
 }

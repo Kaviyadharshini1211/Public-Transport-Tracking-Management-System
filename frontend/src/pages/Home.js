@@ -134,19 +134,31 @@ const Home = ({ user }) => {
             </p>
 
             <div className="hero-actions">
-              <button className="btn-primary" onClick={() => navigate("/vehicles")}>
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M10 2v3M10 15v3M2 10h3M15 10h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <span>Track Your Bus Live</span>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
+              {user ? (
+                <button className="btn-primary" onClick={() => navigate("/vehicles")}>
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M10 2v3M10 15v3M2 10h3M15 10h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <span>Track Your Bus Live</span>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              ) : (
+                <button className="btn-primary" onClick={() => navigate("/login")}>
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{transform: 'rotate(0)'}}>
+                    <path d="M12.5 10L7.5 15L7.5 5" fill="currentColor"/>
+                  </svg>
+                  <span>Login to Start Tracking</span>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              )}
               {!user && (
-                <button className="btn-secondary" onClick={() => navigate("/login")}>
-                  <span>Login to Book Tickets</span>
+                <button className="btn-secondary" onClick={() => navigate("/register")}>
+                  <span>Join as Passenger</span>
                 </button>
               )}
             </div>

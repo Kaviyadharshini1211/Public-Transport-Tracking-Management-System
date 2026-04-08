@@ -337,6 +337,68 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* ========== ROLE TABS (LOGIN ONLY) ========== */
+
+.auth-role-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  background: rgba(0, 0, 0, 0.02);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .auth-role-tabs {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.role-tab {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+[data-theme="dark"] .role-tab {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.role-tab:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.03);
+  color: #1e293b;
+}
+
+[data-theme="dark"] .role-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.role-tab.active {
+  background: #ffffff;
+  color: #d84e55;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: rgba(216, 78, 85, 0.15);
+}
+
+[data-theme="dark"] .role-tab.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .auth-tab-indicator {
   position: absolute;
   top: 4px;

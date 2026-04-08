@@ -1,25 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import API from '../api/api';
+import toast from 'react-hot-toast';
 import '../styles/DashboardPages.css';
 
 const Settings = () => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
     const [settings, setSettings] = useState({
-        emailNotifications: true,
-        pushNotifications: false,
+        emailNotifications: user.settings?.emailNotifications ?? true,
+        pushNotifications: user.settings?.pushNotifications ?? true,
         darkMode: localStorage.getItem("darkMode") === "true",
         twoFactorAuth: false
     });
+    const [loading, setLoading] = useState(false);
 
-    const handleToggle = (key) => {
+    const handleToggle = async (key) => {
         const newValue = !settings[key];
-        setSettings({ ...settings, [key]: newValue });
+        
+        // Optimistic update for UI feel
+        setSettings(prev => ({ ...prev, [key]: newValue }));
         
         if (key === "darkMode") {
             localStorage.setItem("darkMode", newValue);
             document.documentElement.setAttribute("data-theme", newValue ? "dark" : "light");
-            // Dispatch event to sync with Navbar
             window.dispatchEvent(new Event("storage"));
+            toast.success(`Appearance set to ${newValue ? 'Dark' : 'Light'} mode`);
+            
+            // Still sync with backend if possible
+            try {
+                await API.put('/users/settings', { darkMode: newValue });
+            } catch (err) {
+                console.warn("Failed to sync dark mode to backend");
+            }
+            return;
+        }
+
+        // Backend sync for other settings
+        setLoading(true);
+        try {
+            await API.put('/users/settings', { [key]: newValue });
+            
+            // Update local user object
+            const updatedUser = { ...user, settings: { ...user.settings, [key]: newValue } };
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+            
+            toast.success(`${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} updated.`);
+        } catch (err) {
+            console.error("Settings update error:", err);
+            toast.error("Failed to update settings.");
+            // Revert on error
+            setSettings(prev => ({ ...prev, [key]: !newValue }));
+        } finally {
+            setLoading(false);
         }
     };
+
 
     return (
         <div className="dash-page-container">
@@ -94,7 +128,7 @@ const Settings = () => {
                             <button 
                                 className="btn-primary" 
                                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-                                onClick={() => alert("Security settings would be here.")}
+                                onClick={() => toast.error("2FA feature is currently in development.")}
                             >
                                 Enable
                             </button>

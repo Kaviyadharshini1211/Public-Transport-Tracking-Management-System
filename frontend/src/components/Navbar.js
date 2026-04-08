@@ -14,7 +14,24 @@ const Navbar = ({ user, setUser }) => {
   });
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [hasActiveBooking, setHasActiveBooking] = useState(false); // NEW
   const dropdownRef = useRef(null);
+
+  // Check for active booking for passengers
+  useEffect(() => {
+    if (user && user.role === "passenger") {
+      fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/bookings/user/${user.id || user._id}`)
+        .then(res => res.json())
+        .then(data => {
+          // Check if any booking is "Confirmed"
+          const active = Array.isArray(data) && data.some(b => b.status === "Confirmed");
+          setHasActiveBooking(active);
+        })
+        .catch(err => console.error("Error checking active bookings:", err));
+    } else {
+      setHasActiveBooking(false);
+    }
+  }, [user]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -66,6 +83,7 @@ const Navbar = ({ user, setUser }) => {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    setHasActiveBooking(false);
     setUser(null);
     navigate("/");
     setMobileMenuOpen(false);
@@ -211,14 +229,6 @@ const Navbar = ({ user, setUser }) => {
                   How It Works
                 </button>
                 <NavLink
-                  to="/vehicles"
-                  className={({ isActive }) => `navbar-link ${!isHomePage && isActive ? "active" : ""}`}
-                  onClick={closeMobileMenu}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: "6px"}}><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
-                  Track Bus
-                </NavLink>
-                <NavLink
                   to="/contact"
                   className={({ isActive }) => `navbar-link ${!isHomePage && isActive ? "active" : ""}`}
                   onClick={closeMobileMenu}
@@ -244,14 +254,16 @@ const Navbar = ({ user, setUser }) => {
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: "6px"}}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                       Home
                     </NavLink>
-                    <NavLink
-                      to="/vehicles"
-                      className={({ isActive }) => `navbar-link ${isActive ? "active" : ""}`}
-                      onClick={closeMobileMenu}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: "6px"}}><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
-                      Track Bus
-                    </NavLink>
+                    {hasActiveBooking && (
+                      <NavLink
+                        to="/vehicles"
+                        className={({ isActive }) => `navbar-link ${isActive ? "active" : ""}`}
+                        onClick={closeMobileMenu}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: "6px"}}><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
+                        Track Bus
+                      </NavLink>
+                    )}
                     <NavLink
                       to="/book"
                       className={({ isActive }) => `navbar-link ${isActive ? "active" : ""}`}

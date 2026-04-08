@@ -143,6 +143,33 @@ export default function Book() {
     setSelectedRoute(null);
   }, [fromCity, toCity, bDate, passengers]);
 
+  // Handle URL params for quick-booking from Favorites
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get("from");
+    const to = params.get("to");
+    if (from && to && routes.length > 0) {
+      setFromCity(decodeURIComponent(from));
+      setToCity(decodeURIComponent(to));
+      // Set a default date (today) if not set
+      if (!bDate) {
+        setBDate(new Date().toISOString().split('T')[0]);
+      }
+      // We need to wait for state updates, so we use a flag or just call the logic
+    }
+  }, [routes]);
+
+  // Trigger search if cities are set via URL (after routes are loaded)
+  useEffect(() => {
+    if (fromCity && toCity && routes.length > 0 && !isSearched && !isLoading) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("from") && params.get("to")) {
+        handleSearch();
+      }
+    }
+  }, [fromCity, toCity, routes]);
+
+
   const openSeatMap = async (vehicle) => {
     try {
       const res = await API.get(`/bookings/vehicle/${vehicle._id}`);

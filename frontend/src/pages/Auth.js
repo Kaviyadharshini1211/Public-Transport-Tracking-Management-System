@@ -8,12 +8,13 @@ const Auth = ({ setUser }) => {
   const location = useLocation();
   const isSignupRoute = location.pathname === '/register' || location.pathname === '/signup';
   const [isLogin, setIsLogin] = useState(!isSignupRoute);
-  const [role, setRole] = useState('passenger');
+  const [activeRole, setActiveRole] = useState('passenger'); // NEW: For login tabs
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    phone: '' // NEW
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,19 +47,27 @@ const Auth = ({ setUser }) => {
 
     try {
       if (isLogin) {
-        // Login: only email + password — NO role from frontend
+        // Login: only email + password
         const response = await API.post('/auth/login', {
           email: formData.email,
           password: formData.password,
         });
 
+        const user = response.data.user;
+
+        // Role Enforcement: Check if user role matches selected tab
+        if (user.role !== activeRole) {
+          setError(`Account not found in ${activeRole} records. This account is registered as a ${user.role}.`);
+          setLoading(false);
+          return;
+        }
+
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        setUser(response.data.user);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
         window.dispatchEvent(new Event('userChanged'));
 
-        // Use BACKEND role for routing — never trust frontend selection
-        navigateByRole(response.data.user.role);
+        navigateByRole(user.role);
       } else {
         if (formData.password !== formData.confirmPassword) {
           setError('Passwords do not match');
@@ -66,11 +75,19 @@ const Auth = ({ setUser }) => {
           return;
         }
 
-        // Registration: backend ignores role and always sets 'passenger'
+        // Phone Validation (Frontend)
+        if (!/^\d{10}$/.test(formData.phone)) {
+          setError('Please enter a valid 10-digit phone number');
+          setLoading(false);
+          return;
+        }
+
+        // Registration: passenger only
         const response = await API.post('/auth/register', {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          phone: formData.phone // NEW
         });
 
         localStorage.setItem('token', response.data.token);
@@ -193,23 +210,50 @@ const Auth = ({ setUser }) => {
           {/* Dynamic Header */}
           <div className="auth-header">
             <h2 className="auth-title" key={isLogin ? 'login' : 'signup'}>
-              {isLogin ? 'Welcome Back 👋' : 'Create Account 🚀'}
+              {isLogin ? `Welcome Back 👋` : 'Passenger SignUp 🚀'}
             </h2>
             <p className="auth-subtitle">
               {isLogin
-                ? 'Login to continue your journey'
-                : 'Join us and start tracking smarter'}
+                ? `Login as ${activeRole.charAt(0).toUpperCase() + activeRole.slice(1)} to continue`
+                : 'Create your passenger account to start tracking'}
             </p>
           </div>
 
-          {/* Role Selector — Only shown on Sign Up (login uses backend role) */}
+          {/* NEW: Role Tabs for Login Only */}
+          {isLogin && (
+            <div className="auth-role-tabs">
+              <button 
+                type="button" 
+                className={`role-tab ${activeRole === 'passenger' ? 'active' : ''}`}
+                onClick={() => setActiveRole('passenger')}
+              >
+                🚶 Passenger
+              </button>
+              <button 
+                type="button" 
+                className={`role-tab ${activeRole === 'driver' ? 'active' : ''}`}
+                onClick={() => setActiveRole('driver')}
+              >
+                🚗 Driver
+              </button>
+              <button 
+                type="button" 
+                className={`role-tab ${activeRole === 'admin' ? 'active' : ''}`}
+                onClick={() => setActiveRole('admin')}
+              >
+                👨‍💼 Admin
+              </button>
+            </div>
+          )}
+
+          {/* Role Selector Notice — Updated for Restriction */}
           {!isLogin && (
             <div className="auth-role-info">
               <div className="auth-role-notice">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
                 </svg>
-                <span>You'll be registered as a Passenger. Admin and Driver roles are assigned by administrators.</span>
+                <span>Registration is currently open for <strong>Passengers only</strong>. Driver/Admin accounts are assigned by system administrators.</span>
               </div>
             </div>
           )}
@@ -236,6 +280,33 @@ const Auth = ({ setUser }) => {
                     onChange={handleChange}
                     placeholder="Enter your full name"
                     required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Phone Number — Sign Up only */}
+            {!isLogin && (
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="auth-phone">Phone Number</label>
+                <div className="auth-input-wrapper">
+                  <span className="auth-input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                  </span>
+                  <input
+                    id="auth-phone"
+                    type="tel"
+                    name="phone"
+                    className="auth-input"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Enter 10-digit phone number"
+                    required
+                    pattern="\d{10}"
+                    maxLength="10"
                     disabled={loading}
                   />
                 </div>

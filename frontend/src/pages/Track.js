@@ -69,43 +69,73 @@ export default function Track() {
   const [coveredCoords, setCoveredCoords] = useState([]);
   const [remainingCoords, setRemainingCoords] = useState([]);
 
-  const [etaFinal, setEtaFinal] = useState(null);
   const [etaBoarding, setEtaBoarding] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null); // NEW: null=checking, true/false
 
   const mapRef = useRef(null);
 
-  // Read bookingId (?bookingId=XXX)
-  const params = new URLSearchParams(window.location.search);
-  const bookingId = params.get("bookingId");
+  // Get user from localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  // ---------- FETCH BOOKING ----------
+  // ---------- VERIFY BOOKING ----------
   useEffect(() => {
-    if (!bookingId) return;
-    API.get(`/bookings/${bookingId}`)
-      .then((res) => setBooking(res.data))
-      .catch(console.error);
-  }, [bookingId]);
+    if (!user) {
+      setError("Please login to track the bus.");
+      setIsAuthorized(false);
+      setLoading(false);
+      return;
+    }
+
+    if (user.role === "admin" || user.role === "driver") {
+      setIsAuthorized(true);
+      return;
+    }
+
+    // For passengers, check if they have a confirmed booking for THIS vehicle
+    const checkBooking = async () => {
+      try {
+        const res = await API.get(`/bookings/check-active/${user.id || user._id}/${vehicleId}`);
+        if (res.data.hasActiveBooking) {
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+          setError("Please book a ticket to track the bus.");
+        }
+      } catch (err) {
+        console.error("Booking verification failed:", err);
+        setError("Failed to verify booking status.");
+        setIsAuthorized(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkBooking();
+  }, [user, vehicleId]);
 
   // ---------- FETCH VEHICLE ----------
   const fetchVehicle = async () => {
     try {
+      if (!isAuthorized && user?.role === "passenger") return;
+
       const res = await API.get(`/vehicles/${vehicleId}`);
       setVehicle(res.data);
-      setError(null);
+      // setError(null); // Remove this to avoid clearing the "No booking" error
     } catch (err) {
       console.error(err);
-      setError("Failed to load vehicle data. Please try again.");
+      if (isAuthorized) setError("Failed to load vehicle data. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!vehicleId) return;
+    if (!vehicleId || isAuthorized === false) return;
+    
     fetchVehicle();
     const iv = setInterval(fetchVehicle, 3000);
     return () => clearInterval(iv);
-  }, [vehicleId]);
+  }, [vehicleId, isAuthorized]);
 
   // ---------- LOAD ROUTE FROM OSRM ----------
   useEffect(() => {

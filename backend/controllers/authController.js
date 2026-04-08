@@ -7,21 +7,23 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // ------------------ REGISTER (PASSENGER ONLY) ------------------
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, phone } = req.body;
+
+    if (!phone || !/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ message: "Valid 10-digit phone number is required" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ message: "User already exists" });
 
-    // Allow role for admin-created accounts (driver), default to passenger
-    const allowedRoles = ["passenger", "driver"];
-    const assignedRole = allowedRoles.includes(role) ? role : "passenger";
-
+    // Registration is strictly for passengers. Drivers/Admins must be created by an Admin.
     const user = await User.create({
       name,
       email,
       password,
-      role: assignedRole,
+      phone,
+      role: "passenger",
     });
 
     const token = jwt.sign(

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
@@ -68,6 +69,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <Toaster position="top-right" reverseOrder={false} />
         <Navbar user={user} setUser={setUser} />
 
         <Routes>
@@ -98,7 +100,7 @@ function App() {
           <Route path="/book" element={<ProtectedRoute><Book /></ProtectedRoute>} />
           <Route path="/book/confirm" element={<ProtectedRoute><ConfirmBooking /></ProtectedRoute>} />
           <Route path="/bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
-          <Route path="/track/:vehicleId" element={<Track />} />
+          <Route path="/track/:vehicleId" element={<ProtectedRoute><Track /></ProtectedRoute>} />
 
           {/* ADMIN NESTED ROUTES */}
           <Route path="/admin" element={<AdminLayout />}>

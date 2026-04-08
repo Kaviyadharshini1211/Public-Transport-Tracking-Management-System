@@ -13,7 +13,9 @@ import {
   Schedule
 } from "@mui/icons-material";
 import API from "../api/api";
+import toast from "react-hot-toast";
 import "../styles/ConfirmBooking.css";
+
 
 export default function ConfirmBooking() {
   const { state } = useLocation();
@@ -76,9 +78,10 @@ export default function ConfirmBooking() {
       // 2. Load / Verify Razorpay SDK (already in index.html, but safety check)
       if (!window.Razorpay) {
         console.error("[Payment] Razorpay SDK not found on window object.");
-        alert("Razorpay checkout failed to initialize. Please check your internet connection.");
+        toast.error("Razorpay checkout failed to initialize. Please check your internet connection.");
         setLoading(false);
         return;
+
       }
 
       // 3. Open Razorpay Checkout Modal
@@ -117,7 +120,7 @@ export default function ConfirmBooking() {
             }
           } catch (err) {
             console.error("[Payment] Verification API failed:", err);
-            alert("Payment verification failed. Please contact support.");
+            toast.error("Payment verification failed. Please contact support.");
           }
         },
         prefill: {
@@ -140,8 +143,9 @@ export default function ConfirmBooking() {
 
     } catch (err) {
       console.error("[Payment] Critical Error during payment initiation:", err);
-      alert("Failed to initiate payment. Please check if the backend server is running.");
+      toast.error("Failed to initiate payment. Please check if the backend server is running.");
       setLoading(false);
+
     }
   };
 

@@ -1,15 +1,50 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import API from '../api/api';
+import toast from 'react-hot-toast';
+import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/DashboardPages.css';
 
 const Favorites = () => {
-    const favorites = [
-        { id: 1, from: 'Mumbai', to: 'Pune', type: 'Express', frequency: 'Daily', price: '₹450' },
-        { id: 2, from: 'Delhi', to: 'Chandigarh', type: 'Sleeper', frequency: 'Wed, Fri, Sun', price: '₹850' },
-        { id: 3, from: 'Bangalore', to: 'Mysore', type: 'AC Volva', frequency: 'Daily', price: '₹350' },
-    ];
+    const [favorites, setFavorites] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+
+    const fetchFavorites = async () => {
+        try {
+            const res = await API.get('/users/favorites');
+            setFavorites(res.data);
+        } catch (err) {
+            toast.error("Failed to load favorites");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchFavorites();
+    }, []);
+
+    const removeFavorite = async (routeId) => {
+        try {
+            await API.post(`/users/favorites/${routeId}`);
+            setFavorites(favorites.filter(f => f._id !== routeId));
+            toast.success("Removed from favorites");
+        } catch (err) {
+            toast.error("Failed to remove favorite");
+        }
+    };
+
+    const handleBookNow = (route) => {
+        navigate(`/book?from=${encodeURIComponent(route.origin)}&to=${encodeURIComponent(route.destination)}`);
+    };
+
+
+    if (loading) return <div className="dash-page-container"><LoadingSpinner fullscreen={true} /></div>;
 
     return (
         <div className="dash-page-container">
+
             <div className="dash-content-wrapper">
                 <div className="page-header">
                     <h1 className="page-title">Favorite Routes</h1>
@@ -20,7 +55,7 @@ const Favorites = () => {
                     {favorites.length > 0 ? (
                         <div className="list-container">
                             {favorites.map((route) => (
-                                <div key={route.id} className="list-item">
+                                <div key={route._id} className="list-item">
                                     <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
                                         <div style={{
                                             width: '52px',
@@ -38,19 +73,25 @@ const Favorites = () => {
                                         </div>
                                         <div>
                                             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0, color: 'var(--text-color, #1e293b)' }}>
-                                                {route.from} ↔ {route.to}
+                                                {route.origin} ↔ {route.destination}
                                             </h3>
                                             <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: '4px 0 0' }}>
-                                                {route.type} • {route.frequency}
+                                                {route.name} • {route.distanceKm} KM
                                             </p>
                                         </div>
                                     </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontSize: '1rem', fontWeight: '800', color: '#1e293b' }}>{route.price}</div>
+                                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
+                                        <button 
+                                            className="btn-text" 
+                                            style={{ fontSize: '0.75rem', color: '#94a3b8' }}
+                                            onClick={() => removeFavorite(route._id)}
+                                        >
+                                            Remove
+                                        </button>
                                         <button 
                                             className="btn-primary" 
-                                            style={{ padding: '0.4rem 0.9rem', fontSize: '0.75rem', marginTop: '0.5rem', background: '#d84e55' }}
-                                            onClick={() => alert("Quick booking for this route would start here.")}
+                                            style={{ padding: '0.4rem 0.9rem', fontSize: '0.75rem', background: '#d84e55' }}
+                                            onClick={() => handleBookNow(route)}
                                         >
                                             Book Now
                                         </button>
@@ -58,6 +99,7 @@ const Favorites = () => {
                                 </div>
                             ))}
                         </div>
+
                     ) : (
                         <div style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
                             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⭐</div>

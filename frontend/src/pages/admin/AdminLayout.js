@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { io } from "socket.io-client";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-hot-toast";
+
 import API from "../../api/api";
 import "../../styles/AdminLayout.css";
 import AdminVehicles from "./AdminVehicles";
@@ -99,21 +99,24 @@ export default function AdminDashboard() {
 
       // Fire slick custom toast
       toast.error(
-        <SOSAlertMessage 
-          driverName={payload.driverName} 
-          message={payload.message}
-          lat={payload.coordinates?.lat} 
-          lng={payload.coordinates?.lng} 
-        />, 
+        (t) => (
+          <SOSAlertMessage 
+            driverName={payload.driverName} 
+            message={payload.message}
+            lat={payload.coordinates?.lat} 
+            lng={payload.coordinates?.lng} 
+          />
+        ), 
         {
+          duration: Infinity,
           position: "top-right",
-          autoClose: false,
-          hideProgressBar: true,
-          closeOnClick: false,
-          pauseOnHover: true,
-          draggable: true,
-          theme: "dark",
-          style: { background: "#1e1e2f", borderLeft: "4px solid #ef4444" }
+          style: { 
+            background: "#1e1e2f", 
+            color: "#fff",
+            borderLeft: "5px solid #ef4444",
+            padding: "16px",
+            minWidth: "350px"
+          }
         }
       );
     });
@@ -499,8 +502,10 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ─── REAL-TIME SOS TOAST OVERLAY (react-toastify) ─── */}
-      <ToastContainer />
+      {/* ─── REAL-TIME SOS TOAST OVERLAY ─── */}
+      {/* Hot-toast handles rendering globally from App.js, but we can add a local one for layout-specific overrides if needed */}
+
+
 
       {/* ─── Standard Internal Toast Notification ─── */}
       {toastMsg && (

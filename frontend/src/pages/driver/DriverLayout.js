@@ -4,7 +4,9 @@ import DriverDashboard from "./DriverDashboard";
 import DriverMyVehicle from "./DriverMyVehicle";
 import DriverTracking from "./DriverTracking";
 import API from "../../api/api";
+import toast from "react-hot-toast";
 import "../../styles/DriverLayout.css";
+
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
@@ -107,11 +109,10 @@ export default function DriverLayout() {
           location: { lat, lng },
           message: reason
         });
-        // Feedback toast replacing console logs
-        alert("🚨 EMERGENCY SOS BROADCASTED TO ADMIN 🚨");
+        toast.success("🚨 EMERGENCY SOS BROADCASTED TO ADMIN 🚨", { duration: 5000 });
       } catch (err) {
         console.error("SOS transmission failed", err);
-        alert("⚠️ Failed to transmit SOS! Attempt another channel.");
+        toast.error("⚠️ Failed to transmit SOS! Attempt another channel.");
       } finally {
         setTriggeringPanic(false);
       }

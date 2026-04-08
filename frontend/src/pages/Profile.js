@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import API from '../api/api';
+import toast from 'react-hot-toast';
 import '../styles/DashboardPages.css';
 
 const Profile = () => {
@@ -6,18 +8,34 @@ const Profile = () => {
     const [formData, setFormData] = useState({
         name: user.name || "",
         email: user.email || "",
-        phone: user.phone || "+91 98765 43210",
-        address: user.address || "New Delhi, India"
+        phone: user.phone || "",
+        address: user.address || ""
     });
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        alert("Profile update functionality is ready for backend integration!");
-        console.log("Updated data:", formData);
+        setLoading(true);
+        const toastId = toast.loading("Updating profile...");
+
+        try {
+            const res = await API.put('/users/profile', formData);
+            
+            // Update local storage
+            const updatedUser = { ...user, ...res.data };
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+            
+            toast.success("Profile updated successfully!", { id: toastId });
+        } catch (err) {
+            console.error("Profile update error:", err);
+            toast.error(err.response?.data?.message || "Failed to update profile", { id: toastId });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -103,8 +121,12 @@ const Profile = () => {
                         </div>
 
                         <div style={{ marginTop: '1rem' }}>
-                            <button type="submit" className="btn-primary">
-                                Save Changes
+                            <button 
+                                type="submit" 
+                                className={`btn-primary ${loading ? 'loading' : ''}`}
+                                disabled={loading}
+                            >
+                                {loading ? 'Saving Changes...' : 'Save Changes'}
                             </button>
                         </div>
                     </form>

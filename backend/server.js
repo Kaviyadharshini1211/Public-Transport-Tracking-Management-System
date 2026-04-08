@@ -61,6 +61,7 @@ app.use(passport.initialize());
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/vehicles", require("./routes/vehicleRoutes"));
 app.use("/api/routes", require("./routes/routeRoutes"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
