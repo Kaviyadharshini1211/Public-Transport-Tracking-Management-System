@@ -69,3 +69,5 @@ yarn.lock
 # Optional (if using uploads or local storage)
 uploads/
 public/uploads/
+
+docs/
