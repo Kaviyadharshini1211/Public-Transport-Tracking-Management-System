@@ -1,0 +1,712 @@
+// src/pages/Book.jsx
+import React, { useEffect, useState, useMemo } from "react";
+import "../styles/Book.css"
+import {
+  Container,
+  Typography,
+  Select,
+  MenuItem,
+  Card,
+  CardContent,
+  Grid,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Box,
+  Autocomplete,
+  InputAdornment,
+  CircularProgress,
+  Divider,
+} from "@mui/material";
+// Icons
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import PersonIcon from "@mui/icons-material/Person";
+import SearchIcon from "@mui/icons-material/Search";
+import EventSeatIcon from "@mui/icons-material/EventSeat";
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
+
+import * as bookingService from "../api/booking";
+import * as vehicleService from "../api/vehicle";
+import * as routeService from "../api/route";
+import SeatMap from "../components/SeatMap";
+import { useNavigate } from "react-router-dom";
+
+// Helper to generate realistic dummy schedules for UI parity
+function generateMockTimes(vehicleId, distanceKm, avgSpeed) {
+  const charCode = vehicleId ? vehicleId.charCodeAt(vehicleId.length - 1) : 0;
+  const startHour = 6 + (charCode % 15); // 6 AM to 8 PM
+
+  const dist = distanceKm || 300; // default 300km
+  const speed = avgSpeed || 50;   // default 50kmph
+
+  const durationHours = dist / speed;
+  const durationH = Math.floor(durationHours);
+  const durationM = Math.round((durationHours - durationH) * 60);
+
+  const endHour = startHour + durationH + Math.floor(durationM / 60);
+  const endMin = (Math.round(durationM / 5) * 5) % 60; // round minutes to 5
+
+  const formatAmPm = (h, m) => {
+    const period = h >= 12 && h < 24 ? "PM" : "AM";
+    let hr = h % 12;
+    if (hr === 0) hr = 12;
+    return `${hr.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${period}`;
+  };
+
+  return {
+    departureTime: formatAmPm(startHour, 0),
+    eta: formatAmPm(endHour, endMin),
+    durationText: `${durationH}h ${durationM}m`
+  };
+}
+
+export default function Book() {
+  const [routes, setRoutes] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+
+  // Search State
+  const [fromCity, setFromCity] = useState("");
+  const [toCity, setToCity] = useState("");
+  const [bDate, setBDate] = useState("");
+  const [passengers, setPassengers] = useState(1);
+  const [isSearched, setIsSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Booked/Interaction State
+  const [selectedRoute, setSelectedRoute] = useState(null);
+  const [openSeatDialog, setOpenSeatDialog] = useState(false);
+  const [activeVehicle, setActiveVehicle] = useState(null);
+  const [reservedSeats, setReservedSeats] = useState([]);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [boardingStopIndex, setBoardingStopIndex] = useState("");
+  const [droppingStopIndex, setDroppingStopIndex] = useState("");
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    routeService.getRoutes().then(data => setRoutes(data)).catch(console.error);
+  }, []);
+
+  // Compute unique cities for Autocomplete (Origin, Destination, and all Stops)
+  const uniqueCities = useMemo(() => {
+    const cities = new Set();
+    routes.forEach(r => {
+      if (r.origin) cities.add(r.origin.trim());
+      if (r.destination) cities.add(r.destination.trim());
+      r.stops?.forEach(s => {
+        if (s.name) cities.add(s.name.trim());
+      });
+    });
+    return Array.from(cities).sort();
+  }, [routes]);
+
+  // Handle Search Execution
+  const handleSearch = async (e) => {
+    if (e) e.preventDefault();
+    const source = (fromCity || "").trim().toLowerCase();
+    const dest = (toCity || "").trim().toLowerCase();
+
+    console.log(`🚀 handleSearch Fired! Source: "${source}", Dest: "${dest}"`);
+
+    if (!source || !dest) {
+      console.warn("❌ Search aborted: Source or Destination is empty.");
+      return;
+    }
+
+    setIsLoading(true);
+    setIsSearched(false);
+    setVehicles([]);
+    setBoardingStopIndex("");
+    setDroppingStopIndex("");
+
+    console.log(`🔍 Search Initiated: "${source}" -> "${dest}"`);
+    console.log(`📊 Total routes in memory: ${routes.length}`);
+    
+    // Find the ONE best-matching route: source origin, dest destination
+    // Use strict directional matching: source must appear before dest
+    const matchingRoutes = routes.filter(r => {
+      const sequence = [
+        r.origin, 
+        ...(r.stops?.map(s => s.name) || []), 
+        r.destination
+      ].map(s => String(s || "").toLowerCase().trim()).filter(Boolean);
+      
+      const fromIndices = sequence.map((s, idx) => s.includes(source) ? idx : -1).filter(i => i !== -1);
+      const toIndices = sequence.map((s, idx) => s.includes(dest) ? idx : -1).filter(i => i !== -1);
+      
+      // Route must: have source AND dest, with the MINIMUM source idx < MINIMUM dest idx
+      const minFrom = fromIndices.length > 0 ? Math.min(...fromIndices) : -1;
+      const minTo = toIndices.length > 0 ? Math.min(...toIndices) : -1;
+      
+      return minFrom !== -1 && minTo !== -1 && minFrom < minTo;
+    });
+
+    console.log(`✅ Found ${matchingRoutes.length} matching routes.`);
+
+    // Take primary matching route for general context
+    setSelectedRoute(matchingRoutes[0] || null);
+
+    if (matchingRoutes.length > 0) {
+      try {
+        const vehiclePromises = matchingRoutes.map(r => vehicleService.getVehiclesByRoute(r._id));
+        const results = await Promise.all(vehiclePromises);
+
+        const allVehicles = results.flatMap((data, index) =>
+          data.map(v => ({ ...v, routeContext: matchingRoutes[index] }))
+        );
+
+        // Deduplicate vehicles by _id to prevent any duplicates
+        const seen = new Set();
+        const uniqueVehicles = allVehicles.filter(v => {
+          if (seen.has(v._id)) return false;
+          seen.add(v._id);
+          return true;
+        });
+
+        setVehicles(uniqueVehicles);
+      } catch (err) {
+        console.error("Search error:", err);
+      }
+    }
+
+    setIsLoading(false);
+    setIsSearched(true);
+    console.log(`✨ Search Complete. vehicles state set to: ${matchingRoutes.length > 0 ? 'Vehicles found' : 'No vehicles found'}`);
+  };
+
+  // Removed auto-reset useEffect to prevent results from disappearing while typing
+
+  // Handle URL params for quick-booking from Favorites
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get("from");
+    const to = params.get("to");
+    if (from && to && routes.length > 0) {
+      setFromCity(decodeURIComponent(from));
+      setToCity(decodeURIComponent(to));
+      // Set a default date (today) if not set
+      if (!bDate) {
+        setBDate(new Date().toISOString().split('T')[0]);
+      }
+      // We need to wait for state updates, so we use a flag or just call the logic
+    }
+  }, [routes]);
+
+  // Trigger search if cities are set via URL (after routes are loaded)
+  useEffect(() => {
+    if (fromCity && toCity && routes.length > 0 && !isSearched && !isLoading) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("from") && params.get("to")) {
+        handleSearch();
+      }
+    }
+  }, [fromCity, toCity, routes]);
+
+
+  const openSeatMap = async (vehicle) => {
+    try {
+      const data = await bookingService.getBookingsByVehicle(vehicle._id, bDate);
+      const bookedSeatNums = (data || []).flatMap(b => b.seatNumbers || []).map(Number);
+      setReservedSeats(bookedSeatNums);
+    } catch (err) {
+      setReservedSeats([]);
+    }
+
+    const route = vehicle.routeContext || null;
+    setActiveVehicle(vehicle);
+    setSelectedRoute(route);
+
+    // Auto-select Boarding/Dropping indices based on search
+    if (route && route.stops) {
+      const bCity = fromCity.toLowerCase().trim();
+      const dCity = toCity.toLowerCase().trim();
+
+      // Try inclusion match in stops
+      let bIdx = route.stops.findIndex(s => s.name.toLowerCase().includes(bCity));
+      let dIdx = route.stops.findIndex(s => s.name.toLowerCase().includes(dCity));
+
+      // Fallback: Check Origin/Destination directly if stops didn't match
+      if (bIdx === -1 && route.origin?.toLowerCase().includes(bCity)) bIdx = 0;
+      if (dIdx === -1 && route.destination?.toLowerCase().includes(dCity)) dIdx = route.stops.length - 1;
+
+      setBoardingStopIndex(bIdx !== -1 ? bIdx : "");
+      setDroppingStopIndex(dIdx !== -1 ? dIdx : "");
+    } else {
+      setBoardingStopIndex("");
+      setDroppingStopIndex("");
+    }
+
+    setSelectedSeats([]);
+    setOpenSeatDialog(true);
+  };
+
+
+  const toggleSeat = (num) => {
+    setSelectedSeats(prev => prev.includes(num) ? prev.filter(s => s !== num) : [...prev, num]);
+  };
+
+  // Calculated properties for confirmation logic
+  const bookingPricePerSeat = useMemo(() => {
+    if (!selectedRoute) return 200;
+    const distance = selectedRoute.distanceKm || 200;
+    return Math.round(distance * 2); // ₹2 per km
+  }, [selectedRoute]);
+
+  const totalPrice = selectedSeats.length * bookingPricePerSeat;
+
+  const confirmSelection = () => {
+    setOpenSeatDialog(false);
+
+    const boardingStop = selectedRoute?.stops?.[boardingStopIndex] || null;
+    const droppingStop = selectedRoute?.stops?.[droppingStopIndex] || null;
+
+    navigate("/book/confirm", {
+      state: {
+        vehicle: activeVehicle,
+        routeId: selectedRoute?._id,
+        seatNumbers: selectedSeats,
+        totalFare: totalPrice,
+        boardingStop,
+        droppingStop,
+        date: bDate,
+        passengers,
+      }
+    });
+  };
+
+  const isBookingValid = selectedSeats.length > 0 && boardingStopIndex !== "" && droppingStopIndex !== "";
+
+  return (
+    <Box className="book-page-wrapper">
+      <Container className="book-container" sx={{ mt: 4 }}>
+        <Box className="book-header">
+          <Typography className="book-title" variant="h3">
+            Search & Book Tickets
+          </Typography>
+          <Typography className="book-subtitle" variant="subtitle1">
+            Premium travel experience starts here.
+          </Typography>
+        </Box>
+
+        <Box component="form" className="form-section premium-shadow" onSubmit={handleSearch}>
+          <Grid container spacing={3} className="search-grid">
+            {/* From Source - Half width for prominence */}
+            <Grid item xs={12} md={6}>
+              <Autocomplete
+                options={uniqueCities}
+                value={fromCity}
+                onChange={(e, val) => setFromCity(val || "")}
+                onInputChange={(e, val) => setFromCity(val || "")}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="From"
+                    placeholder="Enter Source City"
+                    className="styled-input location-input"
+                    fullWidth
+                    required
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <>
+                          <InputAdornment position="start">
+                            <LocationOnIcon className="input-icon" sx={{ color: '#ef4444' }} />
+                          </InputAdornment>
+                          {params.InputProps.startAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* To Destination - Half width for prominence */}
+            <Grid item xs={12} md={6}>
+              <Autocomplete
+                options={uniqueCities}
+                value={toCity}
+                onChange={(e, val) => setToCity(val || "")}
+                onInputChange={(e, val) => setToCity(val || "")}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="To"
+                    placeholder="Enter Destination City"
+                    className="styled-input location-input"
+                    fullWidth
+                    required
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <>
+                          <InputAdornment position="start">
+                            <LocationOnIcon className="input-icon" sx={{ color: '#ef4444' }} />
+                          </InputAdornment>
+                          {params.InputProps.startAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Second Row: Date, Passengers, and Search */}
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                className="styled-input"
+                label="Departure Date"
+                type="date"
+                fullWidth
+                required
+                value={bDate}
+                onChange={(e) => setBDate(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarMonthIcon className="input-icon" color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                className="styled-input"
+                label="Passengers"
+                type="number"
+                fullWidth
+                required
+                inputProps={{ min: 1, max: 10 }}
+                value={passengers}
+                onChange={(e) => setPassengers(Number(e.target.value))}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon className="input-icon" color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={5} sx={{ display: 'flex' }}>
+              <Button
+                type="submit"
+                onClick={handleSearch}
+                className="search-buses-btn"
+                variant="contained"
+                fullWidth
+                size="large"
+                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                disabled={isLoading}
+              >
+                {isLoading ? "Finding Best Buses..." : "Search Buses"}
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* Empty State: No matches found */}
+        {isSearched && vehicles.length === 0 && (
+          <Box className="empty-state">
+            <DirectionsBusIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="h6">No route matches found</Typography>
+            <Typography variant="body2" color="textSecondary">
+              We couldn't find any buses operating between {fromCity} and {toCity}.
+              Try reversing locations or searching for major cities.
+            </Typography>
+          </Box>
+        )}
+
+        {/* Empty State: Prompt search */}
+        {!isSearched && !isLoading && (
+          <Box className="empty-state pre-search" sx={{ pb: 8 }}>
+            <Typography variant="h6">Enter your destinations to view available buses.</Typography>
+            <img src="https://cdni.iconscout.com/illustration/premium/thumb/bus-ticket-booking-4487405-3738459.png" alt="Travel illustration" className="empty-state-img" />
+          </Box>
+        )}
+
+        {/* Results */}
+        {isSearched && vehicles.length > 0 && (
+          <Box className="results-section">
+            <Typography variant="h5" className="results-title">
+              Available Buses ({fromCity} to {toCity})
+            </Typography>
+            <Grid container spacing={3}>
+              {vehicles.map(v => {
+                const distanceKm = selectedRoute?.distanceKm || 300;
+                const avgSpeedKmph = selectedRoute?.avgSpeedKmph || 50;
+                const times = generateMockTimes(v._id, distanceKm, avgSpeedKmph);
+                return (
+                  <Grid item xs={12} md={6} lg={4} key={v._id}>
+                    <Card className="vehicle-card premium-card">
+                      <CardContent>
+                        <Box className="vehicle-header">
+                          <Typography className="vehicle-title" variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <DirectionsBusIcon color="primary" /> {v.model}
+                          </Typography>
+                          <Box className="vehicle-reg-badge">
+                            {v.regNumber}
+                          </Box>
+                        </Box>
+                        <Typography className="vehicle-route">
+                          {v.routeContext?.name || `${fromCity} → ${toCity}`}
+                        </Typography>
+
+                        <Grid container spacing={2} className="vehicle-times-grid" sx={{ mb: 2 }}>
+                          <Grid item xs={4}>
+                            <Typography className="time-label"><AccessTimeIcon fontSize="small" /> Departure</Typography>
+                            <Typography className="time-value">{times.departureTime}</Typography>
+                          </Grid>
+                          <Grid item xs={4}>
+                            <Typography className="time-label"><HourglassBottomIcon fontSize="small" /> Duration</Typography>
+                            <Typography className="time-value highlight-sub">{times.durationText}</Typography>
+                          </Grid>
+                          <Grid item xs={4}>
+                            <Typography className="time-label"><AccessTimeIcon fontSize="small" /> ETA</Typography>
+                            <Typography className="time-value">{times.eta}</Typography>
+                          </Grid>
+                        </Grid>
+
+                        <Divider sx={{ mb: 2 }} />
+
+                        <Box className="vehicle-details-bottom">
+                          <Box className="seats-info">
+                            <Typography className="detail-label">Seats Info</Typography>
+                            <Typography className="detail-value">{v.capacity} Total</Typography>
+                          </Box>
+                          <Box className="price-info">
+                            <Typography className="detail-label">Price</Typography>
+                            <Typography className="detail-value highlight-price">₹{bookingPricePerSeat}</Typography>
+                          </Box>
+                        </Box>
+
+                        <Button
+                          className="select-seats-btn"
+                          sx={{ mt: 3 }}
+                          variant="contained"
+                          fullWidth
+                          startIcon={<EventSeatIcon />}
+                          onClick={() => openSeatMap(v)}
+                        >
+                          Select Seats
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Box>
+        )}
+
+        {/* Diagnostic Panel for Troubleshooting */}
+        <Box sx={{ mt: 8, p: 3, background: 'rgba(0,0,0,0.05)', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.1)' }}>
+          <Typography variant="h6" sx={{ color: '#64748b', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            🛠 System Diagnostics
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={6} md={3}>
+              <Typography variant="caption" display="block" sx={{ textTransform: 'uppercase', fontWeight: 700, color: '#94a3b8' }}>Routes Loaded</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 800 }}>{routes.length}</Typography>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Typography variant="caption" display="block" sx={{ textTransform: 'uppercase', fontWeight: 700, color: '#94a3b8' }}>Current Input</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>From: {fromCity || '(empty)'}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>To: {toCity || '(empty)'}</Typography>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Typography variant="caption" display="block" sx={{ textTransform: 'uppercase', fontWeight: 700, color: '#94a3b8' }}>Search State</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800 }}>{isSearched ? '✅ ACTIVE' : '⏳ IDLE'}</Typography>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Typography variant="caption" display="block" sx={{ textTransform: 'uppercase', fontWeight: 700, color: '#94a3b8' }}>Vehicles Found</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: vehicles.length > 0 ? '#10b981' : '#ef4444' }}>{vehicles.length}</Typography>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Button 
+                variant="outlined" 
+                size="small" 
+                onClick={() => window.location.reload()}
+                sx={{ mt: 1, borderRadius: '8px' }}
+              >
+                Force Data Refresh
+              </Button>
+            </Grid>
+          </Grid>
+          {routes.length === 0 && (
+            <Typography color="error" sx={{ mt: 2, fontSize: '0.875rem' }}>
+              ⚠️ Warning: No routes loaded from API. Check your connection or database.
+            </Typography>
+          )}
+        </Box>
+
+        {/* Premium Seat Dialog / Trip Summary */}
+        <Dialog
+          className="seat-dialog premium-dialog"
+          open={openSeatDialog}
+          onClose={() => setOpenSeatDialog(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle className="dialog-title">
+            Trip Summary & Seat Selection
+          </DialogTitle>
+          <DialogContent className="dialog-content" sx={{ p: 0 }}>
+            <Grid container>
+              {/* Left Side - Seat Map */}
+              <Grid item xs={12} md={7} sx={{ p: 3, borderRight: '1px solid var(--color-border)' }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>Choose Your Seats</Typography>
+                <SeatMap
+                  capacity={activeVehicle?.capacity || 40}
+                  reserved={reservedSeats}
+                  selected={selectedSeats}
+                  onToggle={toggleSeat}
+                />
+              </Grid>
+
+              {/* Right Side - Trip Summary */}
+              <Grid item xs={12} md={5} className="trip-summary-panel" sx={{ p: 3, background: 'var(--color-gray-50)' }}>
+                <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>Booking Details</Typography>
+
+                <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                  <Typography variant="body2" color="textSecondary">Route</Typography>
+                  <Typography variant="body1" fontWeight="600">{fromCity} → {toCity}</Typography>
+                </Box>
+
+                <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                  <Typography variant="body2" color="textSecondary">Departure Date</Typography>
+                  <Typography variant="body1" fontWeight="600">{bDate || "Not Selected"}</Typography>
+                </Box>
+
+                <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                  <Typography variant="body2" color="textSecondary">Bus Model</Typography>
+                  <Typography variant="body1" fontWeight="600">{activeVehicle?.model}</Typography>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                  <Typography variant="body2" color="textSecondary">Selected Seats</Typography>
+                  <Typography variant="body1" fontWeight="600" color="primary">
+                    {selectedSeats.length > 0 ? selectedSeats.join(", ") : "None"}
+                    {selectedSeats.length > 0 && ` (${selectedSeats.length})`}
+                  </Typography>
+                </Box>
+
+                {selectedSeats.length === 0 ? (
+                  <Box className="empty-seat-helper" sx={{ mt: 4, p: 3, textAlign: 'center', background: 'rgba(216, 78, 85, 0.05)', borderRadius: '12px', border: '1px dashed var(--color-primary-300)' }}>
+                    <EventSeatIcon sx={{ fontSize: 40, color: 'var(--color-primary-400)', mb: 1 }} />
+                    <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600 }}>
+                      Please select seats to continue with your booking.
+                    </Typography>
+                  </Box>
+                ) : (() => {
+                  const validDroppingStops = (selectedRoute?.stops || [])
+                    .map((s, idx) => ({ ...s, originalIdx: idx }))
+                    .filter(s => boardingStopIndex === "" || s.originalIdx > Number(boardingStopIndex));
+
+                  return (
+                    <Box className="fade-in-section" sx={{ animation: 'fadeInUp 0.4s ease-out', mt: 3 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: 'var(--color-gray-700)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Boarding & Dropping Points
+                      </Typography>
+
+                      <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                        <InputLabel>Boarding Point</InputLabel>
+                        <Select
+                          value={boardingStopIndex}
+                          label="Boarding Point"
+                          onChange={(e) => {
+                            setBoardingStopIndex(e.target.value);
+                            setDroppingStopIndex(""); // Reset dropping point on change
+                          }}
+                          sx={{ borderRadius: '8px' }}
+                        >
+                          <MenuItem value=""><em>-- Required --</em></MenuItem>
+                          {selectedRoute?.stops?.map((s, idx) => (
+                            <MenuItem key={`board-${idx}`} value={idx} disabled={idx === selectedRoute.stops.length - 1}>
+                              {s.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl fullWidth size="small" sx={{ mb: 3 }}>
+                        <InputLabel>Dropping Point</InputLabel>
+                        <Select
+                          value={droppingStopIndex}
+                          label="Dropping Point"
+                          onChange={(e) => setDroppingStopIndex(e.target.value)}
+                          sx={{ borderRadius: '8px' }}
+                          disabled={boardingStopIndex !== "" && validDroppingStops.length === 0}
+                        >
+                          <MenuItem value="">
+                            <em>
+                              {boardingStopIndex !== "" && validDroppingStops.length === 0
+                                ? "No further stops available"
+                                : "-- Required --"}
+                            </em>
+                          </MenuItem>
+                          {validDroppingStops.map((s) => (
+                            <MenuItem key={`drop-${s.originalIdx}`} value={s.originalIdx}>{s.name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <Divider sx={{ my: 2 }} />
+
+                      <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                        <Typography variant="body2" color="textSecondary">Price per seat</Typography>
+                        <Typography variant="body1" fontWeight="600">₹{bookingPricePerSeat}</Typography>
+                      </Box>
+
+                      <Box className="total-amount-box" sx={{
+                        p: 2, background: 'linear-gradient(135deg, var(--color-success-50), var(--color-success-100))',
+                        borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                      }}>
+                        <Typography variant="subtitle1" fontWeight="700" color="success.main">Total Amount</Typography>
+                        <Typography variant="h5" fontWeight="800" color="success.dark">₹{totalPrice}</Typography>
+                      </Box>
+                    </Box>
+                  );
+                })()}
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions className="dialog-actions" sx={{ p: 2, justifyContent: 'space-between', px: 3 }}>
+            <Button className="dialog-cancel-btn" onClick={() => setOpenSeatDialog(false)}>
+              Back
+            </Button>
+            <Button
+              className={`dialog-confirm-btn ${isBookingValid ? 'premium-btn' : ''}`}
+              variant="contained"
+              onClick={confirmSelection}
+              disabled={!isBookingValid}
+              startIcon={<PaymentsIcon />}
+              size="large"
+            >
+              {isBookingValid ? `Confirm Booking (₹${totalPrice})` : 'Select Details'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </Box>
+  );
+}
