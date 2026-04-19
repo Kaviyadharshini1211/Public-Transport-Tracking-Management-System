@@ -1,0 +1,76 @@
+const mongoose = require("mongoose");
+
+const boardingStopSchema = new mongoose.Schema(
+  {
+    name: String,
+    lat: Number,
+    lng: Number,
+  },
+  { _id: false }
+);
+
+const bookingSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    routeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Route",
+      required: true,
+    },
+
+    vehicleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vehicle",
+      required: true,
+    },
+
+    seats: { type: Number, required: true },
+
+    journeyDate: { type: String, required: true },
+
+    seatNumbers: {
+      type: [String],
+      default: [],
+    },
+
+    boardingStop: {
+      type: boardingStopSchema,
+      default: null,
+    },
+
+    totalFare: { type: Number, required: true },
+
+    status: {
+      type: String,
+      enum: ["Pending", "Confirmed", "Cancelled", "Failed"],
+      default: "Pending",
+    },
+
+    // Razorpay specific fields
+    razorpayOrderId: { type: String, default: null },
+    razorpayPaymentId: { type: String, default: null },
+    razorpaySignature: { type: String, default: null },
+
+    // ⭐ NEW FIELD — User can toggle alerts ON/OFF
+    emailAlerts: {
+      type: Boolean,
+      default: false,
+    },
+    etaAlertSent: {
+      type: Boolean,
+      default: false,
+    },
+    etaSmsSent: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Booking", bookingSchema);
