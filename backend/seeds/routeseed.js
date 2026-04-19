@@ -152,7 +152,186 @@ const routes = [
       { name: "Ambala", lat: 30.3752, lng: 76.7821 },
       { name: "Ludhiana", lat: 30.9010, lng: 75.8573 }
     ]
-  }
+  },
+  {
+  name: "Mumbai ⇄ Pune Express",
+  origin: "Mumbai",
+  destination: "Pune",
+  distanceKm: 150,
+  avgSpeedKmph: 65,
+  stops: [
+    { name: "Mumbai", lat: 19.0760, lng: 72.8777 },
+    { name: "Lonavala", lat: 18.7546, lng: 73.4062 },
+    { name: "Pune", lat: 18.5204, lng: 73.8567 }
+  ]
+},
+
+{
+  name: "Bangalore ⇄ Chennai",
+  origin: "Bangalore",
+  destination: "Chennai",
+  distanceKm: 350,
+  avgSpeedKmph: 65,
+  stops: [
+    { name: "Bangalore", lat: 12.9716, lng: 77.5946 },
+    { name: "Krishnagiri", lat: 12.5266, lng: 78.2137 },
+    { name: "Vellore", lat: 12.9165, lng: 79.1325 },
+    { name: "Chennai", lat: 13.0827, lng: 80.2707 }
+  ]
+},
+
+{
+  name: "Hyderabad ⇄ Bangalore",
+  origin: "Hyderabad",
+  destination: "Bangalore",
+  distanceKm: 570,
+  avgSpeedKmph: 65,
+  stops: [
+    { name: "Hyderabad", lat: 17.3850, lng: 78.4867 },
+    { name: "Kurnool", lat: 15.8281, lng: 78.0373 },
+    { name: "Anantapur", lat: 14.6819, lng: 77.6006 },
+    { name: "Bangalore", lat: 12.9716, lng: 77.5946 }
+  ]
+},
+
+{
+  name: "Delhi ⇄ Lucknow",
+  origin: "Delhi",
+  destination: "Lucknow",
+  distanceKm: 555,
+  avgSpeedKmph: 60,
+  stops: [
+    { name: "Delhi", lat: 28.7041, lng: 77.1025 },
+    { name: "Ghaziabad", lat: 28.6692, lng: 77.4538 },
+    { name: "Kanpur", lat: 26.4499, lng: 80.3319 },
+    { name: "Lucknow", lat: 26.8467, lng: 80.9462 }
+  ]
+},
+
+{
+  name: "Delhi ⇄ Varanasi",
+  origin: "Delhi",
+  destination: "Varanasi",
+  distanceKm: 820,
+  avgSpeedKmph: 60,
+  stops: [
+    { name: "Delhi", lat: 28.7041, lng: 77.1025 },
+    { name: "Kanpur", lat: 26.4499, lng: 80.3319 },
+    { name: "Prayagraj", lat: 25.4358, lng: 81.8463 },
+    { name: "Varanasi", lat: 25.3176, lng: 82.9739 }
+  ]
+},
+
+{
+  name: "Kolkata ⇄ Bhubaneswar",
+  origin: "Kolkata",
+  destination: "Bhubaneswar",
+  distanceKm: 440,
+  avgSpeedKmph: 60,
+  stops: [
+    { name: "Kolkata", lat: 22.5726, lng: 88.3639 },
+    { name: "Kharagpur", lat: 22.3460, lng: 87.2319 },
+    { name: "Balasore", lat: 21.4942, lng: 86.9335 },
+    { name: "Bhubaneswar", lat: 20.2961, lng: 85.8245 }
+  ]
+},
+
+{
+  name: "Ahmedabad ⇄ Surat",
+  origin: "Ahmedabad",
+  destination: "Surat",
+  distanceKm: 270,
+  avgSpeedKmph: 65,
+  stops: [
+    { name: "Ahmedabad", lat: 23.0225, lng: 72.5714 },
+    { name: "Vadodara", lat: 22.3072, lng: 73.1812 },
+    { name: "Bharuch", lat: 21.7051, lng: 72.9959 },
+    { name: "Surat", lat: 21.1702, lng: 72.8311 }
+  ]
+},
+
+{
+  name: "Jaipur ⇄ Udaipur",
+  origin: "Jaipur",
+  destination: "Udaipur",
+  distanceKm: 395,
+  avgSpeedKmph: 60,
+  stops: [
+    { name: "Jaipur", lat: 26.9124, lng: 75.7873 },
+    { name: "Ajmer", lat: 26.4499, lng: 74.6399 },
+    { name: "Bhilwara", lat: 25.3463, lng: 74.6364 },
+    { name: "Udaipur", lat: 24.5854, lng: 73.7125 }
+  ]
+},
+
+{
+  name: "Nagpur ⇄ Pune",
+  origin: "Nagpur",
+  destination: "Pune",
+  distanceKm: 710,
+  avgSpeedKmph: 65,
+  stops: [
+    { name: "Nagpur", lat: 21.1458, lng: 79.0882 },
+    { name: "Amravati", lat: 20.9320, lng: 77.7523 },
+    { name: "Aurangabad", lat: 19.8762, lng: 75.3433 },
+    { name: "Pune", lat: 18.5204, lng: 73.8567 }
+  ]
+},
+
+{
+  name: "Bangalore ⇄ Hyderabad Express",
+  origin: "Bangalore",
+  destination: "Hyderabad",
+  distanceKm: 570,
+  avgSpeedKmph: 70,
+  stops: [
+    { name: "Bangalore", lat: 12.9716, lng: 77.5946 },
+    { name: "Anantapur", lat: 14.6819, lng: 77.6006 },
+    { name: "Kurnool", lat: 15.8281, lng: 78.0373 },
+    { name: "Hyderabad", lat: 17.3850, lng: 78.4867 }
+  ]
+},
+
+{
+  name: "Chennai ⇄ Madurai",
+  origin: "Chennai",
+  destination: "Madurai",
+  distanceKm: 460,
+  avgSpeedKmph: 60,
+  stops: [
+    { name: "Chennai", lat: 13.0827, lng: 80.2707 },
+    { name: "Trichy", lat: 10.7905, lng: 78.7047 },
+    { name: "Dindigul", lat: 10.3673, lng: 77.9803 },
+    { name: "Madurai", lat: 9.9252, lng: 78.1198 }
+  ]
+},
+
+{
+  name: "Kochi ⇄ Trivandrum",
+  origin: "Kochi",
+  destination: "Trivandrum",
+  distanceKm: 205,
+  avgSpeedKmph: 55,
+  stops: [
+    { name: "Kochi", lat: 9.9312, lng: 76.2673 },
+    { name: "Alappuzha", lat: 9.4981, lng: 76.3388 },
+    { name: "Kollam", lat: 8.8932, lng: 76.6141 },
+    { name: "Trivandrum", lat: 8.5241, lng: 76.9366 }
+  ]
+},
+
+{
+  name: "Guwahati ⇄ Shillong",
+  origin: "Guwahati",
+  destination: "Shillong",
+  distanceKm: 100,
+  avgSpeedKmph: 40,
+  stops: [
+    { name: "Guwahati", lat: 26.1445, lng: 91.7362 },
+    { name: "Nongpoh", lat: 25.9023, lng: 91.8769 },
+    { name: "Shillong", lat: 25.5788, lng: 91.8933 }
+  ]
+},
 ];
 
 // ===========================

@@ -4,23 +4,27 @@ const stopSchema = new mongoose.Schema({
   name: String,
   lat: Number,
   lng: Number,
+  order: Number
 });
 
 const routeSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  origin: { type: String, required: true },
-  destination: { type: String, required: true },
+  routeNumber: String,
+  routeName: String,
 
-  // ★ NEW FIELDS (auto-generated)
-  originLat: Number,
-  originLng: Number,
-  destinationLat: Number,
-  destinationLng: Number,
+  // Used by local bus routes (publicvehicleseed)
+  name:        String,
+  origin:      String,
+  destination: String,
+  distanceKm:  Number,
+  avgSpeedKmph: { type: Number, default: 25 },
 
-  distanceKm: Number,
-  avgSpeedKmph: { type: Number, default: 50 },
+  type: {
+    type: String,
+    enum: ["INTERCITY", "INTRACITY"],
+    default: "INTERCITY"
+  },
 
-  stops: [stopSchema],
-}, { timestamps: true });
+  stops: [stopSchema]
+});
 
 module.exports = mongoose.model("Route", routeSchema);

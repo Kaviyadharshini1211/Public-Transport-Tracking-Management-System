@@ -115,6 +115,14 @@ const Navbar = ({ user, setUser }) => {
             Contact
           </NavLink>
 
+          <NavLink 
+            to="/local-bus" 
+            className={({ isActive }) => `navbar-link navbar-link-bus ${isActive ? 'active' : ''}`}
+            onClick={closeMobileMenu}
+          >
+            🚌 Local Bus
+          </NavLink>
+
           {/* Not Logged In - Show Sign Up CTA */}
           {!user && (
             <NavLink 

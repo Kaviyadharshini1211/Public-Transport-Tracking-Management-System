@@ -2,6 +2,7 @@ const Booking = require("../models/Booking");
 const Vehicle = require("../models/Vehicle");
 const Route = require("../models/Route");
 const sendSMS = require("../services/smsService");
+const sendEmail = require("../services/emailService");
 
 // ==============================
 // Create Booking
@@ -18,7 +19,7 @@ exports.createBooking = async (req, res) => {
       boardingStop,
     } = req.body;
 
-    console.log("BOOKING BODY:", req.body); // 🔍 debug (remove later if needed)
+    console.log("BOOKING BODY:", req.body);
 
     // ✅ Basic validation
     if (!userId || !vehicleId || !routeId) {
@@ -54,7 +55,11 @@ exports.createBooking = async (req, res) => {
       seatNumbers,
       totalFare,
       boardingStop: boardingStop || null,
-      emailAlerts: false,
+
+      // Alerts enabled by default
+      emailAlerts: true,
+      etaAlertSent: false,
+      etaSmsSent: false,
     });
 
     // ✅ Populate response
@@ -64,17 +69,26 @@ exports.createBooking = async (req, res) => {
       .populate("routeId");
 
     // ==============================
-    // SEND SMS
+    // SEND SMS + EMAIL
     // ==============================
-    if (populated.userId?.phone) {
-      await sendSMS(
-        populated.userId.phone,
-        `Booking Confirmed!
+    const message = `Booking Confirmed!
 Route: ${populated.routeId?.name}
-Vehicle: ${populated.vehicleId?.vehicleNumber}
+Vehicle: ${populated.vehicleId?.regNumber}
 Seats: ${seatNumbers.join(", ")}
 Boarding Stop: ${boardingStop?.name || "N/A"}
-Thank you for choosing our service!`
+Thank you for choosing our service!`;
+
+    // SMS
+    if (populated.userId?.phone) {
+      await sendSMS(populated.userId.phone, message);
+    }
+
+    // Email
+    if (populated.userId?.email) {
+      await sendEmail(
+        populated.userId.email,
+        "Booking Confirmation",
+        message
       );
     }
 
@@ -155,6 +169,10 @@ exports.toggleEmailAlerts = async (req, res) => {
     }
 
     booking.emailAlerts = !booking.emailAlerts;
+
+    // Reset ETA alert flag when toggled
+    booking.etaAlertSent = false;
+
     await booking.save();
 
     res.json({

@@ -1,25 +1,23 @@
 const cron = require("node-cron");
 const nodemailer = require("nodemailer");
 const Booking = require("../models/Booking");
-const Vehicle = require("../models/Vehicle");
-const Route = require("../models/Route");
-const User = require("../models/User");
 
 // ---------------- EMAIL TRANSPORTER ----------------
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.MAIL_USER,     // your Gmail
-    pass: process.env.MAIL_PASS,     // app password
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
   },
 });
 
-// ---------------- HAVERSINE ----------------
+// ---------------- HAVERSINE DISTANCE ----------------
 const distance = (lat1, lon1, lat2, lon2) => {
-  var R = 6371;
-  var dLat = ((lat2 - lat1) * Math.PI) / 180;
-  var dLon = ((lon2 - lon1) * Math.PI) / 180;
-  var a =
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1 * (Math.PI / 180)) *
       Math.cos(lat2 * (Math.PI / 180)) *
@@ -37,19 +35,21 @@ const formatETA = (min) => {
 };
 
 // ---------------- CRON JOB ----------------
-// Runs every 5 minutes (adjust as needed)
+// Runs every 1 minute
 cron.schedule("*/1 * * * *", async () => {
   console.log("🚀 Running ETA Email Job");
 
   try {
-    // Get all bookings with alerts enabled
-    const bookings = await Booking.find({ emailAlerts: true })
-      .populate("userId", "email name")                // MUST include email
-      .populate("vehicleId", "currentLocation driverName lastSeenAt")
-      .populate("routeId", "avgSpeedKmph stops");
+    const bookings = await Booking.find({
+      emailAlerts: true,
+      etaAlertSent: false,
+    })
+      .populate("userId", "email name")
+      .populate("vehicleId", "currentLocation driverName lastSeenAt regNumber")
+      .populate("routeId", "avgSpeedKmph");
 
     for (const booking of bookings) {
-      // ------------ VALIDATE USER / EMAIL ------------
+      // ------------ VALIDATE EMAIL ------------
       const email = booking?.userId?.email;
 
       if (!email || typeof email !== "string" || !email.includes("@")) {
@@ -63,45 +63,67 @@ cron.schedule("*/1 * * * *", async () => {
         continue;
       }
 
+      const stop = booking.boardingStop;
+
       // ------------ VALIDATE VEHICLE LOCATION ------------
       const busLoc = booking?.vehicleId?.currentLocation;
-      if (!busLoc || !busLoc.lat || !busLoc.lng) {
-        console.log("❌ Skipping (bus offline):", booking._id);
+      const lastSeen = booking?.vehicleId?.lastSeenAt;
+
+      if (
+        !busLoc ||
+        !busLoc.lat ||
+        !busLoc.lng ||
+        !lastSeen ||
+        Date.now() - new Date(lastSeen).getTime() > 5 * 60 * 1000
+      ) {
+        console.log("❌ Skipping (bus offline/stale):", booking._id);
         continue;
       }
-
-      const stop = booking.boardingStop;
 
       // ------------ CALCULATE ETA ------------
       const km = distance(busLoc.lat, busLoc.lng, stop.lat, stop.lng);
       const speed = booking.routeId?.avgSpeedKmph || 50;
       const minutes = (km / speed) * 60;
+
+      // Only alert when <= 10 minutes
+      if (minutes > 10) {
+        console.log("⏳ ETA more than 10 min — skipping");
+        continue;
+      }
+
       const etaText = formatETA(minutes);
 
       // ------------ SEND EMAIL ------------
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: process.env.MAIL_USER,
         to: email,
-        subject: "Your Bus ETA Update",
+        subject: "Bus Arriving Soon 🚍",
         html: `
-          <h2>Live ETA Update</h2>
+          <h2>Live ETA Alert</h2>
           <p>Hello <strong>${booking.userId.name}</strong>,</p>
-          <p>Your bus is currently <strong>${etaText}</strong> away from your boarding stop:</p>
+
+          <p>Your bus is approximately <strong>${etaText}</strong> away from your boarding stop:</p>
+
           <h3>${stop.name}</h3>
 
-          <p><b>Driver:</b> ${booking.vehicleId.driverName || "N/A"}</p>
+          <p><b>Vehicle:</b> ${booking.vehicleId?.regNumber || "N/A"}</p>
+          <p><b>Driver:</b> ${booking.vehicleId?.driverName || "N/A"}</p>
           <p><b>Last Updated:</b> ${new Date(
             booking.vehicleId.lastSeenAt
           ).toLocaleTimeString()}</p>
 
           <br/>
-          <small>This is an automated ETA alert.</small>
+          <small>This is an automated ETA notification.</small>
         `,
       });
+
+      // Mark alert sent (prevent spam)
+      booking.etaAlertSent = true;
+      await booking.save();
 
       console.log("📩 Sent ETA email to:", email);
     }
   } catch (err) {
-    console.error("Cron job error:", err);
+    console.error("❌ Cron job error:", err);
   }
 });

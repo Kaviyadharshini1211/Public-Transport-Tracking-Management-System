@@ -54,6 +54,14 @@ const bookingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    etaAlertSent: {
+      type: Boolean,
+      default: false,
+    },
+    etaSmsSent: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

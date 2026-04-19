@@ -29,6 +29,7 @@ import MyBookings from "./pages/MyBooking";
 import Track from "./pages/Track";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
+import LocalBusMap from "./pages/localBusMap";
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -72,6 +73,7 @@ function App() {
           <Route path="/login" element={<Auth setUser={setUser} />} />
           <Route path="/register" element={<Auth setUser={setUser} />} />
           <Route path="/auth/success" element={<AuthSuccess />} />
+          <Route path="/local-bus" element={<LocalBusMap />} />
 
           {/* PASSENGER DASHBOARD */}
           <Route path="/dashboard" element={<Dashboard user={user} />} />

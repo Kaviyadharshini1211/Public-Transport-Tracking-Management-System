@@ -195,6 +195,36 @@
   color: #ffffff;
 }
 
+/* Local Bus link — distinct amber accent */
+.navbar-link-bus {
+  color: #d97706;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .navbar-link-bus {
+  color: #fbbf24;
+}
+
+.navbar-link-bus:hover {
+  background: rgba(217, 119, 6, 0.08) !important;
+  color: #b45309 !important;
+}
+
+[data-theme="dark"] .navbar-link-bus:hover {
+  background: rgba(251, 191, 36, 0.12) !important;
+  color: #fcd34d !important;
+}
+
+.navbar-link-bus.active {
+  background: #d97706 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .navbar-link-bus.active {
+  background: #f59e0b !important;
+  color: #1c1917 !important;
+}
+
 /* ============================================
    SIGN UP CTA BUTTON — Primary CTA in navbar
    ============================================ */

@@ -1,7 +1,9 @@
 const Vehicle = require("../models/Vehicle");
 const Route = require("../models/Route");
 
-// GET all vehicles (populate route)
+// ===============================
+// GET all vehicles
+// ===============================
 exports.listVehicles = async (req, res) => {
   try {
     const vehicles = await Vehicle.find().populate("route");
@@ -12,7 +14,9 @@ exports.listVehicles = async (req, res) => {
   }
 };
 
+// ===============================
 // GET single vehicle
+// ===============================
 exports.getVehicle = async (req, res) => {
   try {
     const vehicle = await Vehicle.findById(req.params.id).populate("route");
@@ -23,7 +27,9 @@ exports.getVehicle = async (req, res) => {
   }
 };
 
-// POST create new vehicle
+// ===============================
+// CREATE vehicle
+// ===============================
 exports.createVehicle = async (req, res) => {
   try {
     const vehicle = await Vehicle.create(req.body);
@@ -35,7 +41,9 @@ exports.createVehicle = async (req, res) => {
   }
 };
 
-// PUT update a vehicle
+// ===============================
+// UPDATE vehicle
+// ===============================
 exports.updateVehicle = async (req, res) => {
   try {
     const updated = await Vehicle.findByIdAndUpdate(req.params.id, req.body, {
@@ -50,7 +58,9 @@ exports.updateVehicle = async (req, res) => {
   }
 };
 
-// DELETE a vehicle
+// ===============================
+// DELETE vehicle
+// ===============================
 exports.deleteVehicle = async (req, res) => {
   try {
     await Vehicle.findByIdAndDelete(req.params.id);
@@ -61,7 +71,9 @@ exports.deleteVehicle = async (req, res) => {
   }
 };
 
-// Assign route to vehicle
+// ===============================
+// ASSIGN ROUTE
+// ===============================
 exports.assignRoute = async (req, res) => {
   try {
     const { routeId } = req.body;
@@ -82,7 +94,9 @@ exports.assignRoute = async (req, res) => {
   }
 };
 
-// Update tracking location
+// ===============================
+// UPDATE TRACKING (USED BY BOTH)
+// ===============================
 exports.updateTracking = async (req, res) => {
   try {
     const { lat, lng } = req.body;
@@ -104,7 +118,9 @@ exports.updateTracking = async (req, res) => {
   }
 };
 
-// Stop tracking
+// ===============================
+// STOP TRACKING
+// ===============================
 exports.stopTracking = async (req, res) => {
   try {
     const updated = await Vehicle.findByIdAndUpdate(
@@ -117,5 +133,44 @@ exports.stopTracking = async (req, res) => {
   } catch (err) {
     console.error("stopTracking:", err);
     res.status(500).json({ message: "Failed to stop tracking" });
+  }
+};
+
+// ===============================
+// 🔥 NEW: ALL TRACKED VEHICLES
+// ===============================
+exports.getTrackedVehicles = async (req, res) => {
+  try {
+    const vehicles = await Vehicle.find().populate("route");
+    res.json(vehicles);
+  } catch (err) {
+    console.error("getTrackedVehicles:", err);
+    res.status(500).json({ message: "Failed to fetch tracked vehicles" });
+  }
+};
+
+// ===============================
+// 🔥 NEW: PUBLIC BUSES ONLY
+// ===============================
+exports.getPublicBuses = async (req, res) => {
+  try {
+    const buses = await Vehicle.find({ isPublic: true }).populate("route");
+    res.json(buses);
+  } catch (err) {
+    console.error("getPublicBuses:", err);
+    res.status(500).json({ message: "Failed to fetch public buses" });
+  }
+};
+
+// ===============================
+// 🔥 NEW: INTERCITY BUSES ONLY
+// ===============================
+exports.getIntercityBuses = async (req, res) => {
+  try {
+    const buses = await Vehicle.find({ isPublic: false }).populate("route");
+    res.json(buses);
+  } catch (err) {
+    console.error("getIntercityBuses:", err);
+    res.status(500).json({ message: "Failed to fetch intercity buses" });
   }
 };
