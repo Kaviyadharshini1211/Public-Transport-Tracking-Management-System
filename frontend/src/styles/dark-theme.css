@@ -1,0 +1,76 @@
+/* ============================================
+   DARK MODE THEME — Deep charcoal, soft shadows
+   ============================================ */
+
+[data-theme="dark"] {
+  /* Primary Colors (adjusted for dark mode legibility) */
+  --color-primary-50: #2d1a1c;
+  --color-primary-100: #3d2426;
+  --color-primary-200: #5a3438;
+  --color-primary-300: #7a4449;
+  --color-primary-400: #a85a5f;
+  --color-primary-500: #d84e55;
+  --color-primary-600: #e66a70;
+  --color-primary-700: #ee8a8f;
+  --color-primary-800: #f5aaae;
+  --color-primary-900: #fccacd;
+
+  /* Background Colors — deep charcoal */
+  --color-background: #0f1419;
+  --color-background-alt: #161c22;
+  --color-surface: #1a1f26;
+  --color-surface-elevated: #242b33;
+
+  /* Text Colors */
+  --color-text-primary: #e8eaed;
+  --color-text-secondary: #9aa0a6;
+  --color-text-tertiary: #6b7280;
+  --color-text-inverse: #1f2937;
+
+  /* Border & Divider */
+  --color-border: #2d3748;
+  --color-divider: #374151;
+
+  /* Gray Scale */
+  --color-gray-50: #2d3748;
+  --color-gray-100: #374151;
+  --color-gray-200: #4b5563;
+  --color-gray-300: #6b7280;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #d1d5db;
+  --color-gray-600: #e5e7eb;
+  --color-gray-700: #f3f4f6;
+  --color-gray-800: #f9fafb;
+  --color-gray-900: #ffffff;
+
+  /* Success Colors */
+  --color-success-50: #1a2e1f;
+  --color-success-100: #234d2c;
+  --color-success-500: #10b981;
+  --color-success-700: #34d399;
+
+  /* Error Colors */
+  --color-error-50: #2d1a1a;
+  --color-error-200: #5a3434;
+  --color-error-700: #f87171;
+
+  /* Gradients */
+  --gradient-background: linear-gradient(180deg, #0f1419 0%, #1a1f26 100%);
+  --gradient-hero: linear-gradient(180deg, #0f1419 0%, #161c22 100%);
+
+  /* Shadows — softer, more spread in dark mode */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 16px 48px -8px rgba(0, 0, 0, 0.45);
+  --shadow-primary: 0 8px 24px rgba(216, 78, 85, 0.25);
+
+  /* Glassmorphism — Dark Mode tokens */
+  --glass-background: rgba(26, 31, 38, 0.7);
+  --glass-background-strong: rgba(26, 31, 38, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-blur: blur(10px);
+  --glass-blur-strong: blur(12px);
+}

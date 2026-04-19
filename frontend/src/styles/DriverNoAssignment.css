@@ -1,0 +1,160 @@
+/* ============================================
+   DRIVER NO ASSIGNMENT — Empty State
+   ============================================ */
+
+.no-assignment-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.no-assignment-card {
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  animation: noAssignFadeIn 0.4s ease both;
+}
+
+[data-theme="dark"] .no-assignment-card {
+  background: rgba(24, 24, 27, 0.85);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes noAssignFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.icon-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 1.75rem;
+}
+
+.icon-circle {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(216, 78, 85, 0.08), rgba(232, 99, 106, 0.04));
+  border-radius: 50%;
+}
+
+.icon {
+  font-size: 2.5rem;
+}
+
+.icon-waves {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.wave {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(216, 78, 85, 0.08);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: wavePulse 3s ease-in-out infinite;
+}
+
+.wave-1 { width: 70px; height: 70px; animation-delay: 0s; }
+.wave-2 { width: 95px; height: 95px; animation-delay: 0.5s; }
+.wave-3 { width: 120px; height: 120px; animation-delay: 1s; }
+
+@keyframes wavePulse {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.no-assignment-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 0.625rem;
+  letter-spacing: -0.02em;
+}
+
+[data-theme="dark"] .no-assignment-title {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.no-assignment-message {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.7;
+  margin: 0 0 1.5rem;
+}
+
+[data-theme="dark"] .no-assignment-message {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contact-info .info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.875rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  color: #475569;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .contact-info .info-item {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.contact-info .info-item:hover {
+  background: #f1f5f9;
+  transform: translateX(4px);
+}
+
+.info-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .no-assignment-card {
+    padding: 2rem 1.25rem;
+    border-radius: 18px;
+  }
+
+  .no-assignment-title {
+    font-size: 1.125rem;
+  }
+
+  .icon-container {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1.5rem;
+  }
+
+  .icon {
+    font-size: 2rem;
+  }
+}

@@ -1,0 +1,633 @@
+/* ============================================
+   BOOK PAGE - PREMIUM DESIGN WITH FULL DARK MODE
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+.book-page-wrapper {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding: 4rem 0 6rem;
+  font-family: 'Inter', sans-serif;
+}
+
+[data-theme="dark"] .book-page-wrapper {
+  background: #0a0f1e;
+}
+
+.book-container {
+  max-width: 1300px !important;
+  padding: 0 2rem !important;
+  margin: 0 auto;
+}
+
+/* ========== HEADER ========== */
+
+.book-header {
+  text-align: left;
+  margin-bottom: 3rem;
+  animation: fadeInDown 0.6s ease;
+}
+
+.book-title {
+  font-weight: 900 !important;
+  font-size: 2.75rem !important;
+  color: #0f172a !important;
+  letter-spacing: -1px;
+  margin-bottom: 0.5rem !important;
+}
+
+[data-theme="dark"] .book-title {
+  color: #f8fafc !important;
+}
+
+.book-subtitle {
+  color: #475569 !important;
+  font-size: 1.1rem !important;
+}
+
+[data-theme="dark"] .book-subtitle {
+  color: #94a3b8 !important;
+}
+
+/* ========== SEARCH FORM ========== */
+
+.form-section {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  border: 1.5px solid #e2e8f0;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 10;
+}
+
+[data-theme="dark"] .form-section {
+  background: #1a2540;
+  border: 1.5px solid #2d3a5c;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ── MUI Input overrides ── */
+
+.styled-input .MuiOutlinedInput-root {
+  background: #f8fafc !important;
+  border-radius: 14px !important;
+  height: 68px;
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .styled-input .MuiOutlinedInput-root {
+  background: #0f1a2e !important;
+  color: #f1f5f9 !important;
+}
+
+/* input text */
+.styled-input .MuiInputBase-input {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .styled-input .MuiInputBase-input {
+  color: #f1f5f9 !important;
+}
+
+/* label */
+.styled-input .MuiInputLabel-root {
+  font-weight: 600 !important;
+  color: #64748b !important;
+}
+
+[data-theme="dark"] .styled-input .MuiInputLabel-root {
+  color: #94a3b8 !important;
+}
+
+/* shrunk label */
+.styled-input .MuiInputLabel-shrink {
+  color: #ef4444 !important;
+  background: #fff !important;
+  padding: 0 6px;
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .styled-input .MuiInputLabel-shrink {
+  background: #1a2540 !important;
+  color: #f87171 !important;
+}
+
+/* border */
+.styled-input .MuiOutlinedInput-notchedOutline {
+  border: 2px solid #e2e8f0 !important;
+}
+
+[data-theme="dark"] .styled-input .MuiOutlinedInput-notchedOutline {
+  border-color: #2d3a5c !important;
+}
+
+.styled-input .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #ef4444 !important;
+}
+
+[data-theme="dark"] .styled-input .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #ef4444 !important;
+}
+
+.styled-input .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* icon color inside inputs */
+.input-icon {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .input-icon {
+  color: #64748b !important;
+}
+
+/* ── Autocomplete Dropdown (Popper) ── */
+
+.MuiAutocomplete-paper {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12) !important;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .MuiAutocomplete-paper {
+  background: #1a2540 !important;
+  border-color: #2d3a5c !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+.MuiAutocomplete-option {
+  color: #1e293b !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  padding: 12px 16px !important;
+}
+
+[data-theme="dark"] .MuiAutocomplete-option {
+  color: #e2e8f0 !important;
+}
+
+.MuiAutocomplete-option:hover,
+.MuiAutocomplete-option.Mui-focused {
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+[data-theme="dark"] .MuiAutocomplete-option:hover,
+[data-theme="dark"] .MuiAutocomplete-option.Mui-focused {
+  background: rgba(239, 68, 68, 0.12) !important;
+}
+
+/* Autocomplete no-options text */
+.MuiAutocomplete-noOptions {
+  color: #94a3b8 !important;
+  font-size: 0.9rem !important;
+}
+
+[data-theme="dark"] .MuiAutocomplete-noOptions {
+  color: #64748b !important;
+}
+
+/* ── Search Button ── */
+
+.search-buses-btn {
+  height: 68px !important;
+  border-radius: 14px !important;
+  font-weight: 800 !important;
+  font-size: 1.1rem !important;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35) !important;
+  text-transform: none !important;
+  transition: all 0.3s ease !important;
+  letter-spacing: 0.3px;
+}
+
+.search-buses-btn:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.45) !important;
+}
+
+/* ========== RESULTS SECTION ========== */
+
+.results-section {
+  animation: fadeInUp 0.5s ease;
+}
+
+.results-title {
+  font-weight: 900 !important;
+  font-size: 1.6rem !important;
+  margin-bottom: 1.5rem !important;
+  color: #0f172a !important;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+[data-theme="dark"] .results-title {
+  color: #f8fafc !important;
+}
+
+.results-title::before {
+  content: "";
+  width: 5px;
+  height: 28px;
+  background: #ef4444;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Vehicle Cards ── */
+
+.premium-card {
+  border-radius: 20px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.3s ease !important;
+  background: #ffffff !important;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .premium-card {
+  background: #1a2540 !important;
+  border-color: #2d3a5c !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.premium-card:hover {
+  transform: translateY(-4px);
+  border-color: #ef4444 !important;
+  box-shadow: 0 12px 32px rgba(239, 68, 68, 0.15) !important;
+}
+
+.vehicle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.vehicle-title {
+  font-weight: 800 !important;
+  font-size: 1.2rem !important;
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .vehicle-title {
+  color: #f1f5f9 !important;
+}
+
+.vehicle-reg-badge {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border: 1.5px solid #e2e8f0;
+  letter-spacing: 0.5px;
+}
+
+[data-theme="dark"] .vehicle-reg-badge {
+  background: #0f1a2e;
+  color: #94a3b8;
+  border-color: #2d3a5c;
+}
+
+.vehicle-route {
+  color: #64748b !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 1.25rem !important;
+}
+
+[data-theme="dark"] .vehicle-route {
+  color: #94a3b8 !important;
+}
+
+.vehicle-times-grid {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border: 1.5px solid #e2e8f0;
+}
+
+[data-theme="dark"] .vehicle-times-grid {
+  background: #0f1a2e;
+  border-color: #2d3a5c;
+}
+
+.time-label {
+  font-size: 0.72rem !important;
+  color: #94a3b8 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-value {
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  font-size: 1.1rem !important;
+}
+
+[data-theme="dark"] .time-value {
+  color: #f1f5f9 !important;
+}
+
+.time-value.highlight-sub {
+  color: #ef4444 !important;
+}
+
+.vehicle-details-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-top: 1rem;
+  border-top: 1.5px dashed #e2e8f0;
+}
+
+[data-theme="dark"] .vehicle-details-bottom {
+  border-color: #2d3a5c;
+}
+
+.detail-label {
+  font-size: 0.78rem !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px !important;
+}
+
+[data-theme="dark"] .detail-label {
+  color: #94a3b8 !important;
+}
+
+.detail-value {
+  color: #1e293b !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+}
+
+[data-theme="dark"] .detail-value {
+  color: #e2e8f0 !important;
+}
+
+.detail-value.highlight-price {
+  color: #10b981 !important;
+  font-size: 1.6rem !important;
+  font-weight: 900 !important;
+}
+
+.select-seats-btn {
+  height: 52px !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  font-size: 1rem !important;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+  text-transform: none !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+  margin-top: 1.25rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.select-seats-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.45) !important;
+}
+
+/* ========== EMPTY STATE ========== */
+
+.empty-state {
+  background: white;
+  border-radius: 24px;
+  padding: 5rem 3rem;
+  border: 2px dashed #e2e8f0;
+  text-align: center;
+}
+
+[data-theme="dark"] .empty-state {
+  background: #1a2540;
+  border-color: #2d3a5c;
+}
+
+.empty-state h6 {
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .empty-state h6 {
+  color: #f1f5f9 !important;
+}
+
+.empty-state .MuiTypography-body2 {
+  color: #64748b !important;
+}
+
+[data-theme="dark"] .empty-state .MuiTypography-body2 {
+  color: #94a3b8 !important;
+}
+
+/* ========== DIALOG / SEAT MAP ========== */
+
+.premium-dialog .MuiDialog-paper {
+  border-radius: 24px !important;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .premium-dialog .MuiDialog-paper {
+  background: #1a2540 !important;
+  color: #f1f5f9 !important;
+}
+
+.dialog-title {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  padding: 1.5rem 2rem !important;
+  font-size: 1.3rem !important;
+  font-weight: 800 !important;
+  color: white !important;
+}
+
+.trip-summary-panel {
+  background: #f8fafc !important;
+}
+
+[data-theme="dark"] .trip-summary-panel {
+  background: #0f1a2e !important;
+}
+
+/* Summary rows */
+.summary-row .MuiTypography-body2 {
+  color: #64748b !important;
+  font-size: 0.88rem !important;
+}
+
+[data-theme="dark"] .summary-row .MuiTypography-body2 {
+  color: #94a3b8 !important;
+}
+
+.summary-row .MuiTypography-body1 {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  font-size: 0.95rem !important;
+}
+
+[data-theme="dark"] .summary-row .MuiTypography-body1 {
+  color: #f1f5f9 !important;
+}
+
+/* ── Stop Selection dropdowns inside Dialog ── */
+.MuiFormControl-root .MuiInputLabel-root {
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="dark"] .MuiFormControl-root .MuiInputLabel-root {
+  color: #94a3b8 !important;
+}
+
+.MuiFormControl-root .MuiOutlinedInput-root {
+  color: #0f172a !important;
+  background: #f8fafc !important;
+  border-radius: 10px !important;
+}
+
+[data-theme="dark"] .MuiFormControl-root .MuiOutlinedInput-root {
+  color: #f1f5f9 !important;
+  background: #0f1a2e !important;
+}
+
+[data-theme="dark"] .MuiFormControl-root .MuiOutlinedInput-notchedOutline {
+  border-color: #2d3a5c !important;
+}
+
+/* Select dropdown menu */
+.MuiMenu-paper {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="dark"] .MuiMenu-paper {
+  background: #1a2540 !important;
+  border-color: #2d3a5c !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+.MuiMenuItem-root {
+  color: #1e293b !important;
+  font-weight: 500 !important;
+  font-size: 0.9rem !important;
+}
+
+[data-theme="dark"] .MuiMenuItem-root {
+  color: #e2e8f0 !important;
+}
+
+.MuiMenuItem-root:hover {
+  background: rgba(239, 68, 68, 0.07) !important;
+}
+
+[data-theme="dark"] .MuiMenuItem-root:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+}
+
+.MuiMenuItem-root.Mui-selected {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+  font-weight: 700 !important;
+}
+
+/* ── Dialog action buttons ── */
+.dialog-cancel-btn {
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  color: #64748b !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .dialog-cancel-btn {
+  color: #94a3b8 !important;
+  border-color: #2d3a5c !important;
+}
+
+.dialog-confirm-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  height: 52px !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  text-transform: none !important;
+  font-size: 1rem !important;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3) !important;
+}
+
+.dialog-confirm-btn:hover {
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.45) !important;
+  transform: translateY(-1px);
+}
+
+/* ── Total amount box ── */
+.total-amount-box {
+  background: #ecfdf5 !important;
+  padding: 1.25rem;
+  border-radius: 14px;
+  border: 1.5px solid #10b981 !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+[data-theme="dark"] .total-amount-box {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* ── Dividers ── */
+[data-theme="dark"] .MuiDivider-root {
+  border-color: #2d3a5c !important;
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 900px) {
+  .book-title {
+    font-size: 2rem !important;
+  }
+
+  .search-buses-btn {
+    height: 58px !important;
+    font-size: 1rem !important;
+  }
+
+  .styled-input .MuiOutlinedInput-root {
+    height: 58px;
+  }
+}

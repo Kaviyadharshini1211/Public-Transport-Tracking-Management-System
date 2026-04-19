@@ -1,0 +1,237 @@
+/* ═══════════════════════════════════════════
+   ADMIN VEHICLES — Fleet Management Cards
+   ═══════════════════════════════════════════ */
+
+.av-container {
+  animation: fadeInContent 0.4s ease;
+}
+
+/* ─── Section Header ─── */
+.av-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.av-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+}
+
+.av-section-title span:first-child {
+  font-size: 24px;
+}
+
+.av-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ─── Vehicle Grid ─── */
+.av-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
+}
+
+/* ─── Vehicle Card ─── */
+.av-card {
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 24px;
+  transition: var(--admin-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.av-card:hover {
+  border-color: var(--admin-border-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.av-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--admin-accent), #a78bfa);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.av-card:hover::before {
+  opacity: 1;
+}
+
+/* Card Top Section */
+.av-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.av-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.av-card-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.av-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--admin-text);
+  letter-spacing: -0.01em;
+  margin: 0 0 2px;
+}
+
+.av-card-model {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  font-weight: 500;
+}
+
+/* Card Details */
+.av-card-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.av-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.av-detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.av-detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--admin-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.av-detail-value.unassigned {
+  color: var(--admin-warning);
+  font-style: italic;
+}
+
+/* Card Actions */
+.av-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.av-card-actions .admin-btn {
+  flex: 1;
+}
+
+/* ─── Add Vehicle Modal Extras ─── */
+.av-form-status-row {
+  display: flex;
+  gap: 10px;
+}
+
+.av-status-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  background: var(--admin-surface-3);
+  border: 2px solid var(--admin-border);
+  border-radius: var(--admin-radius-xs);
+  cursor: pointer;
+  transition: var(--admin-transition);
+  color: var(--admin-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.av-status-option:hover {
+  border-color: var(--admin-border-hover);
+}
+
+.av-status-option.selected {
+  border-color: var(--admin-accent);
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--admin-accent-light);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .av-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .av-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .av-card {
+    padding: 18px;
+  }
+
+  .av-card-details {
+    grid-template-columns: 1fr;
+  }
+
+  .av-card-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .av-card {
+    padding: 16px;
+  }
+
+  .av-card-title {
+    font-size: 16px;
+  }
+
+  .av-card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+}

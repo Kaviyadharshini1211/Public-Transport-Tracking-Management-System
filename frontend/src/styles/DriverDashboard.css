@@ -1,0 +1,141 @@
+/* ============================================
+   DRIVER DASHBOARD — Premium Admin-Inspired Look
+   ============================================ */
+
+.drv-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.drv-dash__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.drv-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: var(--drv-surface);
+  border-radius: 16px;
+  border: 1px solid var(--drv-border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.drv-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.drv-stat-card__icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.12); /* Admin Indigo */
+  color: #818cf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drv-stat-card--distance .drv-stat-card__icon-wrap {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+}
+
+.drv-stat-card--status .drv-stat-card__icon-wrap {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+}
+
+.drv-stat-card__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.drv-stat-card__value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--drv-text);
+  line-height: 1.2;
+}
+
+.drv-stat-card__label {
+  font-size: 0.8rem;
+  color: var(--drv-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+.drv-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.drv-status-dot--online { background: #34d399; box-shadow: 0 0 10px rgba(52, 211, 153, 0.6); }
+.drv-status-dot--offline { background: #64748b; }
+
+/* TRIP CONTROL BUTTONS */
+.drv-dash__trip-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1.5rem;
+  background: linear-gradient(135deg, var(--drv-surface) 0%, var(--drv-surface-2) 100%);
+  border-radius: 20px;
+  border: 1px solid var(--drv-border);
+  text-align: center;
+}
+
+.drv-trip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 380px;
+  padding: 1.25rem 2rem;
+  border-radius: 100px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 32px var(--drv-primary-glow);
+}
+
+.drv-trip-btn--start {
+  background: linear-gradient(135deg, var(--drv-primary), #a78bfa);
+}
+
+.drv-trip-btn--start:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px var(--drv-primary-glow);
+  background: linear-gradient(135deg, #4f46e5, #8b5cf6);
+}
+
+.drv-trip-btn--end {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
+}
+
+.drv-trip-btn--end:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(239, 68, 68, 0.4);
+}
+
+.drv-trip-subtitle {
+  margin-top: 1.5rem;
+  color: var(--drv-text-secondary);
+  font-size: 0.95rem;
+  max-width: 400px;
+}
