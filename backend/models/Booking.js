@@ -45,9 +45,14 @@ const bookingSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Confirmed", "Cancelled"],
-      default: "Confirmed",
+      enum: ["Pending", "Confirmed", "Cancelled", "Failed"],
+      default: "Pending",
     },
+
+    // Razorpay specific fields
+    razorpayOrderId: { type: String, default: null },
+    razorpayPaymentId: { type: String, default: null },
+    razorpaySignature: { type: String, default: null },
 
     // ⭐ NEW FIELD — User can toggle alerts ON/OFF
     emailAlerts: {

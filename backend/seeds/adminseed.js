@@ -21,7 +21,6 @@ async function seedAdmin() {
       email: "admin@pt.com",
       password: "admin123",
       role: "admin",
-      phone: "1234567890",
     });
 
     console.log("Admin seeded successfully!");

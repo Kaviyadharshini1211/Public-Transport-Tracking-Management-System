@@ -4,58 +4,20 @@ const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-const validator = require("validator");
-
+// ------------------ REGISTER (PASSENGER ONLY) ------------------
 exports.register = async (req, res) => {
   try {
-    let { name, email, password, phone } = req.body;
+    const { name, email, password, phone } = req.body;
 
-    // 🔴 Check required fields
-    if (!name || !email || !password || !phone) {
-      return res.status(400).json({
-        message: "All fields including phone are required",
-      });
+    if (!phone || !/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ message: "Valid 10-digit phone number is required" });
     }
 
-    // 🔴 Validate email
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({
-        message: "Invalid email format",
-      });
-    }
-
-    // 🔵 Clean phone input
-    phone = phone.replace(/\s+/g, ""); // remove spaces
-
-    // Remove +91 if user entered it
-    if (phone.startsWith("+91")) {
-      phone = phone.slice(3);
-    }
-
-    // Remove leading 0 if user entered 0XXXXXXXXXX
-    if (phone.startsWith("0")) {
-      phone = phone.slice(1);
-    }
-
-    // 🔴 Validate 10-digit Indian number
-    if (!/^[6-9]\d{9}$/.test(phone)) {
-      return res.status(400).json({
-        message: "Invalid Indian phone number",
-      });
-    }
-
-    // 🔵 Force E.164 format
-    phone = `+91${phone}`;
-
-    // 🔴 Check if email exists
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists",
-      });
-    }
+    if (existingUser)
+      return res.status(400).json({ message: "User already exists" });
 
-    // 🔵 Create user
+    // Registration is strictly for passengers. Drivers/Admins must be created by an Admin.
     const user = await User.create({
       name,
       email,
@@ -64,43 +26,40 @@ exports.register = async (req, res) => {
       role: "passenger",
     });
 
-    // 🔐 Generate JWT
     const token = jwt.sign(
       { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 
     res.status(201).json({
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
       token,
     });
-
   } catch (err) {
     console.error("Register error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: err.message || "Server error" });
   }
 };
 
-
-// ------------------ LOGIN (ALL ROLES) ------------------
 exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
+  console.log(`[Auth] Login attempt for: ${email}`);
 
+  try {
     const user = await User.findOne({ email });
-    if (!user)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!user) {
+      console.warn(`[Auth] User not found: ${email}`);
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      console.warn(`[Auth] Passwords do not match for: ${email}`);
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    console.log(`[Auth] Login successful: ${email} (${user.role})`);
 
     const token = jwt.sign(
       { id: user._id, role: user.role },

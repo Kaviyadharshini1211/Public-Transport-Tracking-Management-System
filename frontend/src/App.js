@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
@@ -9,6 +10,7 @@ import Navbar from "./components/Navbar";
 import NotFound from "./pages/NotFound";
 import AuthSuccess from "./pages/AuthSuccess";
 import ErrorBoundary from "./components/ErrorBoundary";
+import Footer from "./components/Footer";
 
 // DRIVER MODULE (NEW)
 import DriverLayout from "./pages/driver/DriverLayout";
@@ -30,6 +32,13 @@ import Track from "./pages/Track";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 import LocalBusMap from "./pages/localBusMap";
+
+// NEW PASSENGER PAGES
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
+import Favorites from "./pages/Favorites";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -61,12 +70,13 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <Toaster position="top-right" reverseOrder={false} />
         <Navbar user={user} setUser={setUser} />
 
         <Routes>
 
           {/* PUBLIC ROUTES */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home user={user} />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/signup" element={<Auth setUser={setUser} />} />
@@ -76,7 +86,11 @@ function App() {
           <Route path="/local-bus" element={<LocalBusMap />} />
 
           {/* PASSENGER DASHBOARD */}
-          <Route path="/dashboard" element={<Dashboard user={user} />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
 
           {/* VEHICLES (visible to non-admin too) */}
           <Route path="/vehicles" element={<Vehicles user={user} />} />
@@ -85,12 +99,12 @@ function App() {
           <Route path="/driver" element={<DriverLayout />} />
 
           {/* BOOKING MODULE */}
-          <Route path="/book" element={<Book />} />
-          <Route path="/book/confirm" element={<ConfirmBooking />} />
-          <Route path="/bookings" element={<MyBookings />} />
-          <Route path="/track/:vehicleId" element={<Track />} />
+          <Route path="/book" element={<ProtectedRoute><Book /></ProtectedRoute>} />
+          <Route path="/book/confirm" element={<ProtectedRoute><ConfirmBooking /></ProtectedRoute>} />
+          <Route path="/bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
+          <Route path="/track/:vehicleId" element={<ProtectedRoute><Track /></ProtectedRoute>} />
 
-          {/* ADMIN NESTED ROUTE */}
+          {/* ADMIN NESTED ROUTES */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />
@@ -104,6 +118,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
 
         </Routes>
+        <Footer />
       </Router>
     </ErrorBoundary>
   );

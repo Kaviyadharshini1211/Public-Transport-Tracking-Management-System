@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/api";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 import {
   MapContainer,
@@ -12,6 +13,7 @@ import {
 import L from "leaflet";
 import polyline from "polyline";
 import "leaflet/dist/leaflet.css";
+import "../styles/Track.css";
 
 // ---------------- FIX DEFAULT MARKERS ----------------
 delete L.Icon.Default.prototype._getIconUrl;
@@ -56,56 +58,86 @@ const formatETA = (min) => {
 
 export default function Track() {
   const { vehicleId } = useParams();
+  const navigate = useNavigate();
 
   const [vehicle, setVehicle] = useState(null);
   const [booking, setBooking] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [routeCoords, setRouteCoords] = useState([]);
   const [coveredCoords, setCoveredCoords] = useState([]);
   const [remainingCoords, setRemainingCoords] = useState([]);
 
-  const [etaFinal, setEtaFinal] = useState(null);
   const [etaBoarding, setEtaBoarding] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null); // NEW: null=checking, true/false
 
   const mapRef = useRef(null);
 
-  // Default fallback center (India)
-  const defaultCenter = [28.6139, 77.2090];
+  // Get user from localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  // Safe bus position
-  const busPosition = vehicle?.currentLocation
-    ? [vehicle.currentLocation.lat, vehicle.currentLocation.lng]
-    : defaultCenter;
-
-  // Read bookingId
-  const params = new URLSearchParams(window.location.search);
-  const bookingId = params.get("bookingId");
-
-  // ---------- FETCH BOOKING ----------
+  // ---------- VERIFY BOOKING ----------
   useEffect(() => {
-    if (!bookingId) return;
-    API.get(`/bookings/${bookingId}`)
-      .then((res) => setBooking(res.data))
-      .catch(console.error);
-  }, [bookingId]);
+    if (!user) {
+      setError("Please login to track the bus.");
+      setIsAuthorized(false);
+      setLoading(false);
+      return;
+    }
+
+    if (user.role === "admin" || user.role === "driver") {
+      setIsAuthorized(true);
+      return;
+    }
+
+    // For passengers, check if they have a confirmed booking for THIS vehicle
+    const checkBooking = async () => {
+      try {
+        const res = await API.get(`/bookings/check-active/${user.id || user._id}/${vehicleId}`);
+        if (res.data.hasActiveBooking) {
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+          setError("Please book a ticket to track the bus.");
+        }
+      } catch (err) {
+        console.error("Booking verification failed:", err);
+        setError("Failed to verify booking status.");
+        setIsAuthorized(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkBooking();
+  }, [user, vehicleId]);
 
   // ---------- FETCH VEHICLE ----------
   const fetchVehicle = async () => {
     try {
+      if (!isAuthorized && user?.role === "passenger") return;
+
       const res = await API.get(`/vehicles/${vehicleId}`);
       setVehicle(res.data);
+      // setError(null); // Remove this to avoid clearing the "No booking" error
     } catch (err) {
       console.error(err);
+      if (isAuthorized) setError("Failed to load vehicle data. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
+    if (!vehicleId || isAuthorized === false) return;
+    
     fetchVehicle();
     const iv = setInterval(fetchVehicle, 3000);
     return () => clearInterval(iv);
-  }, []);
+  }, [vehicleId, isAuthorized]);
 
-  // ---------- LOAD ROUTE ----------
+  // ---------- LOAD ROUTE FROM OSRM ----------
   useEffect(() => {
     if (!vehicle?.route?.stops) return;
 
@@ -125,10 +157,9 @@ export default function Track() {
         const coords = decoded.map(([lat, lng]) => [lat, lng]);
         setRouteCoords(coords);
 
+        // Auto zoom to route
         if (mapRef.current) {
-          mapRef.current.fitBounds(L.latLngBounds(coords), {
-            padding: [40, 40],
-          });
+          mapRef.current.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
         }
       } catch (e) {
         console.error("Route load failed:", e);
@@ -138,7 +169,7 @@ export default function Track() {
     loadRoute();
   }, [vehicle]);
 
-  // ---------- SPLIT ROUTE ----------
+  // ---------- SPLIT COVERED / REMAINING ----------
   useEffect(() => {
     if (!vehicle?.currentLocation || !routeCoords.length) return;
 
@@ -159,7 +190,7 @@ export default function Track() {
     setRemainingCoords(routeCoords.slice(index));
   }, [vehicle, routeCoords]);
 
-  // ---------- ETA FINAL ----------
+  // ---------- ETA TO FINAL DESTINATION ----------
   useEffect(() => {
     if (!remainingCoords.length || !vehicle?.route) return;
 
@@ -178,10 +209,11 @@ export default function Track() {
     setEtaFinal(formatETA(minutes));
   }, [remainingCoords]);
 
-  // ---------- ETA BOARDING ----------
+  // ---------- ETA TO BOARDING STOP ----------
   useEffect(() => {
     if (!booking?.boardingStop) return;
     if (!vehicle?.currentLocation) return;
+    if (!vehicle?.route?.avgSpeedKmph) return;
 
     const stop = booking.boardingStop;
 
@@ -192,13 +224,13 @@ export default function Track() {
       stop.lng
     );
 
-    const speed = vehicle.route?.avgSpeedKmph || 50;
+    const speed = vehicle.route.avgSpeedKmph || 50;
     const minutes = (d / speed) * 60;
 
     setEtaBoarding(formatETA(minutes));
-  }, [booking, vehicle]);
+  }, [booking?.boardingStop, vehicle?.currentLocation, vehicle?.route?.avgSpeedKmph]);
 
-  // ---------- FOLLOW BUS ----------
+  // ---------- FOLLOW BUS AUTO ----------
   useEffect(() => {
     if (!vehicle?.currentLocation || !mapRef.current) return;
 
@@ -209,77 +241,154 @@ export default function Track() {
     );
   }, [vehicle]);
 
-  if (!vehicle) return <h2 style={{ padding: 20 }}>Loading…</h2>;
-
-  return (
-    <div style={{ height: "100vh" }}>
-      <h2 style={{ padding: 20 }}>
-        Live Tracking 🚍
-        <span
-          style={{
-            marginLeft: 15,
-            color: vehicle.currentLocation ? "green" : "orange",
-          }}
-        >
-          {vehicle.currentLocation ? "● Live" : "● Not Started"}
-        </span>
-
-        {etaFinal && (
-          <span style={{ marginLeft: 20, color: "green" }}>
-            | ETA (Destination): {etaFinal}
-          </span>
-        )}
-
-        {etaBoarding && (
-          <span style={{ marginLeft: 20, color: "blue" }}>
-            | ETA (Your Stop): {etaBoarding}
-          </span>
-        )}
-      </h2>
-
-      {!vehicle.currentLocation && (
-        <div style={{ padding: 20, color: "red" }}>
-          Bus has not started yet. Tracking will appear once the driver goes
-          online.
+  // ---------- LOADING STATE ----------
+  if (loading) {
+    return (
+      <div className="track-page">
+        <div className="track-loading">
+          <LoadingSpinner size="lg" />
+          <p className="track-loading-text">Loading vehicle data...</p>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      <MapContainer
-        center={busPosition}
-        zoom={14}
-        style={{ height: "85vh" }}
-        whenCreated={(map) => (mapRef.current = map)}
-      >
-        {/* BASE MAP */}
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+  // ---------- ERROR STATE ----------
+  if (error) {
+    return (
+      <div className="track-page">
+        <div className="track-error">
+          <span className="track-error-icon">⚠️</span>
+          <h2 className="track-error-title">Something went wrong</h2>
+          <p className="track-error-message">{error}</p>
+          <button className="track-error-btn" onClick={() => navigate("/vehicles")}>
+            ← Back to Vehicles
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-        {/* TRAFFIC */}
-        <TileLayer
-          url={`https://api.tomtom.com/traffic/map/4/tile/flow/{z}/{x}/{y}.png?key=YOUR_TOMTOM_KEY`}
-          opacity={0.7}
-        />
+  // ---------- NO VEHICLE ----------
+  if (!vehicle) {
+    return (
+      <div className="track-page">
+        <div className="track-error">
+          <span className="track-error-icon">🚌</span>
+          <h2 className="track-error-title">Vehicle Not Found</h2>
+          <p className="track-error-message">
+            The vehicle you're looking for doesn't exist or has been removed.
+          </p>
+          <button className="track-error-btn" onClick={() => navigate("/vehicles")}>
+            ← Back to Vehicles
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-        {/* Covered */}
-        <Polyline
-          positions={coveredCoords}
-          pathOptions={{ color: "#555", weight: 8, opacity: 0.9 }}
-        />
+  // ---------- NO LOCATION DATA ----------
+  if (!vehicle.currentLocation || !vehicle.currentLocation.lat) {
+    return (
+      <div className="track-page">
+        <div className="track-no-location">
+          <div className="track-no-location-icon">📡</div>
+          <h2 className="track-no-location-title">No Live Tracking Available</h2>
+          <p className="track-no-location-message">
+            This vehicle ({vehicle.regNumber || "Unknown"}) hasn't started sharing its location yet.
+            The driver may not have started the trip. Please check back later.
+          </p>
 
-        {/* Remaining */}
-        <Polyline
-          positions={remainingCoords}
-          pathOptions={{ color: "blue", weight: 6 }}
-        />
+          {/* Show vehicle info even without location */}
+          <div className="track-vehicle-info-card">
+            <div className="track-info-row">
+              <strong>Registration:</strong> {vehicle.regNumber || "—"}
+            </div>
+            <div className="track-info-row">
+              <strong>Model:</strong> {vehicle.model || "—"}
+            </div>
+            <div className="track-info-row">
+              <strong>Driver:</strong> {vehicle.driverName || "Unassigned"}
+            </div>
+            <div className="track-info-row">
+              <strong>Route:</strong> {vehicle.route?.name || "Unassigned"}
+            </div>
+            <div className="track-info-row">
+              <strong>Status:</strong>{" "}
+              <span className={`track-status ${vehicle.status === "active" ? "active" : ""}`}>
+                {vehicle.status ? vehicle.status.toUpperCase() : "UNKNOWN"}
+              </span>
+            </div>
+          </div>
 
-        {/* Stops */}
-        {vehicle.route?.stops?.map((stop, i) => (
-          <Marker key={i} position={[stop.lat, stop.lng]}>
-            <Popup>{stop.name}</Popup>
-          </Marker>
-        ))}
+          <button className="track-error-btn" onClick={() => navigate("/vehicles")}>
+            ← Back to Vehicles
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-        {/* Bus Marker */}
-        {vehicle.currentLocation && (
+  // ---------- RENDER MAP ----------
+  return (
+    <div className="track-page">
+      {/* Header Bar */}
+      <div className="track-header">
+        <div className="track-header-left">
+          <button className="track-back-btn" onClick={() => navigate("/vehicles")}>
+            ←
+          </button>
+          <h2 className="track-title">
+            Live Tracking 🚍
+            <span className="track-vehicle-label">{vehicle.regNumber}</span>
+          </h2>
+        </div>
+
+        <div className="track-eta-badges">
+          {etaFinal && (
+            <span className="eta-badge eta-destination">
+              🏁 Destination: {etaFinal}
+            </span>
+          )}
+          {etaBoarding && (
+            <span className="eta-badge eta-boarding">
+              📍 Your Stop: {etaBoarding}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Map */}
+      <div className="track-map-container">
+        <MapContainer
+          center={[vehicle.currentLocation.lat, vehicle.currentLocation.lng]}
+          zoom={14}
+          style={{ height: "100%", width: "100%", minHeight: "400px" }}
+          ref={mapRef}
+        >
+          {/* BASE OSM MAP */}
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+          {/* Covered route (dark grey) */}
+          <Polyline
+            positions={coveredCoords}
+            pathOptions={{ color: "#555", weight: 8, opacity: 0.9 }}
+          />
+
+          {/* Remaining route (blue) */}
+          <Polyline
+            positions={remainingCoords}
+            pathOptions={{ color: "blue", weight: 6 }}
+          />
+
+          {/* Stops */}
+          {vehicle.route?.stops?.map((stop, i) => (
+            <Marker key={i} position={[stop.lat, stop.lng]}>
+              <Popup>{stop.name}</Popup>
+            </Marker>
+          ))}
+
+          {/* Bus Marker */}
           <Marker
             position={[
               vehicle.currentLocation.lat,
@@ -293,16 +402,15 @@ export default function Track() {
               Driver: {vehicle.driverName}
               <br />
               Last Updated:{" "}
-              {vehicle.lastSeenAt &&
-                new Date(vehicle.lastSeenAt).toLocaleTimeString("en-IN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
+              {new Date(vehicle.lastSeenAt).toLocaleTimeString("en-IN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
             </Popup>
           </Marker>
-        )}
-      </MapContainer>
+        </MapContainer>
+      </div>
     </div>
   );
 }

@@ -27,6 +27,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  overflow-x: hidden;
 }
 
 body {
@@ -37,6 +39,37 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-background);
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ========== RESPONSIVE IMAGES & MEDIA ========== */
+
+img, video, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive container utility */
+.responsive-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-container {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
 }
 
 /* ========== ACCESSIBILITY ========== */

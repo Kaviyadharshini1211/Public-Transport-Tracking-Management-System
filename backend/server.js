@@ -1,6 +1,12 @@
+// Use Google DNS to resolve MongoDB SRV records (network DNS fix)
+const dns = require("dns");
+dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+
 const express = require("express");
-const dotenv  = require("dotenv");
-dotenv.config();
+const http = require("http");
+const { Server } = require("socket.io");
+const dotenv = require("dotenv");
+dotenv.config();                        // 1️⃣ Load env FIRST 🔥
 
 const connectDB = require("./config/db");
 const cors      = require("cors");
@@ -19,25 +25,87 @@ connectDB().then(() => {
 
 const app = express();
 
-app.use(cors({
-  origin:         "*",
-  methods:        ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+// CORS Whitelist (Authorized origins)
+const whitelist = [
+  process.env.FRONTEND_URL,
+  "https://public-transport-system-qydu.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:5173",
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.error(`[CORS Error] Blocked origin: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type", 
+    "Authorization", 
+    "X-Requested-With", 
+    "Accept", 
+    "Origin"
+  ],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(passport.initialize());
 
 // ── Routes ────────────────────────────────────────────────────────────────────
-app.use("/api/auth",        require("./routes/authRoutes"));
-app.use("/api/vehicles",    require("./routes/vehicleRoutes"));
-app.use("/api/routes",      require("./routes/routeRoutes"));
-app.use("/api/dashboard",   require("./routes/dashboardRoutes"));
-app.use("/api/bookings",    require("./routes/bookingRoutes"));
-
-// ★ NEW — local city buses
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/vehicles", require("./routes/vehicleRoutes"));
+app.use("/api/routes", require("./routes/routeRoutes"));
+app.use("/api/dashboard", require("./routes/dashboardRoutes"));
+app.use("/api/bookings", require("./routes/bookingRoutes"));
+app.use("/api/trips", require("./routes/tripRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
+app.use("/api/sos", require("./routes/sosRoutes"));
+app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/local-buses", require("./routes/localBusRoutes"));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+  }
+});
+
+// Attach socket IO to app globally for controllers
+app.set("io", io);
+
+io.on("connection", (socket) => {
+  console.log(`[Socket.IO] New connection: ${socket.id}`);
+  socket.on("disconnect", () => {
+    console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
+  });
+});
+
+server.listen(PORT, () => console.log(`Server & Socket.IO running on port ${PORT}`));
+
+// Better error handling for production
+app.use((err, req, res, next) => {
+  console.error(`[Error] ${req.method} ${req.url}:`, err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || "Internal Server Error",
+    error: process.env.NODE_ENV === "development" ? err : {},
+  });
+});
+
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});

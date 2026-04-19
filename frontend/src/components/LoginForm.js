@@ -20,7 +20,7 @@ const LoginForm = ({ setUser }) => {
       setError("Google login is only available for passengers.");
       return;
     }
-    window.location.href = `${backendURL}/auth/google`;
+    window.location.href = "https://public-transport-system-8yox.onrender.com/api/auth/google";
   };
 
   const togglePasswordVisibility = () => {
@@ -193,7 +193,7 @@ const LoginForm = ({ setUser }) => {
             onClick={() => navigate("/register")}
             disabled={loading}
           >
-            Register here
+            Sign Up here
           </button>
         </div>
       </div>

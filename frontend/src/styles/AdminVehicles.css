@@ -1,210 +1,237 @@
-/* AdminVehicles.css */
+/* ═══════════════════════════════════════════
+   ADMIN VEHICLES — Fleet Management Cards
+   ═══════════════════════════════════════════ */
 
-.vehicles-container {
-  padding: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
+.av-container {
+  animation: fadeInContent 0.4s ease;
 }
 
-.vehicles-header {
-  margin-bottom: 32px;
-  color: white;
-  font-weight: 700;
-  text-align: center;
-  font-size: 2.5rem;
-  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+/* ─── Section Header ─── */
+.av-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.vehicles-grid {
+.av-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+}
+
+.av-section-title span:first-child {
+  font-size: 24px;
+}
+
+.av-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ─── Vehicle Grid ─── */
+.av-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
 }
 
-/* Responsive breakpoints */
-@media (max-width: 1536px) {
-  .vehicles-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 1200px) {
-  .vehicles-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .vehicles-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .vehicles-container {
-    padding: 16px;
-  }
-
-  .vehicles-header {
-    font-size: 2rem;
-  }
-}
-
-.vehicle-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+/* ─── Vehicle Card ─── */
+.av-card {
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 24px;
+  transition: var(--admin-transition);
   position: relative;
+  overflow: hidden;
 }
 
-.vehicle-card::before {
+.av-card:hover {
+  border-color: var(--admin-border-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.av-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  height: 3px;
+  background: linear-gradient(90deg, var(--admin-accent), #a78bfa);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.vehicle-card:hover {
-  transform: translateY(-12px) scale(1.02);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+.av-card:hover::before {
+  opacity: 1;
 }
 
-.card-content {
-  padding: 24px;
-}
-
-.card-header {
+/* Card Top Section */
+.av-card-top {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 18px;
 }
 
-.vehicle-reg-number {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0;
-  letter-spacing: 1px;
-}
-
-.status-badge {
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.vehicle-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.detail-row {
+.av-card-identity {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  transition: background 0.2s ease;
+  gap: 14px;
 }
 
-.detail-row:hover {
-  background: #e9ecef;
+.av-card-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
 }
 
-.detail-icon {
-  margin-right: 12px;
-  font-size: 1.25rem;
-  width: 24px;
-  text-align: center;
+.av-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--admin-text);
+  letter-spacing: -0.01em;
+  margin: 0 0 2px;
 }
 
-.detail-label {
-  font-weight: 600;
-  color: #495057;
-  margin-right: 8px;
-  min-width: 80px;
-}
-
-.detail-value {
-  color: #212529;
+.av-card-model {
+  font-size: 12px;
+  color: var(--admin-text-muted);
   font-weight: 500;
 }
 
-.detail-value.unassigned {
-  color: #6c757d;
+/* Card Details */
+.av-card-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.av-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.av-detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.av-detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--admin-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.av-detail-value.unassigned {
+  color: var(--admin-warning);
   font-style: italic;
 }
 
-.detail-value.route-assigned {
-  color: #28a745;
+/* Card Actions */
+.av-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.av-card-actions .admin-btn {
+  flex: 1;
+}
+
+/* ─── Add Vehicle Modal Extras ─── */
+.av-form-status-row {
+  display: flex;
+  gap: 10px;
+}
+
+.av-status-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  background: var(--admin-surface-3);
+  border: 2px solid var(--admin-border);
+  border-radius: var(--admin-radius-xs);
+  cursor: pointer;
+  transition: var(--admin-transition);
+  color: var(--admin-text-muted);
+  font-size: 13px;
   font-weight: 600;
 }
 
-/* Empty state */
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
-  color: white;
+.av-status-option:hover {
+  border-color: var(--admin-border-hover);
 }
 
-.empty-state-icon {
-  font-size: 5rem;
-  margin-bottom: 20px;
-  opacity: 0.6;
+.av-status-option.selected {
+  border-color: var(--admin-accent);
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--admin-accent-light);
 }
 
-.empty-state-text {
-  font-size: 1.5rem;
-  font-weight: 500;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Loading state */
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-}
-
-.loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 5px solid rgba(255, 255, 255, 0.3);
-  border-top: 5px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Pulse animation for new cards */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .av-section-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
-  50% {
-    opacity: 0.8;
+
+  .av-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .av-card {
+    padding: 18px;
+  }
+
+  .av-card-details {
+    grid-template-columns: 1fr;
+  }
+
+  .av-card-actions {
+    flex-wrap: wrap;
   }
 }
 
-.vehicle-card.new {
-  animation: pulse 2s ease-in-out;
+@media (max-width: 480px) {
+  .av-card {
+    padding: 16px;
+  }
+
+  .av-card-title {
+    font-size: 16px;
+  }
+
+  .av-card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
 }

@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
+import { useToast, ToastContainer } from "../components/Toast";
+import LoadingSpinner from "../components/LoadingSpinner";
 import "../styles/Vehicles.css";
 
 const Vehicles = ({ user }) => {
   const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { toasts, addToast, removeToast } = useToast();
 
   const fetchVehicles = async () => {
     try {
@@ -13,6 +17,8 @@ const Vehicles = ({ user }) => {
       setVehicles(res.data || []);
     } catch (err) {
       console.error("Failed to fetch vehicles:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -22,39 +28,55 @@ const Vehicles = ({ user }) => {
     return () => clearInterval(iv);
   }, []);
 
-  if (!user)
-    return (
-      <div className="vehicles-page">
-        <div className="vehicles-container">
-          <div className="error-state">
-            <span className="error-icon">🔒</span>
-            <h2 className="error-title">Authentication Required</h2>
-            <p className="error-message">
-              Please log in to view and track vehicles in real-time.
-            </p>
-            <button
-              className="error-action"
-              onClick={() => navigate("/login")}
-            >
-              Go to Login
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-
-  const handleTrack = (vehicleId) => {
-    navigate(`/vehicles/${vehicleId}/track`);
+  const handleTrack = (vehicle) => {
+    // Null check for location before navigating
+    if (!vehicle.currentLocation || !vehicle.currentLocation.lat) {
+      addToast({
+        type: "warning",
+        title: "Tracking Unavailable",
+        message: "Live tracking is not available for this vehicle yet. The driver may not have started sharing location.",
+        duration: 4000,
+      });
+      return;
+    }
+    navigate(`/track/${vehicle._id}`);
   };
 
   const handleBook = (vehicleId) => {
-    navigate(`/book/${vehicleId}`);
+    if (user) {
+      navigate(`/book`);
+    } else {
+      navigate("/login");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="vehicles-page">
+        <div className="vehicles-loading">
+          <LoadingSpinner size="lg" />
+          <p className="vehicles-loading-text">Loading vehicles...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="vehicles-page">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
       <div className="vehicles-container">
         <h1 className="vehicles-title">🚍 Vehicles</h1>
+
+        {/* Optional login banner for non-authenticated users */}
+        {!user && (
+          <div className="vehicles-login-banner">
+            <span className="login-banner-icon">💡</span>
+            <span className="login-banner-text">
+              <strong>Tip:</strong> <a href="/login" className="login-banner-link">Login</a> to unlock booking, personalized alerts, and advanced tracking features.
+            </span>
+          </div>
+        )}
 
         {vehicles.length === 0 ? (
           <div className="empty-state">
@@ -70,6 +92,7 @@ const Vehicles = ({ user }) => {
               const lastSeen =
                 v.lastSeenAt && new Date(v.lastSeenAt).toLocaleString();
               const location = v.currentLocation;
+              const hasLocation = location && location.lat;
 
               return (
                 <div className="vehicle-card" key={v._id}>
@@ -98,7 +121,7 @@ const Vehicles = ({ user }) => {
                       <strong>Route:</strong> {v.route?.name || "Unassigned"}
                     </div>
 
-                    {location ? (
+                    {hasLocation ? (
                       <>
                         <div className="vehicle-info-item">
                           <strong>Location:</strong>{" "}
@@ -110,7 +133,8 @@ const Vehicles = ({ user }) => {
                         </div>
                       </>
                     ) : (
-                      <div className="vehicle-info-item">
+                      <div className="vehicle-info-item vehicle-no-location">
+                        <span className="no-location-icon">📡</span>
                         No live location yet
                       </div>
                     )}
@@ -118,16 +142,17 @@ const Vehicles = ({ user }) => {
 
                   <div className="vehicle-actions">
                     <button
-                      className="vehicle-btn vehicle-btn-primary"
-                      onClick={() => handleTrack(v._id)}
+                      className={`vehicle-btn vehicle-btn-primary ${!hasLocation ? "vehicle-btn-disabled" : ""}`}
+                      onClick={() => handleTrack(v)}
+                      title={hasLocation ? "Track this vehicle live" : "Location not available yet"}
                     >
-                      Track
+                      {hasLocation ? "📍 Track" : "📡 Track"}
                     </button>
                     <button
                       className="vehicle-btn vehicle-btn-secondary"
                       onClick={() => handleBook(v._id)}
                     >
-                      Book
+                      {user ? "🎫 Book" : "🔐 Login to Book"}
                     </button>
                   </div>
                 </div>

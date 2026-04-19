@@ -315,3 +315,53 @@
 .transition-fast { transition: all var(--transition-fast); }
 .transition-base { transition: all var(--transition-base); }
 .transition-slow { transition: all var(--transition-slow); }
+
+/* ============================================
+   MICRO-INTERACTIONS & GLOBAL POLISH
+   ============================================ */
+
+/* Press-down micro-interaction for buttons */
+.press-down:active {
+  transform: scale(0.97) !important;
+  transition: transform 80ms ease;
+}
+
+/* Hover lift for interactive cards */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* Brand selection color */
+::selection {
+  background: rgba(216, 78, 85, 0.15);
+  color: #1a202c;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar — thin and branded */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.25);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.15) transparent;
+}

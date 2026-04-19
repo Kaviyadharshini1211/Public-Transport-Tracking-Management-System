@@ -8,10 +8,17 @@ const userSchema = new mongoose.Schema({
 
   phone: {
     type: String,
-    required: true,
+    required: [true, "Phone number is required"],
     trim: true,
+    validate: {
+      validator: function (v) {
+        return /^\d{10}$/.test(v);
+      },
+      message: (props) => `${props.value} is not a valid 10-digit phone number!`,
+    },
   },
 
+  // Password required for normal accounts AND driver accounts
   password: {
     type: String,
     required: function () {
@@ -29,8 +36,23 @@ const userSchema = new mongoose.Schema({
     enum: ["admin", "passenger", "driver"],
     default: "passenger",
   },
-});
 
+  address: {
+    type: String,
+    default: "",
+  },
+
+  favorites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Route'
+  }],
+
+  settings: {
+    emailNotifications: { type: Boolean, default: true },
+    pushNotifications: { type: Boolean, default: true },
+    darkMode: { type: Boolean, default: false }
+  }
+});
 
 // Hash password
 userSchema.pre("save", async function (next) {

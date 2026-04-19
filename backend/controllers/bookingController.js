@@ -4,9 +4,7 @@ const Route = require("../models/Route");
 const sendSMS = require("../services/smsService");
 const sendEmail = require("../services/emailService");
 
-// ==============================
 // Create Booking
-// ==============================
 exports.createBooking = async (req, res) => {
   try {
     const {
@@ -22,31 +20,16 @@ exports.createBooking = async (req, res) => {
     console.log("BOOKING BODY:", req.body);
 
     // ✅ Basic validation
-    if (!userId || !vehicleId || !routeId) {
+    if (!userId || !vehicleId || !routeId || !seats) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    if (!seatNumbers || seatNumbers.length === 0) {
-      return res.status(400).json({ message: "No seats selected" });
-    }
-
-    if (seats == null) {
-      return res.status(400).json({ message: "Seats count missing" });
-    }
-
-    // ✅ Check vehicle exists
     const vehicle = await Vehicle.findById(vehicleId);
-    if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found" });
-    }
+    if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });
 
-    // ✅ Check route exists
     const route = await Route.findById(routeId);
-    if (!route) {
-      return res.status(404).json({ message: "Route not found" });
-    }
+    if (!route) return res.status(404).json({ message: "Route not found" });
 
-    // ✅ Create booking
     const booking = await Booking.create({
       userId,
       vehicleId,
@@ -62,7 +45,6 @@ exports.createBooking = async (req, res) => {
       etaSmsSent: false,
     });
 
-    // ✅ Populate response
     const populated = await Booking.findById(booking._id)
       .populate("userId", "-password")
       .populate("vehicleId")
@@ -93,16 +75,13 @@ Thank you for choosing our service!`;
     }
 
     res.status(201).json(populated);
-
   } catch (err) {
     console.error("createBooking error:", err);
     res.status(500).json({ message: "Failed to create booking" });
   }
 };
 
-// ==============================
 // User bookings
-// ==============================
 exports.getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ userId: req.params.userId })
@@ -117,9 +96,7 @@ exports.getUserBookings = async (req, res) => {
   }
 };
 
-// ==============================
 // Get single booking
-// ==============================
 exports.getBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
@@ -127,9 +104,7 @@ exports.getBooking = async (req, res) => {
       .populate("vehicleId")
       .populate("userId", "-password");
 
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
 
     res.json(booking);
   } catch (err) {
@@ -138,9 +113,7 @@ exports.getBooking = async (req, res) => {
   }
 };
 
-// ==============================
-// Get bookings by vehicle (seat map)
-// ==============================
+// Get bookings by vehicle (used for seat map)
 exports.getBookingsByVehicle = async (req, res) => {
   try {
     const bookings = await Booking.find({
@@ -157,16 +130,12 @@ exports.getBookingsByVehicle = async (req, res) => {
   }
 };
 
-// ==============================
-// Toggle Email Alerts
-// ==============================
+// ⭐ NEW — Toggle Email Alerts
 exports.toggleEmailAlerts = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
-
-    if (!booking) {
+    if (!booking)
       return res.status(404).json({ message: "Booking not found" });
-    }
 
     booking.emailAlerts = !booking.emailAlerts;
 
@@ -182,5 +151,51 @@ exports.toggleEmailAlerts = async (req, res) => {
   } catch (err) {
     console.error("toggleEmailAlerts error:", err);
     res.status(500).json({ message: "Failed to toggle alerts" });
+  }
+};
+
+// ⭐ NEW — Check if user has an active booking for a vehicle
+exports.checkActiveBooking = async (req, res) => {
+  try {
+    const { userId, vehicleId } = req.params;
+
+    const booking = await Booking.findOne({
+      userId,
+      vehicleId,
+      status: "Confirmed",
+    });
+
+    res.json({ hasActiveBooking: !!booking });
+  } catch (err) {
+    console.error("checkActiveBooking error:", err);
+    res.status(500).json({ message: "Failed to check booking status" });
+  }
+};
+
+// ⭐ NEW — Cancel Booking
+exports.cancelBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // Check ownership
+    if (booking.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized to cancel this booking" });
+    }
+
+    if (booking.status === "Cancelled") {
+      return res.status(400).json({ message: "Booking is already cancelled" });
+    }
+
+    booking.status = "Cancelled";
+    await booking.save();
+
+    res.json({ success: true, message: "Booking cancelled successfully" });
+  } catch (err) {
+    console.error("cancelBooking error:", err);
+    res.status(500).json({ message: "Failed to cancel booking" });
   }
 };

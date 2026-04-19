@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { protect } = require("../middleware/authMiddleware");
 
 const {
   createBooking,
@@ -7,10 +8,20 @@ const {
   getBooking,
   getBookingsByVehicle,
   toggleEmailAlerts,
+  checkActiveBooking,
+  cancelBooking,
 } = require("../controllers/bookingController");
 
 // Create booking
 router.post("/", createBooking);
+
+// Cancel booking
+router.put("/cancel/:id", protect, cancelBooking);
+
+
+// Check active booking (MUST be before generic /:id)
+router.get("/check-active/:userId/:vehicleId", checkActiveBooking);
+
 
 // User bookings
 router.get("/user/:userId", getUserBookings);

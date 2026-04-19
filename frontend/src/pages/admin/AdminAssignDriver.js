@@ -1,116 +1,146 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import API from "../../api/api";
 import "../../styles/AdminAssignDriver.css";
 
-export default function AdminAssignDriver() {
-  const [vehicles, setVehicles] = useState([]);
-  const [drivers, setDrivers] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function AdminAssignDriver({ vehicles, setVehicles, drivers, showToast }) {
+  const [savingId, setSavingId] = useState(null);
 
-  // Fetch vehicles + drivers
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [vehiclesRes, driversRes] = await Promise.all([
-          API.get("/vehicles"),
-          API.get("/auth/list-users?role=driver")
-        ]);
-        setVehicles(vehiclesRes.data);
-        setDrivers(driversRes.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  // Calculate stats
+  const assignedCount = vehicles.filter((v) => v.driverName).length;
+  const unassignedCount = vehicles.length - assignedCount;
 
   // Assign or unassign driver
   const assignDriver = async (vehicleId, email) => {
+    setSavingId(vehicleId);
     try {
       await API.put(`/vehicles/${vehicleId}`, { driverName: email || null });
 
-      // Update UI instantly
       setVehicles((prev) =>
         prev.map((v) =>
           v._id === vehicleId ? { ...v, driverName: email || null } : v
         )
       );
+
+      showToast(
+        email ? "Driver assigned successfully" : "Driver unassigned",
+        "success"
+      );
     } catch (error) {
       console.error("Error assigning driver:", error);
-      alert("Failed to assign driver. Please try again.");
+      showToast("Failed to assign driver. Please try again.", "error");
+    } finally {
+      setSavingId(null);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="assign-driver-container">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
-    );
-  }
+  // Find driver name by email
+  const getDriverName = (email) => {
+    const driver = drivers.find((d) => d.email === email);
+    return driver?.name || email;
+  };
+
+  // Get initials
+  const getInitials = (name) => {
+    if (!name) return "?";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.charAt(0).toUpperCase();
+  };
 
   return (
-    <div className="assign-driver-container">
-      <h1 className="page-header">🚗 Assign Drivers to Vehicles</h1>
+    <div className="aad-container">
+      {/* Section Header */}
+      <div className="aad-section-header">
+        <h2 className="aad-section-title">
+          <span>🔗</span> Driver Assignments
+        </h2>
+        <div className="aad-summary">
+          <div className="aad-summary-item">
+            ✅ <span className="aad-summary-count">{assignedCount}</span> Assigned
+          </div>
+          <div className="aad-summary-item">
+            ⚠️ <span className="aad-summary-count">{unassignedCount}</span> Unassigned
+          </div>
+        </div>
+      </div>
 
+      {/* Empty State */}
       {vehicles.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">🚙</div>
-          <p className="empty-state-text">No vehicles available</p>
+        <div className="admin-empty-state">
+          <div className="admin-empty-icon">🚙</div>
+          <div className="admin-empty-title">No Vehicles Available</div>
+          <p className="admin-empty-text">
+            Add vehicles to your fleet first. Then you can assign drivers to them from this panel.
+          </p>
         </div>
       ) : (
-        <div className="vehicles-grid">
+        <div className="aad-grid">
           {vehicles.map((v) => {
-            const driver = v.driverName ? v.driverName : "Unassigned";
-            const isAssigned = driver !== "Unassigned";
+            const isAssigned = !!v.driverName;
+            const driverName = isAssigned ? getDriverName(v.driverName) : null;
+            const isSaving = savingId === v._id;
 
             return (
-              <div key={v._id} className="vehicle-card">
-                <div className="card-content">
-                  {/* Top Row */}
-                  <div className="card-header">
-                    <h2 className="vehicle-reg">{v.regNumber}</h2>
-                    <span
-                      className={`status-chip ${
-                        isAssigned ? "status-assigned" : "status-unassigned"
-                      }`}
-                    >
-                      {isAssigned ? "✓ Assigned" : "○ Unassigned"}
-                    </span>
-                  </div>
-
-                  {/* Vehicle Info */}
-                  <div className="vehicle-info">
-                    <div className="info-row">
-                      <span className="info-label">Driver:</span>
-                      <span>{driver}</span>
-                    </div>
-                    <div className="info-row">
-                      <span className="info-label">Model:</span>
-                      <span>{v.model}</span>
+              <div key={v._id} className={`aad-card ${isAssigned ? "is-assigned" : "is-unassigned"}`}>
+                {/* Card Top */}
+                <div className="aad-card-top">
+                  <div className="aad-card-identity">
+                    <div className="aad-vehicle-icon">🚌</div>
+                    <div>
+                      <h3 className="aad-vehicle-reg">{v.regNumber}</h3>
+                      <span className="aad-vehicle-model">{v.model}</span>
                     </div>
                   </div>
-
-                  {/* Assign / Unassign Dropdown */}
-                  <div className="driver-select">
-                    <select
-                      value={v.driverName || ""}
-                      onChange={(e) => assignDriver(v._id, e.target.value)}
-                    >
-                      <option value="">🚫 Unassign Driver</option>
-                      {drivers.map((d) => (
-                        <option key={d._id} value={d.email}>
-                          {d.name} ({d.email})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <span
+                    className={`admin-badge ${isAssigned ? "admin-badge-assigned" : "admin-badge-unassigned"}`}
+                  >
+                    <span className="admin-badge-dot" />
+                    {isAssigned ? "Assigned" : "Unassigned"}
+                  </span>
                 </div>
+
+                {/* Current Assignment */}
+                <div className="aad-current-assignment">
+                  <div className="aad-assignment-label">Current Driver</div>
+                  {isAssigned ? (
+                    <div className="aad-assignment-driver">
+                      <div className="aad-driver-avatar">
+                        {getInitials(driverName)}
+                      </div>
+                      <span className="aad-driver-name">{driverName}</span>
+                    </div>
+                  ) : (
+                    <span className="aad-no-driver">No driver assigned</span>
+                  )}
+                </div>
+
+                {/* Driver Select */}
+                <div className="aad-select-wrapper">
+                  <label className="aad-select-label">
+                    {isAssigned ? "Change Driver" : "Assign Driver"}
+                  </label>
+                  <select
+                    className="aad-select"
+                    value={v.driverName || ""}
+                    onChange={(e) => assignDriver(v._id, e.target.value)}
+                    disabled={isSaving}
+                  >
+                    <option value="">🚫 Unassign Driver</option>
+                    {drivers.map((d) => (
+                      <option key={d._id} value={d.email}>
+                        {d.name} ({d.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Saving indicator */}
+                {isSaving && (
+                  <div className="aad-saving">
+                    <div className="aad-saving-dot" />
+                    Updating assignment...
+                  </div>
+                )}
               </div>
             );
           })}
