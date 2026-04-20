@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import API from "../api/api";
+import * as bookingService from "../api/booking";
+import * as vehicleService from "../api/vehicle";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 import {
@@ -41,9 +42,9 @@ const distance = (lat1, lon1, lat2, lon2) => {
   var a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(lat1 * (Math.PI / 180)) *
-      Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
@@ -70,6 +71,7 @@ export default function Track() {
   const [remainingCoords, setRemainingCoords] = useState([]);
 
   const [etaBoarding, setEtaBoarding] = useState(null);
+  const [etaFinal, setEtaFinal] = useState(null); // Fixed missing state
   const [isAuthorized, setIsAuthorized] = useState(null); // NEW: null=checking, true/false
 
   const mapRef = useRef(null);
@@ -94,8 +96,8 @@ export default function Track() {
     // For passengers, check if they have a confirmed booking for THIS vehicle
     const checkBooking = async () => {
       try {
-        const res = await API.get(`/bookings/check-active/${user.id || user._id}/${vehicleId}`);
-        if (res.data.hasActiveBooking) {
+        const data = await bookingService.checkActiveBooking(user.id || user._id, vehicleId);
+        if (data.hasActiveBooking) {
           setIsAuthorized(true);
         } else {
           setIsAuthorized(false);
@@ -118,8 +120,8 @@ export default function Track() {
     try {
       if (!isAuthorized && user?.role === "passenger") return;
 
-      const res = await API.get(`/vehicles/${vehicleId}`);
-      setVehicle(res.data);
+      const data = await vehicleService.getVehicleById(vehicleId);
+      setVehicle(data);
       // setError(null); // Remove this to avoid clearing the "No booking" error
     } catch (err) {
       console.error(err);
@@ -128,6 +130,7 @@ export default function Track() {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     if (!vehicleId || isAuthorized === false) return;

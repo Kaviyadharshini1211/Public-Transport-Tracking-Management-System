@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/api";
+import * as vehicleService from "../api/vehicle";
 import { useToast, ToastContainer } from "../components/Toast";
 import LoadingSpinner from "../components/LoadingSpinner";
 import "../styles/Vehicles.css";
@@ -13,8 +13,8 @@ const Vehicles = ({ user }) => {
 
   const fetchVehicles = async () => {
     try {
-      const res = await API.get("/vehicles");
-      setVehicles(res.data || []);
+      const data = await vehicleService.getVehicles();
+      setVehicles(data || []);
     } catch (err) {
       console.error("Failed to fetch vehicles:", err);
     } finally {
@@ -61,103 +61,133 @@ const Vehicles = ({ user }) => {
     );
   }
 
+  const [filter, setFilter] = useState("all");
+
+  const filteredVehicles = vehicles.filter(v => {
+    if (filter === "all") return true;
+    if (filter === "intercity") return v.type === "long-haul";
+    if (filter === "local") return v.type === "local";
+    return true;
+  });
+
   return (
     <div className="vehicles-page">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       <div className="vehicles-container">
-        <h1 className="vehicles-title">🚍 Vehicles</h1>
-
-        {/* Optional login banner for non-authenticated users */}
-        {!user && (
-          <div className="vehicles-login-banner">
-            <span className="login-banner-icon">💡</span>
-            <span className="login-banner-text">
-              <strong>Tip:</strong> <a href="/login" className="login-banner-link">Login</a> to unlock booking, personalized alerts, and advanced tracking features.
-            </span>
+        <header className="vehicles-header-section">
+          <h1 className="vehicles-title">🚍 Fleet Management</h1>
+          <p className="vehicles-subtitle">Real-time status and booking for our entire fleet.</p>
+          
+          <div className="vehicles-filter-bar">
+            <button 
+              className={`filter-btn ${filter === "all" ? "active" : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              All Vehicles
+            </button>
+            <button 
+              className={`filter-btn ${filter === "intercity" ? "active" : ""}`}
+              onClick={() => setFilter("intercity")}
+            >
+              Intercity (Luxury)
+            </button>
+            <button 
+              className={`filter-btn ${filter === "local" ? "active" : ""}`}
+              onClick={() => setFilter("local")}
+            >
+              Local (City Bus)
+            </button>
           </div>
-        )}
+        </header>
 
-        {vehicles.length === 0 ? (
+        {filteredVehicles.length === 0 ? (
           <div className="empty-state">
             <span className="empty-icon">🚌</span>
-            <h2 className="empty-title">No Vehicles Found</h2>
+            <h2 className="empty-title">No {filter !== 'all' ? filter : ''} vehicles found</h2>
             <p className="empty-message">
-              No vehicles are currently available. Check back later.
+              Try changing your filter or check back later.
             </p>
           </div>
         ) : (
-          <div className="vehicles-grid">
-            {vehicles.map((v) => {
-              const lastSeen =
-                v.lastSeenAt && new Date(v.lastSeenAt).toLocaleString();
-              const location = v.currentLocation;
-              const hasLocation = location && location.lat;
+          <div className="table-responsive premium-shadow">
+            <table className="vehicles-table">
+              <thead>
+                <tr>
+                  <th>Vehicle Info</th>
+                  <th>Type</th>
+                  <th>Route</th>
+                  <th>Status</th>
+                  <th>Live Tracking</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredVehicles.map((v) => {
+                  const location = v.currentLocation;
+                  const hasLocation = location && location.lat;
+                  const isLocal = v.type === "local";
 
-              return (
-                <div className="vehicle-card" key={v._id}>
-                  <div className="vehicle-header">
-                    <span className="vehicle-number">
-                      {v.regNumber || v.vehicleNumber || "—"}
-                    </span>
-                    <span
-                      className={`vehicle-status ${v.status === "active" ? "active" : "inactive"}`}
-                    >
-                      {v.status ? v.status.toUpperCase() : "UNKNOWN"}
-                    </span>
-                  </div>
-
-                  <div className="vehicle-info">
-                    <div className="vehicle-info-item">
-                      <strong>Model:</strong> {v.model || v.type || "—"}
-                    </div>
-                    <div className="vehicle-info-item">
-                      <strong>Capacity:</strong> {v.capacity ?? "—"}
-                    </div>
-                    <div className="vehicle-info-item">
-                      <strong>Driver:</strong> {v.driverName || "Unassigned"}
-                    </div>
-                    <div className="vehicle-info-item">
-                      <strong>Route:</strong> {v.route?.name || "Unassigned"}
-                    </div>
-
-                    {hasLocation ? (
-                      <>
-                        <div className="vehicle-info-item">
-                          <strong>Location:</strong>{" "}
-                          {Number(location.lat).toFixed(4)},{" "}
-                          {Number(location.lng).toFixed(4)}
+                  return (
+                    <tr key={v._id}>
+                      <td>
+                        <div className="v-info-cell">
+                          <span className="v-reg">{v.regNumber}</span>
+                          <span className="v-model">{v.model}</span>
                         </div>
-                        <div className="vehicle-info-item">
-                          <strong>Last seen:</strong> {lastSeen}
+                      </td>
+                      <td>
+                        <span className={`type-badge ${isLocal ? 'local' : 'long-haul'}`}>
+                          {isLocal ? 'CITY BUS' : 'INTERCITY'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="v-route-cell">
+                          <span className="v-route-name">{v.route?.name || "Unassigned"}</span>
+                          <span className="v-driver">Driver: {v.driverName || "N/A"}</span>
                         </div>
-                      </>
-                    ) : (
-                      <div className="vehicle-info-item vehicle-no-location">
-                        <span className="no-location-icon">📡</span>
-                        No live location yet
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="vehicle-actions">
-                    <button
-                      className={`vehicle-btn vehicle-btn-primary ${!hasLocation ? "vehicle-btn-disabled" : ""}`}
-                      onClick={() => handleTrack(v)}
-                      title={hasLocation ? "Track this vehicle live" : "Location not available yet"}
-                    >
-                      {hasLocation ? "📍 Track" : "📡 Track"}
-                    </button>
-                    <button
-                      className="vehicle-btn vehicle-btn-secondary"
-                      onClick={() => handleBook(v._id)}
-                    >
-                      {user ? "🎫 Book" : "🔐 Login to Book"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                      </td>
+                      <td>
+                        <span className={`status-pill ${v.status === "active" ? "active" : "inactive"}`}>
+                          {v.status?.toUpperCase() || "OFFLINE"}
+                        </span>
+                      </td>
+                      <td>
+                        {hasLocation ? (
+                          <div className="v-tracking-cell">
+                            <span className="tracking-live">LIVE</span>
+                            <span className="tracking-time">
+                              {new Date(v.lastSeenAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="tracking-none">Not Shared</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="v-actions-cell">
+                          <button
+                            className={`action-btn track ${!hasLocation ? "disabled" : ""}`}
+                            onClick={() => handleTrack(v)}
+                            disabled={!hasLocation}
+                          >
+                            Track
+                          </button>
+                          {!isLocal && (
+                            <button
+                              className="action-btn book"
+                              onClick={() => handleBook(v._id)}
+                            >
+                              Book
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

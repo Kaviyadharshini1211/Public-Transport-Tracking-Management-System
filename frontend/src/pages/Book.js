@@ -34,7 +34,9 @@ import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
 
-import API from "../api/api";
+import * as bookingService from "../api/booking";
+import * as vehicleService from "../api/vehicle";
+import * as routeService from "../api/route";
 import SeatMap from "../components/SeatMap";
 import { useNavigate } from "react-router-dom";
 
@@ -42,10 +44,10 @@ import { useNavigate } from "react-router-dom";
 function generateMockTimes(vehicleId, distanceKm, avgSpeed) {
   const charCode = vehicleId ? vehicleId.charCodeAt(vehicleId.length - 1) : 0;
   const startHour = 6 + (charCode % 15); // 6 AM to 8 PM
-  
+
   const dist = distanceKm || 300; // default 300km
   const speed = avgSpeed || 50;   // default 50kmph
-  
+
   const durationHours = dist / speed;
   const durationH = Math.floor(durationHours);
   const durationM = Math.round((durationHours - durationH) * 60);
@@ -70,7 +72,7 @@ function generateMockTimes(vehicleId, distanceKm, avgSpeed) {
 export default function Book() {
   const [routes, setRoutes] = useState([]);
   const [vehicles, setVehicles] = useState([]);
-  
+
   // Search State
   const [fromCity, setFromCity] = useState("");
   const [toCity, setToCity] = useState("");
@@ -78,7 +80,7 @@ export default function Book() {
   const [passengers, setPassengers] = useState(1);
   const [isSearched, setIsSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Booked/Interaction State
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [openSeatDialog, setOpenSeatDialog] = useState(false);
@@ -91,15 +93,18 @@ export default function Book() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    API.get("/routes").then(r => setRoutes(r.data)).catch(console.error);
+    routeService.getRoutes().then(data => setRoutes(data)).catch(console.error);
   }, []);
 
-  // Compute unique cities for Autocomplete
+  // Compute unique cities for Autocomplete (Origin, Destination, and all Stops)
   const uniqueCities = useMemo(() => {
     const cities = new Set();
     routes.forEach(r => {
-      if (r.origin) cities.add(r.origin);
-      if (r.destination) cities.add(r.destination);
+      if (r.origin) cities.add(r.origin.trim());
+      if (r.destination) cities.add(r.destination.trim());
+      r.stops?.forEach(s => {
+        if (s.name) cities.add(s.name.trim());
+      });
     });
     return Array.from(cities).sort();
   }, [routes]);
@@ -107,41 +112,78 @@ export default function Book() {
   // Handle Search Execution
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
-    if (!fromCity || !toCity) return;
-    
+    const source = (fromCity || "").trim().toLowerCase();
+    const dest = (toCity || "").trim().toLowerCase();
+
+    console.log(`🚀 handleSearch Fired! Source: "${source}", Dest: "${dest}"`);
+
+    if (!source || !dest) {
+      console.warn("❌ Search aborted: Source or Destination is empty.");
+      return;
+    }
+
     setIsLoading(true);
     setIsSearched(false);
     setVehicles([]);
     setBoardingStopIndex("");
     setDroppingStopIndex("");
+
+    console.log(`🔍 Search Initiated: "${source}" -> "${dest}"`);
+    console.log(`📊 Total routes in memory: ${routes.length}`);
     
-    // Attempt internal matching
-    const matchedRoute = routes.find(
-      r => r.origin?.toLowerCase() === fromCity.toLowerCase() && 
-           r.destination?.toLowerCase() === toCity.toLowerCase()
-    );
+    // Find the ONE best-matching route: source origin, dest destination
+    // Use strict directional matching: source must appear before dest
+    const matchingRoutes = routes.filter(r => {
+      const sequence = [
+        r.origin, 
+        ...(r.stops?.map(s => s.name) || []), 
+        r.destination
+      ].map(s => String(s || "").toLowerCase().trim()).filter(Boolean);
+      
+      const fromIndices = sequence.map((s, idx) => s.includes(source) ? idx : -1).filter(i => i !== -1);
+      const toIndices = sequence.map((s, idx) => s.includes(dest) ? idx : -1).filter(i => i !== -1);
+      
+      // Route must: have source AND dest, with the MINIMUM source idx < MINIMUM dest idx
+      const minFrom = fromIndices.length > 0 ? Math.min(...fromIndices) : -1;
+      const minTo = toIndices.length > 0 ? Math.min(...toIndices) : -1;
+      
+      return minFrom !== -1 && minTo !== -1 && minFrom < minTo;
+    });
 
-    setSelectedRoute(matchedRoute || null);
+    console.log(`✅ Found ${matchingRoutes.length} matching routes.`);
 
-    if (matchedRoute) {
+    // Take primary matching route for general context
+    setSelectedRoute(matchingRoutes[0] || null);
+
+    if (matchingRoutes.length > 0) {
       try {
-        const res = await API.get(`/vehicles/by-route/${matchedRoute._id}`);
-        setVehicles(res.data);
+        const vehiclePromises = matchingRoutes.map(r => vehicleService.getVehiclesByRoute(r._id));
+        const results = await Promise.all(vehiclePromises);
+
+        const allVehicles = results.flatMap((data, index) =>
+          data.map(v => ({ ...v, routeContext: matchingRoutes[index] }))
+        );
+
+        // Deduplicate vehicles by _id to prevent any duplicates
+        const seen = new Set();
+        const uniqueVehicles = allVehicles.filter(v => {
+          if (seen.has(v._id)) return false;
+          seen.add(v._id);
+          return true;
+        });
+
+        setVehicles(uniqueVehicles);
       } catch (err) {
-        console.error(err);
+        console.error("Search error:", err);
       }
     }
-    
+
     setIsLoading(false);
     setIsSearched(true);
+    console.log(`✨ Search Complete. vehicles state set to: ${matchingRoutes.length > 0 ? 'Vehicles found' : 'No vehicles found'}`);
   };
 
-  // Reset search results on criteria change
-  useEffect(() => {
-    setIsSearched(false);
-    setVehicles([]);
-    setSelectedRoute(null);
-  }, [fromCity, toCity, bDate, passengers]);
+  // Removed auto-reset useEffect to prevent results from disappearing while typing
 
   // Handle URL params for quick-booking from Favorites
   useEffect(() => {
@@ -172,19 +214,41 @@ export default function Book() {
 
   const openSeatMap = async (vehicle) => {
     try {
-      const res = await API.get(`/bookings/vehicle/${vehicle._id}`);
-      const bookedSeatNums = (res.data || []).flatMap(b => b.seatNumbers || []);
+      const data = await bookingService.getBookingsByVehicle(vehicle._id, bDate);
+      const bookedSeatNums = (data || []).flatMap(b => b.seatNumbers || []).map(Number);
       setReservedSeats(bookedSeatNums);
     } catch (err) {
       setReservedSeats([]);
     }
-    
+
+    const route = vehicle.routeContext || null;
     setActiveVehicle(vehicle);
+    setSelectedRoute(route);
+
+    // Auto-select Boarding/Dropping indices based on search
+    if (route && route.stops) {
+      const bCity = fromCity.toLowerCase().trim();
+      const dCity = toCity.toLowerCase().trim();
+
+      // Try inclusion match in stops
+      let bIdx = route.stops.findIndex(s => s.name.toLowerCase().includes(bCity));
+      let dIdx = route.stops.findIndex(s => s.name.toLowerCase().includes(dCity));
+
+      // Fallback: Check Origin/Destination directly if stops didn't match
+      if (bIdx === -1 && route.origin?.toLowerCase().includes(bCity)) bIdx = 0;
+      if (dIdx === -1 && route.destination?.toLowerCase().includes(dCity)) dIdx = route.stops.length - 1;
+
+      setBoardingStopIndex(bIdx !== -1 ? bIdx : "");
+      setDroppingStopIndex(dIdx !== -1 ? dIdx : "");
+    } else {
+      setBoardingStopIndex("");
+      setDroppingStopIndex("");
+    }
+
     setSelectedSeats([]);
-    setBoardingStopIndex("");
-    setDroppingStopIndex("");
     setOpenSeatDialog(true);
   };
+
 
   const toggleSeat = (num) => {
     setSelectedSeats(prev => prev.includes(num) ? prev.filter(s => s !== num) : [...prev, num]);
@@ -234,14 +298,13 @@ export default function Book() {
         </Box>
 
         <Box component="form" className="form-section premium-shadow" onSubmit={handleSearch}>
-          <Grid container spacing={2} alignItems="stretch" className="search-grid">
-            {/* From Source */}
-            <Grid item xs={12} sm={6} md={3}>
+          <Grid container spacing={3} className="search-grid">
+            {/* From Source - Half width for prominence */}
+            <Grid item xs={12} md={6}>
               <Autocomplete
                 options={uniqueCities}
                 value={fromCity}
                 onChange={(e, val) => setFromCity(val || "")}
-                freeSolo
                 onInputChange={(e, val) => setFromCity(val || "")}
                 renderInput={(params) => (
                   <TextField
@@ -257,7 +320,7 @@ export default function Book() {
                       startAdornment: (
                         <>
                           <InputAdornment position="start">
-                            <LocationOnIcon className="input-icon" sx={{ color: 'var(--color-primary-600)' }} />
+                            <LocationOnIcon className="input-icon" sx={{ color: '#ef4444' }} />
                           </InputAdornment>
                           {params.InputProps.startAdornment}
                         </>
@@ -268,13 +331,12 @@ export default function Book() {
               />
             </Grid>
 
-            {/* To Destination */}
-            <Grid item xs={12} sm={6} md={3}>
+            {/* To Destination - Half width for prominence */}
+            <Grid item xs={12} md={6}>
               <Autocomplete
                 options={uniqueCities}
                 value={toCity}
                 onChange={(e, val) => setToCity(val || "")}
-                freeSolo
                 onInputChange={(e, val) => setToCity(val || "")}
                 renderInput={(params) => (
                   <TextField
@@ -290,7 +352,7 @@ export default function Book() {
                       startAdornment: (
                         <>
                           <InputAdornment position="start">
-                            <LocationOnIcon className="input-icon" sx={{ color: 'var(--color-primary-600)' }} />
+                            <LocationOnIcon className="input-icon" sx={{ color: '#ef4444' }} />
                           </InputAdornment>
                           {params.InputProps.startAdornment}
                         </>
@@ -301,11 +363,11 @@ export default function Book() {
               />
             </Grid>
 
-            {/* Date Selection */}
-            <Grid item xs={12} sm={4} md={2}>
+            {/* Second Row: Date, Passengers, and Search */}
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 className="styled-input"
-                label="Date"
+                label="Departure Date"
                 type="date"
                 fullWidth
                 required
@@ -322,8 +384,7 @@ export default function Book() {
               />
             </Grid>
 
-            {/* Passengers */}
-            <Grid item xs={12} sm={4} md={2}>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 className="styled-input"
                 label="Passengers"
@@ -344,10 +405,10 @@ export default function Book() {
               />
             </Grid>
 
-            {/* Submit Button */}
-            <Grid item xs={12} sm={4} md={2} sx={{ display: 'flex' }}>
+            <Grid item xs={12} md={5} sx={{ display: 'flex' }}>
               <Button
                 type="submit"
+                onClick={handleSearch}
                 className="search-buses-btn"
                 variant="contained"
                 fullWidth
@@ -355,7 +416,7 @@ export default function Book() {
                 startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
                 disabled={isLoading}
               >
-                {isLoading ? "Searching" : "Search Buses"}
+                {isLoading ? "Finding Best Buses..." : "Search Buses"}
               </Button>
             </Grid>
           </Grid>
@@ -367,7 +428,7 @@ export default function Book() {
             <DirectionsBusIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6">No route matches found</Typography>
             <Typography variant="body2" color="textSecondary">
-              We couldn't find any buses operating between {fromCity} and {toCity}. 
+              We couldn't find any buses operating between {fromCity} and {toCity}.
               Try reversing locations or searching for major cities.
             </Typography>
           </Box>
@@ -397,7 +458,7 @@ export default function Book() {
                     <Card className="vehicle-card premium-card">
                       <CardContent>
                         <Box className="vehicle-header">
-                          <Typography className="vehicle-title" variant="h6" sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                          <Typography className="vehicle-title" variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <DirectionsBusIcon color="primary" /> {v.model}
                           </Typography>
                           <Box className="vehicle-reg-badge">
@@ -405,20 +466,20 @@ export default function Book() {
                           </Box>
                         </Box>
                         <Typography className="vehicle-route">
-                          {selectedRoute?.name || `${fromCity} → ${toCity}`}
+                          {v.routeContext?.name || `${fromCity} → ${toCity}`}
                         </Typography>
-                        
+
                         <Grid container spacing={2} className="vehicle-times-grid" sx={{ mb: 2 }}>
                           <Grid item xs={4}>
-                            <Typography className="time-label"><AccessTimeIcon fontSize="small"/> Departure</Typography>
+                            <Typography className="time-label"><AccessTimeIcon fontSize="small" /> Departure</Typography>
                             <Typography className="time-value">{times.departureTime}</Typography>
                           </Grid>
                           <Grid item xs={4}>
-                            <Typography className="time-label"><HourglassBottomIcon fontSize="small"/> Duration</Typography>
+                            <Typography className="time-label"><HourglassBottomIcon fontSize="small" /> Duration</Typography>
                             <Typography className="time-value highlight-sub">{times.durationText}</Typography>
                           </Grid>
                           <Grid item xs={4}>
-                            <Typography className="time-label"><AccessTimeIcon fontSize="small"/> ETA</Typography>
+                            <Typography className="time-label"><AccessTimeIcon fontSize="small" /> ETA</Typography>
                             <Typography className="time-value">{times.eta}</Typography>
                           </Grid>
                         </Grid>
@@ -435,11 +496,11 @@ export default function Book() {
                             <Typography className="detail-value highlight-price">₹{bookingPricePerSeat}</Typography>
                           </Box>
                         </Box>
-                        
-                        <Button 
+
+                        <Button
                           className="select-seats-btn"
-                          sx={{ mt: 3 }} 
-                          variant="contained" 
+                          sx={{ mt: 3 }}
+                          variant="contained"
                           fullWidth
                           startIcon={<EventSeatIcon />}
                           onClick={() => openSeatMap(v)}
@@ -455,12 +516,53 @@ export default function Book() {
           </Box>
         )}
 
+        {/* Diagnostic Panel for Troubleshooting */}
+        <Box sx={{ mt: 8, p: 3, background: 'rgba(0,0,0,0.05)', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.1)' }}>
+          <Typography variant="h6" sx={{ color: '#64748b', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            🛠 System Diagnostics
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={6} md={3}>
+              <Typography variant="caption" display="block" sx={{ textTransform: 'uppercase', fontWeight: 700, color: '#94a3b8' }}>Routes Loaded</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 800 }}>{routes.length}</Typography>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Typography variant="caption" display="block" sx={{ textTransform: 'uppercase', fontWeight: 700, color: '#94a3b8' }}>Current Input</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>From: {fromCity || '(empty)'}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>To: {toCity || '(empty)'}</Typography>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Typography variant="caption" display="block" sx={{ textTransform: 'uppercase', fontWeight: 700, color: '#94a3b8' }}>Search State</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800 }}>{isSearched ? '✅ ACTIVE' : '⏳ IDLE'}</Typography>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Typography variant="caption" display="block" sx={{ textTransform: 'uppercase', fontWeight: 700, color: '#94a3b8' }}>Vehicles Found</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: vehicles.length > 0 ? '#10b981' : '#ef4444' }}>{vehicles.length}</Typography>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Button 
+                variant="outlined" 
+                size="small" 
+                onClick={() => window.location.reload()}
+                sx={{ mt: 1, borderRadius: '8px' }}
+              >
+                Force Data Refresh
+              </Button>
+            </Grid>
+          </Grid>
+          {routes.length === 0 && (
+            <Typography color="error" sx={{ mt: 2, fontSize: '0.875rem' }}>
+              ⚠️ Warning: No routes loaded from API. Check your connection or database.
+            </Typography>
+          )}
+        </Box>
+
         {/* Premium Seat Dialog / Trip Summary */}
-        <Dialog 
+        <Dialog
           className="seat-dialog premium-dialog"
-          open={openSeatDialog} 
-          onClose={() => setOpenSeatDialog(false)} 
-          maxWidth="md" 
+          open={openSeatDialog}
+          onClose={() => setOpenSeatDialog(false)}
+          maxWidth="md"
           fullWidth
         >
           <DialogTitle className="dialog-title">
@@ -471,28 +573,28 @@ export default function Book() {
               {/* Left Side - Seat Map */}
               <Grid item xs={12} md={7} sx={{ p: 3, borderRight: '1px solid var(--color-border)' }}>
                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>Choose Your Seats</Typography>
-                <SeatMap 
-                  capacity={activeVehicle?.capacity || 40} 
-                  reserved={reservedSeats} 
-                  selected={selectedSeats} 
-                  onToggle={toggleSeat} 
+                <SeatMap
+                  capacity={activeVehicle?.capacity || 40}
+                  reserved={reservedSeats}
+                  selected={selectedSeats}
+                  onToggle={toggleSeat}
                 />
               </Grid>
 
               {/* Right Side - Trip Summary */}
               <Grid item xs={12} md={5} className="trip-summary-panel" sx={{ p: 3, background: 'var(--color-gray-50)' }}>
                 <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>Booking Details</Typography>
-                
+
                 <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                   <Typography variant="body2" color="textSecondary">Route</Typography>
                   <Typography variant="body1" fontWeight="600">{fromCity} → {toCity}</Typography>
                 </Box>
-                
+
                 <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                   <Typography variant="body2" color="textSecondary">Departure Date</Typography>
                   <Typography variant="body1" fontWeight="600">{bDate || "Not Selected"}</Typography>
                 </Box>
-                
+
                 <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                   <Typography variant="body2" color="textSecondary">Bus Model</Typography>
                   <Typography variant="body1" fontWeight="600">{activeVehicle?.model}</Typography>
@@ -503,86 +605,121 @@ export default function Book() {
                 <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                   <Typography variant="body2" color="textSecondary">Selected Seats</Typography>
                   <Typography variant="body1" fontWeight="600" color="primary">
-                    {selectedSeats.length > 0 ? selectedSeats.join(", ") : "None"} 
+                    {selectedSeats.length > 0 ? selectedSeats.join(", ") : "None"}
                     {selectedSeats.length > 0 && ` (${selectedSeats.length})`}
                   </Typography>
                 </Box>
 
-                {selectedSeats.length === 0 ? (
-                  <Box className="empty-seat-helper" sx={{ mt: 4, p: 3, textAlign: 'center', background: 'rgba(216, 78, 85, 0.05)', borderRadius: '12px', border: '1px dashed var(--color-primary-300)' }}>
-                    <EventSeatIcon sx={{ fontSize: 40, color: 'var(--color-primary-400)', mb: 1 }} />
-                    <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600 }}>
-                      Please select seats to continue with your booking.
-                    </Typography>
-                  </Box>
-                ) : (() => {
+                {/* Boarding & Dropping Points — always visible */}
+                {(() => {
                   const validDroppingStops = (selectedRoute?.stops || [])
                     .map((s, idx) => ({ ...s, originalIdx: idx }))
                     .filter(s => boardingStopIndex === "" || s.originalIdx > Number(boardingStopIndex));
 
                   return (
-                    <Box className="fade-in-section" sx={{ animation: 'fadeInUp 0.4s ease-out', mt: 3 }}>
+                    <Box sx={{ mt: 2 }}>
                       <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: 'var(--color-gray-700)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         Boarding & Dropping Points
                       </Typography>
 
-                      <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                        <InputLabel>Boarding Point</InputLabel>
-                        <Select
-                          value={boardingStopIndex}
-                          label="Boarding Point"
-                          onChange={(e) => {
-                            setBoardingStopIndex(e.target.value);
-                            setDroppingStopIndex(""); // Reset dropping point on change
-                          }}
-                          sx={{ borderRadius: '8px', background: 'white' }}
-                        >
-                          <MenuItem value=""><em>-- Required --</em></MenuItem>
-                          {selectedRoute?.stops?.map((s, idx) => (
-                            <MenuItem key={`board-${idx}`} value={idx} disabled={idx === selectedRoute.stops.length - 1}>
-                              {s.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                      {(!selectedRoute?.stops || selectedRoute.stops.length === 0) ? (
+                        <Box sx={{ p: 2, background: 'rgba(239,68,68,0.06)', borderRadius: '10px', border: '1px dashed #ef4444', mb: 2 }}>
+                          <Typography variant="body2" color="error" sx={{ fontWeight: 600, textAlign: 'center' }}>
+                            ⚠️ No stops found for this route. Please contact support.
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <>
+                          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                            <InputLabel>Boarding Point *</InputLabel>
+                            <Select
+                              value={boardingStopIndex}
+                              label="Boarding Point *"
+                              onChange={(e) => {
+                                setBoardingStopIndex(e.target.value);
+                                setDroppingStopIndex(""); // Reset dropping point on change
+                              }}
+                              sx={{ borderRadius: '8px' }}
+                              error={boardingStopIndex === ""}
+                            >
+                              <MenuItem value=""><em>-- Select Boarding Point --</em></MenuItem>
+                              {selectedRoute?.stops?.map((s, idx) => (
+                                <MenuItem key={`board-${idx}`} value={idx} disabled={idx === selectedRoute.stops.length - 1}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <LocationOnIcon fontSize="small" sx={{ color: '#22c55e' }} />
+                                    {s.name}
+                                  </Box>
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
 
-                      <FormControl fullWidth size="small" sx={{ mb: 3 }}>
-                        <InputLabel>Dropping Point</InputLabel>
-                        <Select
-                          value={droppingStopIndex}
-                          label="Dropping Point"
-                          onChange={(e) => setDroppingStopIndex(e.target.value)}
-                          sx={{ borderRadius: '8px', background: 'white' }}
-                          disabled={boardingStopIndex !== "" && validDroppingStops.length === 0}
-                        >
-                          <MenuItem value="">
-                            <em>
-                              {boardingStopIndex !== "" && validDroppingStops.length === 0 
-                                ? "No further stops available" 
-                                : "-- Required --"}
-                            </em>
-                          </MenuItem>
-                          {validDroppingStops.map((s) => (
-                            <MenuItem key={`drop-${s.originalIdx}`} value={s.originalIdx}>{s.name}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                            <InputLabel>Dropping Point *</InputLabel>
+                            <Select
+                              value={droppingStopIndex}
+                              label="Dropping Point *"
+                              onChange={(e) => setDroppingStopIndex(e.target.value)}
+                              sx={{ borderRadius: '8px' }}
+                              disabled={boardingStopIndex === ""}
+                              error={boardingStopIndex !== "" && droppingStopIndex === ""}
+                            >
+                              <MenuItem value="">
+                                <em>
+                                  {boardingStopIndex === ""
+                                    ? "Select boarding point first"
+                                    : validDroppingStops.length === 0
+                                      ? "No further stops available"
+                                      : "-- Select Dropping Point --"}
+                                </em>
+                              </MenuItem>
+                              {validDroppingStops.map((s) => (
+                                <MenuItem key={`drop-${s.originalIdx}`} value={s.originalIdx}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <LocationOnIcon fontSize="small" sx={{ color: '#ef4444' }} />
+                                    {s.name}
+                                  </Box>
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </>
+                      )}
 
-                    <Divider sx={{ my: 2 }} />
+                      <Divider sx={{ my: 2 }} />
 
-                    <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="body2" color="textSecondary">Price per seat</Typography>
-                      <Typography variant="body1" fontWeight="600">₹{bookingPricePerSeat}</Typography>
+                      {/* Seat selection hint when no seats chosen yet */}
+                      {selectedSeats.length === 0 ? (
+                        <Box sx={{ p: 2.5, textAlign: 'center', background: 'rgba(216, 78, 85, 0.05)', borderRadius: '12px', border: '1px dashed var(--color-primary-300)' }}>
+                          <EventSeatIcon sx={{ fontSize: 36, color: 'var(--color-primary-400)', mb: 0.5 }} />
+                          <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600 }}>
+                            Select seats from the map on the left to see fare.
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Box>
+                          <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                            <Typography variant="body2" color="textSecondary">Selected Seats</Typography>
+                            <Typography variant="body1" fontWeight="600" color="primary">
+                              {selectedSeats.join(", ")} ({selectedSeats.length})
+                            </Typography>
+                          </Box>
+
+                          <Box className="summary-row" sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                            <Typography variant="body2" color="textSecondary">Price per seat</Typography>
+                            <Typography variant="body1" fontWeight="600">₹{bookingPricePerSeat}</Typography>
+                          </Box>
+
+                          <Box className="total-amount-box" sx={{
+                            p: 2, background: 'linear-gradient(135deg, var(--color-success-50), var(--color-success-100))',
+                            borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                          }}>
+                            <Typography variant="subtitle1" fontWeight="700" color="success.main">Total Amount</Typography>
+                            <Typography variant="h5" fontWeight="800" color="success.dark">₹{totalPrice}</Typography>
+                          </Box>
+                        </Box>
+                      )}
                     </Box>
-
-                    <Box className="total-amount-box" sx={{ 
-                      p: 2, background: 'linear-gradient(135deg, var(--color-success-50), var(--color-success-100))',
-                      borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                    }}>
-                      <Typography variant="subtitle1" fontWeight="700" color="success.main">Total Amount</Typography>
-                      <Typography variant="h5" fontWeight="800" color="success.dark">₹{totalPrice}</Typography>
-                    </Box>
-                  </Box>
                   );
                 })()}
               </Grid>
@@ -592,10 +729,10 @@ export default function Book() {
             <Button className="dialog-cancel-btn" onClick={() => setOpenSeatDialog(false)}>
               Back
             </Button>
-            <Button 
+            <Button
               className={`dialog-confirm-btn ${isBookingValid ? 'premium-btn' : ''}`}
-              variant="contained" 
-              onClick={confirmSelection} 
+              variant="contained"
+              onClick={confirmSelection}
               disabled={!isBookingValid}
               startIcon={<PaymentsIcon />}
               size="large"

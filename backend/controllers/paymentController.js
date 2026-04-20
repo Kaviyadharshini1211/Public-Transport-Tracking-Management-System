@@ -73,6 +73,7 @@ exports.verifyPayment = async (req, res) => {
       seatNumbers,
       totalFare,
       boardingStop,
+      journeyDate,
     } = bookingDetails;
 
     const booking = await Booking.create({
@@ -83,6 +84,7 @@ exports.verifyPayment = async (req, res) => {
       seatNumbers,
       totalFare,
       boardingStop,
+      journeyDate,
       status: "Confirmed",
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,

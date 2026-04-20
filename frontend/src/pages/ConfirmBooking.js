@@ -12,7 +12,7 @@ import {
   DirectionsBus,
   Schedule
 } from "@mui/icons-material";
-import API from "../api/api";
+import * as paymentService from "../api/payment";
 import toast from "react-hot-toast";
 import "../styles/ConfirmBooking.css";
 
@@ -64,16 +64,13 @@ export default function ConfirmBooking() {
     try {
       // 1. Create Razorpay Order in Backend
       console.log("[Payment] Calling backend to create order...");
-      
-      const apiBaseURL = process.env.REACT_APP_API_URL || process.env.VITE_API_URL || "http://localhost:5000/api";
-      console.log("[Payment] Using API Base URL:", apiBaseURL);
 
-      const orderRes = await API.post("/payments/create-order", {
+      const data = await paymentService.createOrder({
         amount: totalFare,
       });
 
-      console.log("[Payment] Order created successfully:", orderRes.data.id);
-      const { id: order_id, amount, currency } = orderRes.data;
+      console.log("[Payment] Order created successfully:", data.id);
+      const { id: order_id, amount, currency } = data;
 
       // 2. Load / Verify Razorpay SDK (already in index.html, but safety check)
       if (!window.Razorpay) {
@@ -85,7 +82,7 @@ export default function ConfirmBooking() {
       }
 
       // 3. Open Razorpay Checkout Modal
-      const razorpayKey = process.env.REACT_APP_RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || "rzp_test_YOUR_KEY";
+      const razorpayKey = process.env.REACT_APP_RAZORPAY_KEY_ID;
       console.log("[Payment] Opening Razorpay checkout modal with key:", razorpayKey);
 
       const options = {
@@ -99,7 +96,7 @@ export default function ConfirmBooking() {
           console.log("[Payment] Payment successful, verifying signature...");
           // 4. Verify Payment in Backend
           try {
-            const verifyRes = await API.post("/payments/verify", {
+            const data = await paymentService.verifyPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
@@ -111,10 +108,11 @@ export default function ConfirmBooking() {
                 seatNumbers,
                 totalFare,
                 boardingStop,
+                journeyDate: date,
               },
             });
 
-            if (verifyRes.data.success) {
+            if (data.success) {
               console.log("[Payment] Verification successful, booking confirmed.");
               setSuccessOpen(true);
             }

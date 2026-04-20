@@ -83,7 +83,7 @@ function App() {
           <Route path="/login" element={<Auth setUser={setUser} />} />
           <Route path="/register" element={<Auth setUser={setUser} />} />
           <Route path="/auth/success" element={<AuthSuccess />} />
-          <Route path="/local-bus" element={<LocalBusMap />} />
+          <Route path="/local-buses/map" element={<LocalBusMap />} />
 
           {/* PASSENGER DASHBOARD */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} /></ProtectedRoute>} />

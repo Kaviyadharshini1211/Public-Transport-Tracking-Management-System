@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/api";
+import * as authService from "../api/auth";
 
 function base64UrlDecodeToUtf8(base64Url) {
   if (!base64Url) return null;
@@ -66,20 +66,19 @@ export default function AuthSuccess() {
       }, 150);
 
       // 4️⃣ Fetch the canonical user in background
-      API.get("/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => {
-          if (res.data?.user) {
-            localStorage.setItem("user", JSON.stringify(res.data.user));
+      authService.getMe()
+        .then((data) => {
+          if (data?.user) {
+            localStorage.setItem("user", JSON.stringify(data.user));
             window.dispatchEvent(new Event("userChanged"));
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
 
     run();
   }, [navigate]);
+
 
   return <p>Signing you in…</p>;
 }

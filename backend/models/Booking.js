@@ -31,6 +31,8 @@ const bookingSchema = new mongoose.Schema(
 
     seats: { type: Number, required: true },
 
+    journeyDate: { type: String, required: true },
+
     seatNumbers: {
       type: [String],
       default: [],

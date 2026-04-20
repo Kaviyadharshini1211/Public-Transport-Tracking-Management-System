@@ -4,7 +4,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import API from "../api/api";
+import * as localBusService from "../api/localBus";
 import "../styles/localBusMap.css";
 
 // ── Fix default icons ─────────────────────────────────────────────────────────
@@ -113,8 +113,8 @@ export default function LocalBusMap() {
 
   // ── Load routes once ────────────────────────────────────────────────────────
   useEffect(() => {
-    API.get("/local-buses/routes")
-      .then((r) => { setRoutes(r.data); if (r.data[0]) setSelectedRoute(r.data[0]); })
+    localBusService.getLocalRoutes()
+      .then((data) => { setRoutes(data); if (data[0]) setSelectedRoute(data[0]); })
       .catch(console.error)
       .finally(() => setRoutesLoading(false));
   }, []);
@@ -140,8 +140,8 @@ export default function LocalBusMap() {
   const fetchBuses = useCallback(() => {
     if (!selectedRoute) return;
     setBusesLoading(true);
-    API.get(`/local-buses/live?routeId=${selectedRoute._id}`)
-      .then((r) => { setBuses(r.data); setLastUpdated(new Date()); })
+    localBusService.getLiveBuses(selectedRoute._id)
+      .then((data) => { setBuses(data); setLastUpdated(new Date()); })
       .catch(console.error)
       .finally(() => setBusesLoading(false));
   }, [selectedRoute]);
@@ -163,11 +163,12 @@ export default function LocalBusMap() {
     setEtaLoading(true);
     setFlyTarget({ lat: stop.lat, lng: stop.lng, zoom: 16 });
     try {
-      const r = await API.get(`/local-buses/eta/${selectedRoute._id}/${idx}`);
-      setEtaData(r.data);
+      const data = await localBusService.getStopETA(selectedRoute._id, idx);
+      setEtaData(data);
     } catch { setEtaData({ arrivals: [] }); }
     finally   { setEtaLoading(false); }
   };
+
 
   // ── Derived values ────────────────────────────────────────────────────────────
   const routeColorIdx = routes.findIndex((r) => r._id === selectedRoute?._id);

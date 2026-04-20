@@ -12,6 +12,7 @@ exports.createBooking = async (req, res) => {
       vehicleId,
       routeId,
       seats,
+      journeyDate,
       seatNumbers = [],
       totalFare,
       boardingStop,
@@ -35,6 +36,7 @@ exports.createBooking = async (req, res) => {
       vehicleId,
       routeId,
       seats,
+      journeyDate,
       seatNumbers,
       totalFare,
       boardingStop: boardingStop || null,
@@ -116,10 +118,16 @@ exports.getBooking = async (req, res) => {
 // Get bookings by vehicle (used for seat map)
 exports.getBookingsByVehicle = async (req, res) => {
   try {
-    const bookings = await Booking.find({
+    const filter = {
       vehicleId: req.params.vehicleId,
       status: "Confirmed",
-    })
+    };
+
+    if (req.query.date) {
+      filter.journeyDate = req.query.date;
+    }
+
+    const bookings = await Booking.find(filter)
       .select("seatNumbers seats boardingStop userId emailAlerts")
       .populate("userId", "name email");
 
@@ -181,8 +189,9 @@ exports.cancelBooking = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
+    console.log("Cancelling booking:", booking._id, "by user:", req.user._id, "Owner is:", booking.userId);
     // Check ownership
-    if (booking.userId.toString() !== req.user.id) {
+    if (booking.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to cancel this booking" });
     }
 

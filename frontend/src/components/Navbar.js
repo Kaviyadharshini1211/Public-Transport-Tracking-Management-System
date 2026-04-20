@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import * as bookingService from "../api/booking";
 import "../styles/Navbar.css";
 
 const Navbar = ({ user, setUser }) => {
@@ -20,8 +21,7 @@ const Navbar = ({ user, setUser }) => {
   // Check for active booking for passengers
   useEffect(() => {
     if (user && user.role === "passenger") {
-      fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/bookings/user/${user.id || user._id}`)
-        .then(res => res.json())
+      bookingService.getUserBookings(user.id || user._id)
         .then(data => {
           // Check if any booking is "Confirmed"
           const active = Array.isArray(data) && data.some(b => b.status === "Confirmed");

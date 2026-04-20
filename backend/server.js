@@ -26,12 +26,10 @@ connectDB().then(() => {
 const app = express();
 
 // CORS Whitelist (Authorized origins)
-const whitelist = [
-  process.env.FRONTEND_URL,
-  "https://public-transport-system-qydu.vercel.app",
-  "http://localhost:3000",
-  "http://localhost:5173",
-];
+const whitelist = [];
+if (process.env.FRONTEND_URL) {
+  whitelist.push(process.env.FRONTEND_URL);
+}
 
 const corsOptions = {
   origin: function (origin, callback) {
