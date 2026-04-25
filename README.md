@@ -128,10 +128,21 @@ This system aims to bring **transparency, efficiency, and convenience** to rural
 public-transport-system/
 │
 ├── backend/               # Express.js API + MongoDB
+│   ├── config/            # Database and passport configuration
+│   ├── controllers/       # Route handler logic
+│   ├── middleware/        # Auth and access control
+│   ├── models/            # Mongoose schemas
+│   ├── routes/            # API route definitions
+│   ├── services/          # Email and SMS services
+│   ├── jobs/              # Cron jobs and simulators
+│   ├── seeds/             # Database seed scripts
+│   └── utils/             # Helper utilities
+│
 ├── frontend/              # React.js web app
-├── ai_microservice/       # FastAPI-based ML models
-├── docker/                # Docker configurations
-└── docs/                  # Diagrams, reports, and documentation
+│   ├── public/            # Static assets and index.html
+│   └── src/               # React components, pages, and styles
+│
+└── README.md              # Project documentation
 ```
 
 ---
