@@ -75,3 +75,4 @@ docs/
 # Scratch/dev files
 scratch/
 old_navbar*.txt
+ai/eta_model.pkl

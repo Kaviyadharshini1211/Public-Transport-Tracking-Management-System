@@ -6,7 +6,8 @@ import numpy as np
 class ETAPredictor:
     def __init__(self):
         self.model = None
-        self.model_path = os.path.join(os.path.dirname(__file__), 'eta_model.pkl')
+        model_dir = os.getenv("MODEL_DIR", os.path.dirname(__file__))
+        self.model_path = os.path.join(model_dir, 'eta_model.pkl')
         self.load_model()
 
     def load_model(self):
