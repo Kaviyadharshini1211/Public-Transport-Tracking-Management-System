@@ -71,3 +71,7 @@ uploads/
 public/uploads/
 
 docs/
+
+# Scratch/dev files
+scratch/
+old_navbar*.txt
