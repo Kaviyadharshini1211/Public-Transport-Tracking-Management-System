@@ -33,5 +33,5 @@
     "nodemon": "^3.1.10",
     "supertest": "^7.1.4"
   },
-  "description": ""
+  "description": "Express.js API server for the Public Transport Tracking and Management System"
 }
