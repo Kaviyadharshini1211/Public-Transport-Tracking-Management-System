@@ -359,8 +359,9 @@ export default function LocalBusMap() {
           <MapController selectedRoute={selectedRoute} flyTarget={flyTarget} mapRef={mapRef} />
 
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+            url="https://{s}.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}"
+            subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+            attribution="&copy; Google Maps"
           />
 
           {/* Road-following polyline */}

@@ -89,6 +89,49 @@ exports.generateTokenAndRedirect = (req, res) => {
   return res.redirect(redirectURL);
 };
 
+// ------------------ UPDATE PHONE (FOR GOOGLE / MISSING PHONE USERS) ------------------
+exports.updatePhone = async (req, res) => {
+  try {
+    const rawPhone = String(req.body.phone || "").trim();
+    if (!rawPhone) {
+      return res.status(400).json({ message: "Phone number is required" });
+    }
+
+    const digitsOnly = rawPhone.replace(/\D/g, "");
+    let normalizedPhone = rawPhone;
+
+    if (/^[6-9]\d{9}$/.test(digitsOnly)) {
+      normalizedPhone = `+91${digitsOnly}`;
+    } else if (!/^\+91[6-9]\d{9}$/.test(rawPhone)) {
+      return res.status(400).json({
+        message: "Enter a valid Indian mobile number",
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.phone = normalizedPhone;
+    await user.save();
+
+    res.status(200).json({
+      message: "Phone number updated successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("Update phone error:", err);
+    res.status(500).json({ message: "Failed to update phone number" });
+  }
+};
+
 // ------------------ GET LOGGED IN USER ------------------
 exports.getMe = async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");

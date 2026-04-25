@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import AuthSuccess from "./pages/AuthSuccess";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Footer from "./components/Footer";
+import ChatbotWidget from "./components/ChatbotWidget";
 
 // DRIVER MODULE (NEW)
 import DriverLayout from "./pages/driver/DriverLayout";
@@ -119,6 +120,7 @@ function App() {
 
         </Routes>
         <Footer />
+        <ChatbotWidget />
       </Router>
     </ErrorBoundary>
   );

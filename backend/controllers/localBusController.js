@@ -1,5 +1,6 @@
 const Vehicle = require("../models/Vehicle");
 const Route   = require("../models/Route");
+const axios   = require("axios");
 
 // ─── Haversine distance (km) ──────────────────────────────────────────────────
 const haversine = (lat1, lon1, lat2, lon2) => {
@@ -114,17 +115,33 @@ exports.getETAForStop = async (req, res) => {
     }).select("regNumber currentLocation lastSeenAt nearestStopIndex driverName");
 
     const now = Date.now();
-    const arrivals = [];
+    const activeBuses = buses.filter(b => b.lastSeenAt && (now - new Date(b.lastSeenAt).getTime() <= 3 * 60 * 1000));
 
-    for (const bus of buses) {
-      // skip stale
-      if (!bus.lastSeenAt || now - new Date(bus.lastSeenAt).getTime() > 3 * 60 * 1000) continue;
-
+    const arrivalPromises = activeBuses.map(async (bus) => {
       const { lat, lng } = bus.currentLocation;
       const distKm = haversine(lat, lng, targetStop.lat, targetStop.lng);
-      const etaMin = distKm <= 0.15 ? 0 : Math.round((distKm / avgSpeed) * 60);
+      
+      let etaMin = 0;
+      if (distKm > 0.15) {
+        try {
+          const currentHour = new Date().getHours();
+          const aiUrl = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
+          const aiRes = await axios.post(`${aiUrl}/predict_eta`, {
+            distance_remaining_km: distKm,
+            avg_speed_kmh: avgSpeed,
+            traffic_index: 5, // Default moderate traffic
+            weather_condition: 0, // Clear weather
+            time_of_day: currentHour,
+            bus_type: 0 // Standard local bus
+          });
+          etaMin = Math.round(aiRes.data.estimated_minutes);
+        } catch (e) {
+          console.error("AI ETA prediction failed, using fallback:", e.message);
+          etaMin = Math.round((distKm / avgSpeed) * 60);
+        }
+      }
 
-      arrivals.push({
+      return {
         vehicleId:   bus._id,
         regNumber:   bus.regNumber,
         driverName:  bus.driverName || "—",
@@ -132,8 +149,10 @@ exports.getETAForStop = async (req, res) => {
         distanceKm:  parseFloat(distKm.toFixed(2)),
         status:      etaMin === 0 ? "arriving" : "en-route",
         lastSeenAt:  bus.lastSeenAt,
-      });
-    }
+      };
+    });
+
+    const arrivals = await Promise.all(arrivalPromises);
 
     arrivals.sort((a, b) => a.etaMinutes - b.etaMinutes);
 

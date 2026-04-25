@@ -5,7 +5,8 @@ const {
   login,
   getMe,
   generateTokenAndRedirect,
-  listUsers
+  listUsers,
+  updatePhone,
 } = require("../controllers/authController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -21,6 +22,7 @@ router.post("/register", register);
 
 // Login (all roles)
 router.post("/login", login);
+router.put("/update-phone", protect, updatePhone);
 
 // Google Auth (passenger only)
 router.get(

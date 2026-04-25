@@ -185,23 +185,28 @@ export default function Book() {
 
   // Removed auto-reset useEffect to prevent results from disappearing while typing
 
-  // Handle URL params for quick-booking from Favorites
+  // Handle URL params for quick-booking from Favorites and Chatbot deep-links
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const from = params.get("from");
     const to = params.get("to");
+    const dateParam = params.get("date");
+    const paxParam = params.get("passengers");
     if (from && to && routes.length > 0) {
       setFromCity(decodeURIComponent(from));
       setToCity(decodeURIComponent(to));
-      // Set a default date (today) if not set
-      if (!bDate) {
+      if (dateParam) {
+        setBDate(dateParam);
+      } else if (!bDate) {
         setBDate(new Date().toISOString().split('T')[0]);
       }
-      // We need to wait for state updates, so we use a flag or just call the logic
+      if (paxParam && Number(paxParam) > 0) {
+        setPassengers(Number(paxParam));
+      }
     }
   }, [routes]);
 
-  // Trigger search if cities are set via URL (after routes are loaded)
+  // Trigger search if cities are set via URL (after routes are loaded) — supports chatbot deep-links
   useEffect(() => {
     if (fromCity && toCity && routes.length > 0 && !isSearched && !isLoading) {
       const params = new URLSearchParams(window.location.search);
@@ -209,6 +214,7 @@ export default function Book() {
         handleSearch();
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromCity, toCity, routes]);
 
 

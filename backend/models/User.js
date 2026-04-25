@@ -13,13 +13,17 @@ const userSchema = new mongoose.Schema({
 
   phone: {
     type: String,
-    required: [true, "Phone number is required"],
+    required: function () {
+      // Google OAuth users may complete phone later.
+      return !this.googleId;
+    },
     trim: true,
     validate: {
       validator: function (v) {
-        return /^\d{10}$/.test(v);
+        if (!v) return !this.googleId;
+        return /^(\+91)?[6-9]\d{9}$/.test(v);
       },
-      message: (props) => `${props.value} is not a valid 10-digit phone number!`,
+      message: (props) => `${props.value} is not a valid phone number!`,
     },
   },
 

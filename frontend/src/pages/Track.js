@@ -208,8 +208,13 @@ export default function Track() {
     }
 
     const speed = vehicle.route.avgSpeedKmph || 50;
-    const minutes = (km / speed) * 60;
-    setEtaFinal(formatETA(minutes));
+    
+    vehicleService.getVehicleETA(vehicle._id, { distance_remaining_km: km, avg_speed_kmh: speed })
+      .then(res => setEtaFinal(formatETA(res.estimated_minutes)))
+      .catch(err => {
+        console.warn("AI ETA fallback");
+        setEtaFinal(formatETA((km / speed) * 60));
+      });
   }, [remainingCoords]);
 
   // ---------- ETA TO BOARDING STOP ----------
@@ -228,9 +233,10 @@ export default function Track() {
     );
 
     const speed = vehicle.route.avgSpeedKmph || 50;
-    const minutes = (d / speed) * 60;
 
-    setEtaBoarding(formatETA(minutes));
+    vehicleService.getVehicleETA(vehicle._id, { distance_remaining_km: d, avg_speed_kmh: speed })
+      .then(res => setEtaBoarding(formatETA(res.estimated_minutes)))
+      .catch(err => setEtaBoarding(formatETA((d / speed) * 60)));
   }, [booking?.boardingStop, vehicle?.currentLocation, vehicle?.route?.avgSpeedKmph]);
 
   // ---------- FOLLOW BUS AUTO ----------
@@ -369,8 +375,12 @@ export default function Track() {
           style={{ height: "100%", width: "100%", minHeight: "400px" }}
           ref={mapRef}
         >
-          {/* BASE OSM MAP */}
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          {/* GOOGLE MAPS TRAFFIC LAYER */}
+          <TileLayer
+            url="https://{s}.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}"
+            subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+            attribution="&copy; Google Maps"
+          />
 
           {/* Covered route (dark grey) */}
           <Polyline

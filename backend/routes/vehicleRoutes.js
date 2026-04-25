@@ -9,7 +9,8 @@ const {
   deleteVehicle,
   assignRoute,
   updateTracking,
-  stopTracking
+  stopTracking,
+  predictETA
 } = require("../controllers/vehicleController");
 
 const router = express.Router();
@@ -36,5 +37,8 @@ router.get("/by-route/:routeId", async (req, res) => {
 // Tracking
 router.post("/:id/tracking", updateTracking);
 router.patch("/:id/tracking/stop", stopTracking);
+
+// AI ETA
+router.post("/:id/eta", predictETA);
 
 module.exports = router;

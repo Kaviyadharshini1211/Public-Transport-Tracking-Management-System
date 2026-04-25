@@ -1,5 +1,6 @@
 const Vehicle = require("../models/Vehicle");
 const Route = require("../models/Route");
+const axios = require("axios");
 
 // ===============================
 // GET all vehicles
@@ -172,5 +173,29 @@ exports.getIntercityBuses = async (req, res) => {
   } catch (err) {
     console.error("getIntercityBuses:", err);
     res.status(500).json({ message: "Failed to fetch intercity buses" });
+  }
+};
+
+// ===============================
+// PREDICT ETA (AI PROXY)
+// ===============================
+exports.predictETA = async (req, res) => {
+  try {
+    const { distance_remaining_km, avg_speed_kmh, traffic_index, weather_condition, bus_type } = req.body;
+    
+    // Call Python FastAPI
+    const aiUrl = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
+    const aiRes = await axios.post(`${aiUrl}/predict_eta`, {
+      distance_remaining_km: parseFloat(distance_remaining_km) || 1,
+      avg_speed_kmh: parseFloat(avg_speed_kmh) || 50,
+      traffic_index: traffic_index || 5, // Default moderate traffic
+      weather_condition: weather_condition || 0, // Clear
+      bus_type: bus_type || 0
+    });
+
+    res.json(aiRes.data);
+  } catch (err) {
+    console.error("predictETA:", err.message);
+    res.status(500).json({ message: "Failed to predict ETA using AI" });
   }
 };

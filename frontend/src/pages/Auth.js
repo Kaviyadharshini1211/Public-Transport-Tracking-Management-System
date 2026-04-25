@@ -77,14 +77,12 @@ const Auth = ({ setUser }) => {
           setLoading(false);
           return;
         }
-        const token = localStorage.getItem('token');
-        const fullPhone = `+91${formData.phone}`;
-
-        await authService.updatePhone({ phone: fullPhone });
-
-        const user = JSON.parse(localStorage.getItem('user'));
-        user.phone = fullPhone;
-        localStorage.setItem('user', JSON.stringify(user));
+        const response = await authService.updatePhone({ phone: formData.phone });
+        const updatedUser = response?.user;
+        if (updatedUser) {
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          setUser(updatedUser);
+        }
 
         window.dispatchEvent(new Event('userChanged'));
         setRequirePhone(false);

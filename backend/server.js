@@ -72,6 +72,7 @@ app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/sos", require("./routes/sosRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/local-buses", require("./routes/localBusRoutes"));
+app.use("/api/chatbot", require("./routes/chatbotRoutes"));
 
 const PORT = process.env.PORT || 5000;
 

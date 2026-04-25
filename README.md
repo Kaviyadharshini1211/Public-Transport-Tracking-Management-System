@@ -62,16 +62,24 @@ This system aims to bring **transparency, efficiency, and convenience** to rural
 
 ## 🚀 Key Features
 
-- 🔹 Real-time vehicle location tracking (Google Maps integration)
-- 🔹 Interactive route planning and optimization
-- 🔹 Online ticket booking and fare payment
-- 🔹 Admin control panel with live analytics
-- 🔹 AI-based ETA prediction engine
-- 🔹 Push notifications and SMS/email alerts
-- 🔹 Secure authentication (JWT & Role-based Access)
-- 🔹 Driver web interface for updates and route reporting
-- 🔹 Offline mode for low-connectivity zones
-- 🔹 Sustainable & scalable architecture
+### 🚌 Core Transport System
+- 🔹 **Real-time Vehicle Tracking:** Live tracking on Google Maps with real-time OSRM-snapped road geometry.
+- 🔹 **Interactive Route Planning:** Admin tools to create stops, define paths, and optimize routes.
+- 🔹 **Digital Ticketing & Payments:** Razorpay integration for seamless online fare collection.
+- 🔹 **Driver & Admin Portals:** Dedicated web interfaces for drivers (GPS broadcasting) and admins (fleet management).
+
+### 🤖 Advanced AI & Machine Learning
+- 🔹 **AI-Powered Chatbot (Groq):** A conversational assistant capable of understanding natural language to find routes, check early schedules, and auto-navigate users to pre-filled booking pages.
+- 🔹 **AI ETA Prediction Engine:** A dedicated Python FastAPI microservice running a Scikit-Learn Random Forest model that predicts exact arrival times by factoring in remaining distance, vehicle speed, live weather, traffic indices, and rush hour penalties.
+
+### 🗺️ Live Mapping & Visualization
+- 🔹 **Live Google Traffic Layer:** Integrated Google Maps Traffic tiles into Leaflet, allowing users to see real-time road congestion (red/yellow/green lines) affecting their bus.
+- 🔹 **Intracity & Intercity Modes:** Separate tracking views for local city buses (multi-bus overview) and long-distance travel (single-bus deep tracking).
+
+### 🎫 User Experience & Security
+- 🔹 **Google OAuth 2.0 + Phone Verification:** Secure 1-click Google login paired with mandatory phone number collection for verifiable user identities.
+- 🔹 **PDF Ticket Generation:** Automated, downloadable PDF tickets featuring embedded QR codes for quick offline verification by bus conductors.
+- 🔹 **Push Notifications & Alerts:** SMS (Twilio) and Email (Nodemailer) alerts for delays and booking confirmations.
 
 ---
 
@@ -91,12 +99,12 @@ This system aims to bring **transparency, efficiency, and convenience** to rural
 
 ## 🧠 AI Integration
 
-| **AI Module** | **Function** |
-|----------------|--------------|
-| ETA Predictor | Predicts bus arrival times using ML regression models based on traffic & weather data |
-| Route Optimizer | Uses graph algorithms (Dijkstra / A*) to recommend efficient routes |
-| Crowd Density Detector | Uses image processing and YOLO-based models for real-time crowd analysis |
-| Anomaly Detector | Identifies unusual route or delay patterns for admin alerts |
+| **AI Module** | **Technology** | **Function** |
+|----------------|----------------|--------------|
+| **AI Chatbot** | Groq Llama 3 | Understands complex natural language queries, parses intent, filters buses, and bridges users to the booking flow with preserved conversational context. |
+| **ETA Predictor** | Scikit-Learn (Random Forest) via FastAPI | Predicts highly accurate bus arrival times by modeling non-linear relationships between distance, speed, time of day, and traffic severity. |
+| **Route Optimizer** | Custom Graph Alg (Future) | Recommends efficient routes and handles dynamic rerouting. |
+| **Anomaly Detector** | Time-series Analysis (Future)| Identifies unusual route deviation or unexpected delays to alert admins. |
 
 ---
 

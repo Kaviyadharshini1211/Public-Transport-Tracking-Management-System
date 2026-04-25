@@ -14,3 +14,8 @@ export const getVehiclesByRoute = async (routeId) => {
   const res = await API.get(`/vehicles/by-route/${routeId}`);
   return res.data;
 };
+
+export const getVehicleETA = async (id, payload) => {
+  const res = await API.post(`/vehicles/${id}/eta`, payload);
+  return res.data;
+};
