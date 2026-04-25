@@ -18,8 +18,6 @@ exports.createBooking = async (req, res) => {
       boardingStop,
     } = req.body;
 
-    console.log("BOOKING BODY:", req.body);
-
     // ✅ Basic validation
     if (!userId || !vehicleId || !routeId || !seats) {
       return res.status(400).json({ message: "Missing required fields" });
