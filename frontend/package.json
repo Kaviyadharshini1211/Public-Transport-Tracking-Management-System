@@ -1,4 +1,7 @@
 {
+  "name": "pt-tracker-frontend",
+  "version": "1.0.0",
+  "description": "React frontend for the Public Transport Tracking and Management System",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
