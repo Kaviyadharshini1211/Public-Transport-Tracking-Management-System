@@ -137,7 +137,7 @@ exports.stopTracking = async (req, res) => {
 };
 
 // ===============================
-// 🔥 NEW: ALL TRACKED VEHICLES
+// ALL TRACKED VEHICLES
 // ===============================
 exports.getTrackedVehicles = async (req, res) => {
   try {
@@ -150,7 +150,7 @@ exports.getTrackedVehicles = async (req, res) => {
 };
 
 // ===============================
-// 🔥 NEW: PUBLIC BUSES ONLY
+// PUBLIC BUSES ONLY
 // ===============================
 exports.getPublicBuses = async (req, res) => {
   try {
@@ -163,7 +163,7 @@ exports.getPublicBuses = async (req, res) => {
 };
 
 // ===============================
-// 🔥 NEW: INTERCITY BUSES ONLY
+// INTERCITY BUSES ONLY
 // ===============================
 exports.getIntercityBuses = async (req, res) => {
   try {

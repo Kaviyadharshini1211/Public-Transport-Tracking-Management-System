@@ -32,7 +32,7 @@ router.get("/vehicle/:vehicleId", getBookingsByVehicle);
 // Get single booking
 router.get("/:id", getBooking);
 
-// ⭐ Toggle email alerts
+// Toggle email alerts
 router.put("/:id/toggle-alerts", toggleEmailAlerts);
 
 module.exports = router;

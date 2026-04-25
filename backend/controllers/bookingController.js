@@ -18,7 +18,7 @@ exports.createBooking = async (req, res) => {
       boardingStop,
     } = req.body;
 
-    // ✅ Basic validation
+    // Basic validation
     if (!userId || !vehicleId || !routeId || !seats) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -136,7 +136,7 @@ exports.getBookingsByVehicle = async (req, res) => {
   }
 };
 
-// ⭐ NEW — Toggle Email Alerts
+// Toggle Email Alerts
 exports.toggleEmailAlerts = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
@@ -160,7 +160,7 @@ exports.toggleEmailAlerts = async (req, res) => {
   }
 };
 
-// ⭐ NEW — Check if user has an active booking for a vehicle
+// Check if user has an active booking for a vehicle
 exports.checkActiveBooking = async (req, res) => {
   try {
     const { userId, vehicleId } = req.params;
@@ -178,7 +178,7 @@ exports.checkActiveBooking = async (req, res) => {
   }
 };
 
-// ⭐ NEW — Cancel Booking
+// Cancel Booking
 exports.cancelBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);

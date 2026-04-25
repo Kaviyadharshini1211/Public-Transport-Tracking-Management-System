@@ -56,7 +56,7 @@ const bookingSchema = new mongoose.Schema(
     razorpayPaymentId: { type: String, default: null },
     razorpaySignature: { type: String, default: null },
 
-    // ⭐ NEW FIELD — User can toggle alerts ON/OFF
+    // User can toggle alerts ON/OFF
     emailAlerts: {
       type: Boolean,
       default: false,

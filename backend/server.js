@@ -6,7 +6,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const dotenv = require("dotenv");
-dotenv.config();                        // 1️⃣ Load env FIRST 🔥
+dotenv.config();                        // Load env FIRST
 
 const connectDB = require("./config/db");
 const cors      = require("cors");
