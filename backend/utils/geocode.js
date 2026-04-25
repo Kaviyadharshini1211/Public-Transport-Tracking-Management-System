@@ -1,3 +1,8 @@
+/**
+ * Geocode Utility
+ * Converts place names to lat/lng coordinates using the OpenStreetMap Nominatim API.
+ * Free to use — no API key required.
+ */
 const axios = require("axios");
 
 // Use OpenStreetMap Nominatim — free & no API key required
