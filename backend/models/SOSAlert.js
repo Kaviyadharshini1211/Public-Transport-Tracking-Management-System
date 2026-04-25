@@ -1,3 +1,7 @@
+/**
+ * SOSAlert Model
+ * Emergency alerts triggered by drivers, broadcast to admins via Socket.IO.
+ */
 const mongoose = require("mongoose");
 
 const sosAlertSchema = new mongoose.Schema({

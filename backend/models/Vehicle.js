@@ -1,3 +1,8 @@
+/**
+ * Vehicle Model
+ * Represents both long-haul (intercity) and local (city) buses.
+ * Tracks real-time location, assigned route, and nearest stop index.
+ */
 const mongoose = require("mongoose");
 
 const locationSchema = new mongoose.Schema({

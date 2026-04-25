@@ -1,3 +1,7 @@
+/**
+ * Trip Model
+ * Records driver trips with start/end times, GPS path, distance, and earnings.
+ */
 const mongoose = require("mongoose");
 
 const tripSchema = new mongoose.Schema({

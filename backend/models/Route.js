@@ -1,3 +1,8 @@
+/**
+ * Route Model
+ * Defines bus routes with origin, destination, stops, and average speed.
+ * Supports both INTERCITY and INTRACITY route types.
+ */
 const mongoose = require("mongoose");
 
 const stopSchema = new mongoose.Schema({

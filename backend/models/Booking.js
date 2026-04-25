@@ -1,3 +1,8 @@
+/**
+ * Booking Model
+ * Stores ticket reservations with seat selection, fare, and Razorpay payment details.
+ * Supports email/SMS alert preferences per booking.
+ */
 const mongoose = require("mongoose");
 
 const boardingStopSchema = new mongoose.Schema(

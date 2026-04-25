@@ -1,3 +1,7 @@
+/**
+ * Notification Model
+ * In-app notifications for drivers and admins (assignments, emergencies, SOS, earnings).
+ */
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({

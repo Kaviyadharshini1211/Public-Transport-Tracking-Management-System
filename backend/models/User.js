@@ -1,3 +1,8 @@
+/**
+ * User Model
+ * Represents passengers, drivers, and admins.
+ * Supports both email/password and Google OAuth authentication.
+ */
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
