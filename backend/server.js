@@ -95,6 +95,10 @@ io.on("connection", (socket) => {
 
 server.listen(PORT, () => console.log(`Server & Socket.IO running on port ${PORT}`));
 
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
 // Better error handling for production
 app.use((err, req, res, next) => {
   console.error(`[Error] ${req.method} ${req.url}:`, err.stack);
@@ -102,8 +106,4 @@ app.use((err, req, res, next) => {
     message: err.message || "Internal Server Error",
     error: process.env.NODE_ENV === "development" ? err : {},
   });
-});
-
-app.get("/", (req, res) => {
-  res.send("Backend is running 🚀");
 });
