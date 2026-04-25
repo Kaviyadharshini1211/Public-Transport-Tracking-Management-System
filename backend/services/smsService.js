@@ -1,3 +1,8 @@
+/**
+ * SMS Service
+ * Sends SMS notifications (booking confirmations) via Twilio.
+ * Requires TWILIO_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE environment variables.
+ */
 const twilio = require("twilio");
 
 const client = twilio(

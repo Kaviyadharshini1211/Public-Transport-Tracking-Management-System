@@ -1,3 +1,8 @@
+/**
+ * Email Service
+ * Sends transactional emails (booking confirmations, ETA alerts) via Gmail SMTP.
+ * Requires MAIL_USER and MAIL_PASS environment variables.
+ */
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
