@@ -142,110 +142,99 @@ export default function MyBookings() {
         {bookings.map((booking) => (
           <Card key={booking._id} className={`booking-card ${booking.status === 'Cancelled' ? 'cancelled' : ''}`}>
             <CardContent className="booking-card-content">
-
-              {/* Header */}
-              <div className="booking-header">
-                <Typography className="booking-id">
-                  #{booking._id.slice(-8).toUpperCase()}
-                </Typography>
-                <Typography className={`booking-status status-${booking.status.toLowerCase()}`}>
-                  {booking.status}
-                </Typography>
-              </div>
-
-              {/* Vehicle */}
-              <div className="booking-detail">
-                <DirectionsBusIcon className="detail-icon" />
-                <div className="detail-content">
-                  <Typography className="detail-label">Vehicle</Typography>
-                  <Typography className="detail-text">
-                    {booking.vehicleId?.regNumber || "Not Available"}
+              
+              <div className="ticket-top">
+                <div className="booking-header">
+                  <Typography className="booking-id">
+                    #{booking._id.slice(-8).toUpperCase()}
+                  </Typography>
+                  <Typography className={`booking-status status-${booking.status.toLowerCase()}`}>
+                    {booking.status}
                   </Typography>
                 </div>
-              </div>
 
-              {/* Route */}
-              <div className="booking-detail">
-                <RouteIcon className="detail-icon" />
-                <div className="detail-content">
-                  <Typography className="detail-label">Route</Typography>
-                  <Typography className="detail-text">
-                    {booking.routeId?.name || "Not Available"}
-                  </Typography>
-                </div>
-              </div>
-
-              {/* Boarding Stop */}
-              <div className="booking-detail">
-                <LocationOnIcon className="detail-icon" />
-                <div className="detail-content">
-                  <Typography className="detail-label">Boarding Stop</Typography>
-                  <Typography className="detail-text">
-                    {booking.boardingStop?.name || "Not Specified"}
-                  </Typography>
-                </div>
-              </div>
-
-              {/* Seats */}
-              <div className="booking-detail">
-                <EventSeatIcon className="detail-icon" />
-                <div className="detail-content">
-                  <Typography className="detail-label">Seats</Typography>
-                  <div className="seats-info">
-                    {booking.seatNumbers?.length > 0 ? (
-                      booking.seatNumbers.map((seat, idx) => (
-                        <span key={idx} className="seat-chip">
-                          {seat}
-                        </span>
-                      ))
-                    ) : (
-                      <Typography className="detail-text">
-                        {booking.seats}
-                      </Typography>
-                    )}
+                <div className="booking-detail">
+                  <DirectionsBusIcon className="detail-icon" />
+                  <div className="detail-content">
+                    <Typography className="detail-label">Vehicle & Route</Typography>
+                    <Typography className="detail-text">
+                      {booking.routeId?.name || (booking.vehicleId?.regNumber || "Bus Service")}
+                    </Typography>
                   </div>
                 </div>
-              </div>
-              
-              {/* Fare */}
-              <div className="fare-info">
-                <Typography className="fare-label">Total Fare</Typography>
-                <Typography className="fare-amount">
-                  ₹{booking.totalFare}
-                </Typography>
+
+                <div className="booking-detail">
+                  <LocationOnIcon className="detail-icon" />
+                  <div className="detail-content">
+                    <Typography className="detail-label">Boarding Point</Typography>
+                    <Typography className="detail-text">
+                      {booking.boardingStop?.name || "Standard Stop"}
+                    </Typography>
+                  </div>
+                </div>
+
+                <div className="booking-detail">
+                  <EventSeatIcon className="detail-icon" />
+                  <div className="detail-content">
+                    <Typography className="detail-label">Seats Selection</Typography>
+                    <div className="seats-info">
+                      {booking.seatNumbers?.length > 0 ? (
+                        booking.seatNumbers.map((seat, idx) => (
+                          <span key={idx} className="seat-chip">
+                            {seat}
+                          </span>
+                        ))
+                      ) : (
+                        <Typography className="detail-text">
+                          {booking.seats} Seats
+                        </Typography>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="fare-info">
+                  <Typography className="fare-label">Total Fare Paid</Typography>
+                  <Typography className="fare-amount">
+                    ₹{booking.totalFare}
+                  </Typography>
+                </div>
               </div>
 
-              {/* ⭐ Email Alert Toggle */}
-              <div style={{ marginTop: 10 }}>
-                <Typography className="detail-label">Email Alerts</Typography>
-                <BookingAlertToggle booking={booking} />
-              </div>
+              <div className="ticket-divider"></div>
 
-              {/* Actions */}
-              <div className="booking-actions">
-                <Button
-                  variant="contained"
-                  className="track-button"
-                  onClick={() =>
-                    navigate(
-                      `/track/${booking.vehicleId?._id}?bookingId=${booking._id}`
-                    )
-                  }
-                  disabled={!booking.vehicleId?._id || booking.status === 'Cancelled'}
-                >
-                  Track Bus
-                </Button>
-                
-                {booking.status === 'Confirmed' && (
+              <div className="ticket-bottom">
+                <div className="booking-alerts" style={{ marginBottom: '1rem' }}>
+                  <Typography className="detail-label" style={{ marginBottom: '0.5rem' }}>Live ETA Alerts</Typography>
+                  <BookingAlertToggle booking={booking} />
+                </div>
+
+                <div className="booking-actions">
                   <Button
-                    variant="outlined"
-                    className="cancel-button"
-                    onClick={() => handleCancelClick(booking._id)}
-                    disabled={cancelLoading}
+                    variant="contained"
+                    className="track-button"
+                    onClick={() =>
+                      navigate(
+                        `/track/${booking.vehicleId?._id}?bookingId=${booking._id}`
+                      )
+                    }
+                    disabled={!booking.vehicleId?._id || booking.status === 'Cancelled'}
                   >
-                    Cancel
+                    Track Bus
                   </Button>
-                )}
+                  
+                  {booking.status === 'Confirmed' && (
+                    <Button
+                      variant="outlined"
+                      className="cancel-button"
+                      onClick={() => handleCancelClick(booking._id)}
+                      disabled={cancelLoading}
+                      style={{ marginTop: '0.5rem', width: '100%', borderColor: '#f87171', color: '#f87171' }}
+                    >
+                      Cancel Booking
+                    </Button>
+                  )}
+                </div>
               </div>
 
             </CardContent>

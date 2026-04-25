@@ -26,6 +26,7 @@ export default function DriverTracking({ vehicle, loading }) {
   const [tracking, setTracking] = useState(false);
   const [locationState, setLocationState] = useState("checking"); // checking | granted | denied | unavailable
   const [coords, setCoords] = useState(null);
+  const [signalStrength, setSignalStrength] = useState(0); // 0-100 based on accuracy
   const [error, setError] = useState(null);
   const watchIdRef = useRef(null);
 
@@ -90,14 +91,25 @@ export default function DriverTracking({ vehicle, loading }) {
       // Start watching
       const id = navigator.geolocation.watchPosition(
         async (pos) => {
-          const { latitude, longitude } = pos.coords;
+          const { latitude, longitude, accuracy } = pos.coords;
           setCoords({ lat: latitude, lng: longitude });
+          
+          // Calculate signal (0-100) based on accuracy meters
+          let strength = 0;
+          if (accuracy < 10) strength = 100;
+          else if (accuracy < 30) strength = 75;
+          else if (accuracy < 80) strength = 50;
+          else if (accuracy < 200) strength = 25;
+          else strength = 10;
+          setSignalStrength(strength);
+
           setLocationState("granted");
 
           try {
             await API.post(`/vehicles/${vehicle._id}/tracking`, {
               lat: latitude,
               lng: longitude,
+              accuracy: accuracy
             });
           } catch (apiErr) {
             console.error("Tracking API error:", apiErr);
@@ -291,6 +303,21 @@ export default function DriverTracking({ vehicle, loading }) {
             <span className={`drv-tracking__status-dot ${tracking ? "drv-tracking__status-dot--active" : ""}`}></span>
             {tracking ? "Sharing Location" : "Location Sharing Off"}
           </span>
+
+          {tracking && (
+            <div className="drv-tracking__signal">
+              <div className="drv-tracking__signal-bars">
+                <div className={`signal-bar ${signalStrength >= 25 ? 'active' : ''}`}></div>
+                <div className={`signal-bar ${signalStrength >= 50 ? 'active' : ''}`}></div>
+                <div className={`signal-bar ${signalStrength >= 75 ? 'active' : ''}`}></div>
+                <div className={`signal-bar ${signalStrength >= 100 ? 'active' : ''}`}></div>
+              </div>
+              <span className="drv-tracking__signal-text">
+                {signalStrength >= 75 ? "Strong" : signalStrength >= 50 ? "Fair" : "Weak"} GPS
+              </span>
+            </div>
+          )}
+
           <span className="drv-tracking__vehicle-tag">
             🚌 {vehicle.regNumber}
           </span>

@@ -101,6 +101,49 @@
   font-size: 0.85rem;
 }
 
+/* Signal Strength Indicator */
+.drv-tracking__signal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--drv-border);
+}
+
+.drv-tracking__signal-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.signal-bar {
+  width: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+.signal-bar:nth-child(1) { height: 25%; }
+.signal-bar:nth-child(2) { height: 50%; }
+.signal-bar:nth-child(3) { height: 75%; }
+.signal-bar:nth-child(4) { height: 100%; }
+
+.signal-bar.active {
+  background: #34d399; /* Green for good signal */
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.4);
+}
+
+.drv-tracking__signal-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--drv-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* Tracking Button */
 .drv-tracking__btn {
   width: 100%;

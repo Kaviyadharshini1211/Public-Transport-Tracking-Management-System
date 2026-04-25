@@ -158,7 +158,17 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+  animation: dashCardSlideUp 0.6s ease both;
+}
+
+.dash-stat-card:nth-child(1) { animation-delay: 0.1s; }
+.dash-stat-card:nth-child(2) { animation-delay: 0.2s; }
+.dash-stat-card:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes dashCardSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 [data-theme="dark"] .dash-stat-card {
@@ -318,11 +328,17 @@
   border-radius: 18px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.4s cubic-bezier(0.2, 1, 0.3, 1);
   text-align: left;
   font-family: var(--font-primary, 'Inter', sans-serif);
   overflow: hidden;
+  animation: dashCardSlideUp 0.6s ease both;
 }
+
+.dash-action-card:nth-child(1) { animation-delay: 0.4s; }
+.dash-action-card:nth-child(2) { animation-delay: 0.5s; }
+.dash-action-card:nth-child(3) { animation-delay: 0.6s; }
+.dash-action-card:nth-child(4) { animation-delay: 0.7s; }
 
 [data-theme="dark"] .dash-action-card {
   background: rgba(24, 24, 27, 0.85);

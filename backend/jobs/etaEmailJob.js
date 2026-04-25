@@ -3,13 +3,18 @@ const nodemailer = require("nodemailer");
 const Booking = require("../models/Booking");
 
 // ---------------- EMAIL TRANSPORTER ----------------
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-});
+let transporter = null;
+if (process.env.MAIL_USER && process.env.MAIL_PASS) {
+  transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
+    },
+  });
+} else {
+  console.warn("⚠️ [ETA Job] Email credentials missing. Email alerts will be skipped.");
+}
 
 // ---------------- HAVERSINE DISTANCE ----------------
 const distance = (lat1, lon1, lat2, lon2) => {
@@ -94,34 +99,38 @@ cron.schedule("*/1 * * * *", async () => {
       const etaText = formatETA(minutes);
 
       // ------------ SEND EMAIL ------------
-      await transporter.sendMail({
-        from: process.env.MAIL_USER,
-        to: email,
-        subject: "Bus Arriving Soon 🚍",
-        html: `
-          <h2>Live ETA Alert</h2>
-          <p>Hello <strong>${booking.userId.name}</strong>,</p>
+      if (transporter) {
+        await transporter.sendMail({
+          from: process.env.MAIL_USER,
+          to: email,
+          subject: "Bus Arriving Soon 🚍",
+          html: `
+            <h2>Live ETA Alert</h2>
+            <p>Hello <strong>${booking.userId.name}</strong>,</p>
 
-          <p>Your bus is approximately <strong>${etaText}</strong> away from your boarding stop:</p>
+            <p>Your bus is approximately <strong>${etaText}</strong> away from your boarding stop:</p>
 
-          <h3>${stop.name}</h3>
+            <h3>${stop.name}</h3>
 
-          <p><b>Vehicle:</b> ${booking.vehicleId?.regNumber || "N/A"}</p>
-          <p><b>Driver:</b> ${booking.vehicleId?.driverName || "N/A"}</p>
-          <p><b>Last Updated:</b> ${new Date(
-            booking.vehicleId.lastSeenAt
-          ).toLocaleTimeString()}</p>
+            <p><b>Vehicle:</b> ${booking.vehicleId?.regNumber || "N/A"}</p>
+            <p><b>Driver:</b> ${booking.vehicleId?.driverName || "N/A"}</p>
+            <p><b>Last Updated:</b> ${new Date(
+              booking.vehicleId.lastSeenAt
+            ).toLocaleTimeString()}</p>
 
-          <br/>
-          <small>This is an automated ETA notification.</small>
-        `,
-      });
+            <br/>
+            <small>This is an automated ETA notification.</small>
+          `,
+        });
 
-      // Mark alert sent (prevent spam)
-      booking.etaAlertSent = true;
-      await booking.save();
+        // Mark alert sent (prevent spam)
+        booking.etaAlertSent = true;
+        await booking.save();
 
-      console.log("📩 Sent ETA email to:", email);
+        console.log("📩 Sent ETA email to:", email);
+      } else {
+        console.log("ℹ️ Skipping email alert for", email, "(Transporter not configured)");
+      }
     }
   } catch (err) {
     console.error("❌ Cron job error:", err);
