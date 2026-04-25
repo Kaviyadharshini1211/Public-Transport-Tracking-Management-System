@@ -290,15 +290,4 @@ This project is developed for academic and research purposes under the MIT Licen
 
 ---
 
-## 📚 Documentation
-
-For detailed documentation, please refer to:
-
-- [Architecture Document](docs/architecture.md)
-- [API Documentation](docs/api.md)
-- [User Manual](docs/user-manual.md)
-- [Docker Deployment Guide](docs/docker-deployment.md)
-
----
-
 **⭐ If you find this project useful, please consider giving it a star on GitHub!**
