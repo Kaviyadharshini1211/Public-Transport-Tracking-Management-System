@@ -187,7 +187,6 @@ exports.cancelBooking = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    console.log("Cancelling booking:", booking._id, "by user:", req.user._id, "Owner is:", booking.userId);
     // Check ownership
     if (booking.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to cancel this booking" });
