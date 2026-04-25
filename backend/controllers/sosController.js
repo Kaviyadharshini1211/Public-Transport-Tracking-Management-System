@@ -24,8 +24,8 @@ exports.createSOS = async (req, res) => {
     }
 
     res.status(201).json({ success: true, alert: newSOS });
-  } catch (error) {
-    console.error("SOS generation error:", error);
+  } catch (err) {
+    console.error("SOS generation error:", err);
     res.status(500).json({ message: "Failed to broadcast SOS" });
   }
 };
@@ -35,8 +35,8 @@ exports.getAllSOS = async (req, res) => {
   try {
     const alerts = await SOSAlert.find().sort({ createdAt: -1 });
     res.status(200).json(alerts);
-  } catch (error) {
-    console.error("SOS fetch error:", error);
+  } catch (err) {
+    console.error("SOS fetch error:", err);
     res.status(500).json({ message: "Failed to fetch SOS history" });
   }
 };
@@ -62,8 +62,8 @@ exports.resolveSOS = async (req, res) => {
     }
 
     res.status(200).json({ success: true, alert });
-  } catch (error) {
-    console.error("SOS resolution error:", error);
+  } catch (err) {
+    console.error("SOS resolution error:", err);
     res.status(500).json({ message: "Failed to resolve SOS" });
   }
 };
