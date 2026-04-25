@@ -77,15 +77,15 @@ This system aims to bring **transparency, efficiency, and convenience** to rural
 
 ## ⚙️ Tech Stack
 
-**Frontend (Web):** React.js, TailwindCSS, Axios, Mapbox/Leaflet
+**Frontend (Web):** React.js, Material UI (MUI), Axios, Leaflet, Socket.IO Client
 
-**Backend (API):** Node.js, Express.js, MongoDB, JWT, Mongoose
+**Backend (API):** Node.js, Express.js, MongoDB, Mongoose, JWT, Socket.IO
 
-**AI & Analytics:** Python (FastAPI), Scikit-Learn, Pandas, TensorFlow (ETA Model)
+**Services:** Nodemailer (Email), Twilio (SMS), Razorpay (Payments)
 
-**DevOps:** Docker, Docker Compose
+**DevOps:** Docker
 
-**Maps & APIs:** Google Maps API / OpenStreetMap API / Payment Gateway APIs
+**Maps & APIs:** Leaflet / OpenStreetMap (Nominatim Geocoding)
 
 ---
 
