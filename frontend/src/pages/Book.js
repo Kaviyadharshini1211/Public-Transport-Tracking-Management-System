@@ -130,23 +130,23 @@ export default function Book() {
 
     console.log(`🔍 Search Initiated: "${source}" -> "${dest}"`);
     console.log(`📊 Total routes in memory: ${routes.length}`);
-    
+
     // Find the ONE best-matching route: source origin, dest destination
     // Use strict directional matching: source must appear before dest
     const matchingRoutes = routes.filter(r => {
       const sequence = [
-        r.origin, 
-        ...(r.stops?.map(s => s.name) || []), 
+        r.origin,
+        ...(r.stops?.map(s => s.name) || []),
         r.destination
       ].map(s => String(s || "").toLowerCase().trim()).filter(Boolean);
-      
+
       const fromIndices = sequence.map((s, idx) => s.includes(source) ? idx : -1).filter(i => i !== -1);
       const toIndices = sequence.map((s, idx) => s.includes(dest) ? idx : -1).filter(i => i !== -1);
-      
+
       // Route must: have source AND dest, with the MINIMUM source idx < MINIMUM dest idx
       const minFrom = fromIndices.length > 0 ? Math.min(...fromIndices) : -1;
       const minTo = toIndices.length > 0 ? Math.min(...toIndices) : -1;
-      
+
       return minFrom !== -1 && minTo !== -1 && minFrom < minTo;
     });
 
@@ -214,7 +214,6 @@ export default function Book() {
         handleSearch();
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromCity, toCity, routes]);
 
 
@@ -546,9 +545,9 @@ export default function Book() {
               <Typography variant="h5" sx={{ fontWeight: 800, color: vehicles.length > 0 ? '#10b981' : '#ef4444' }}>{vehicles.length}</Typography>
             </Grid>
             <Grid item xs={6} md={3}>
-              <Button 
-                variant="outlined" 
-                size="small" 
+              <Button
+                variant="outlined"
+                size="small"
                 onClick={() => window.location.reload()}
                 sx={{ mt: 1, borderRadius: '8px' }}
               >
