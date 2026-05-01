@@ -1,6 +1,6 @@
 # Node modules
 node_modules/
-
+__pycache__/
 # Build output
 dist/
 build/
@@ -75,4 +75,4 @@ docs/
 # Scratch/dev files
 scratch/
 # AI Models
-*.pkl
+*.pkl
