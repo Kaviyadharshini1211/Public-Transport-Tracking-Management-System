@@ -1,5 +1,6 @@
 const Vehicle = require("../models/Vehicle");
 const Route = require("../models/Route");
+const User = require("../models/User");
 const axios = require("axios");
 
 // ===============================
@@ -197,5 +198,66 @@ exports.predictETA = async (req, res) => {
   } catch (err) {
     console.error("predictETA:", err.message);
     res.status(500).json({ message: "Failed to predict ETA using AI" });
+  }
+};
+
+// ===============================
+// AUTO-ASSIGN DRIVERS VIA AI
+// ===============================
+exports.autoAssignDrivers = async (req, res) => {
+  try {
+    // 1. Get all drivers (we assume 'baseLocation' is available)
+    const drivers = await User.find({ role: "driver", baseLocation: { $exists: true } });
+    if (!drivers.length) return res.status(400).json({ message: "No drivers available for assignment" });
+
+    // 2. Get all vehicles that need assignments (you could filter by unassigned, here we do all for bulk optimization)
+    const vehicles = await Vehicle.find().populate("route");
+    if (!vehicles.length) return res.status(400).json({ message: "No vehicles available for assignment" });
+
+    // 3. Format payload for AI Service
+    const driverPayload = drivers.map(d => ({
+      id: d.email, // using email to map back
+      location: { lat: d.baseLocation.lat, lng: d.baseLocation.lng },
+      experience_years: d.experience_years || Math.floor(Math.random() * 15) + 2 // Mock experience if not in DB
+    }));
+
+    const vehiclePayload = vehicles.map(v => {
+      // Default to 0,0 if route origin is missing
+      const lat = v.route?.stops?.[0]?.lat || 0;
+      const lng = v.route?.stops?.[0]?.lng || 0;
+      return {
+        id: v._id.toString(),
+        route_origin: { lat, lng },
+        type: v.type === 'long-haul' ? 1 : 0
+      };
+    });
+
+    // 4. Call AI Service
+    const aiUrl = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
+    console.log(`🤖 Requesting AI assignment for ${driverPayload.length} drivers & ${vehiclePayload.length} vehicles...`);
+    const aiRes = await axios.post(`${aiUrl}/optimize_assignments`, {
+      drivers: driverPayload,
+      vehicles: vehiclePayload
+    });
+
+    const { assignments, status } = aiRes.data;
+    
+    // 5. Update Database with AI mappings
+    let updatedCount = 0;
+    for (const match of assignments) {
+      await Vehicle.findByIdAndUpdate(match.vehicle_id, {
+        driverName: match.driver_id
+      });
+      updatedCount++;
+    }
+
+    res.json({
+      message: `AI Assignment complete: ${updatedCount} drivers optimally mapped.`,
+      assignments,
+      status
+    });
+  } catch (err) {
+    console.error("autoAssignDrivers Error:", err.message);
+    res.status(500).json({ message: "AI Auto-Assignment failed" });
   }
 };

@@ -21,6 +21,13 @@ API.interceptors.response.use(
       console.error('Request timed out. The server might be waking up.');
       error.message = 'The server is taking too long to respond. Please try again in 30 seconds.';
     }
+    if (error.response && error.response.status === 401) {
+      console.warn("Unauthorized! Clearing token and redirecting to login...");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      // Force reload to clear React state and redirect correctly via Auth flow
+      window.location.href = "/login";
+    }
     return Promise.reject(error);
   }
 );

@@ -6,6 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import * as localBusService from "../api/localBus";
 import "../styles/localBusMap.css";
+import MapWeatherOverlay from "../components/MapWeatherOverlay";
 
 // ── Fix default icons ─────────────────────────────────────────────────────────
 delete L.Icon.Default.prototype._getIconUrl;
@@ -15,8 +16,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png",
 });
 
-// ── Route colour palette (one colour per route) ───────────────────────────────
-const ROUTE_COLORS = ["#3b82f6", "#ef4444", "#10b981", "#8b5cf6", "#f59e0b", "#06b6d4"];
+// ── Route colour palette (one colour per route, avoiding green/red traffic map colors) ──
+const ROUTE_COLORS = ["#3b82f6", "#ec4899", "#8b5cf6", "#d946ef", "#06b6d4", "#4f46e5"];
 
 // ── Dynamic numbered bus pin (coloured circle + triangle tail) ────────────────
 function makeBusIcon(num, color, isStale) {
@@ -355,6 +356,7 @@ export default function LocalBusMap() {
 
       {/* ── Map ──────────────────────────────────────────────────────────────── */}
       <div className="lbm-map-wrap">
+        <MapWeatherOverlay lat={mapCenter[0]} lng={mapCenter[1]} />
         <MapContainer center={mapCenter} zoom={13} className="lbm-map">
           <MapController selectedRoute={selectedRoute} flyTarget={flyTarget} mapRef={mapRef} />
 
