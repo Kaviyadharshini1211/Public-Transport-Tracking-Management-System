@@ -75,5 +75,4 @@ docs/
 # Scratch/dev files
 scratch/
 # AI Models
-*.pkl
-ai/models/**/
+*.pkl

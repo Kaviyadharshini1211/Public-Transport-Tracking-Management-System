@@ -21,7 +21,7 @@ MODELS = [
 ]
 
 def upload_models():
-    print("📤 Connecting to MongoDB to upload models...")
+    print("Connecting to MongoDB to upload models...")
     try:
         db_name = "test" 
         if '/' in MONGO_URI.split('?')[-2]:
@@ -46,10 +46,10 @@ def upload_models():
             with open(file_to_upload, "rb") as f:
                 fs.put(f, filename=model["filename"])
             
-            print(f"✅ Successfully uploaded {model['filename']}!")
+            print(f"Successfully uploaded {model['filename']}!")
 
     except Exception as e:
-        print(f"❌ Failed to upload models: {e}")
+        print(f"Failed to upload models: {e}")
 
 if __name__ == "__main__":
     upload_models()

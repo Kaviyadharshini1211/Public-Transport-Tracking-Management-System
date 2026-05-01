@@ -19,7 +19,7 @@ MODELS = [
 ]
 
 def download_models():
-    print("📥 Connecting to MongoDB to fetch models...")
+    print("Connecting to MongoDB to fetch models...")
     try:
         db_name = "test" 
         if '/' in MONGO_URI.split('?')[-2]:
@@ -35,21 +35,21 @@ def download_models():
             os.makedirs(os.path.dirname(model["path"]), exist_ok=True)
             
             if os.path.exists(model["path"]):
-                print(f"✅ Model {model['filename']} already exists locally. Skipping download.")
+                print(f"Model {model['filename']} already exists locally. Skipping download.")
                 continue
 
             file_doc = fs.find_one({"filename": model["filename"]})
             if not file_doc:
-                print(f"❌ Error: {model['filename']} not found in MongoDB GridFS. Please upload it first.")
+                print(f"Error: {model['filename']} not found in MongoDB GridFS. Please upload it first.")
                 continue
 
             with open(model["path"], "wb") as f:
                 f.write(file_doc.read())
             
-            print(f"✅ Successfully downloaded {model['filename']} ({file_doc.length} bytes) to {model['path']}")
+            print(f"Successfully downloaded {model['filename']} ({file_doc.length} bytes) to {model['path']}")
 
     except Exception as e:
-        print(f"❌ Failed to download models: {e}")
+        print(f"Failed to download models: {e}")
 
 if __name__ == "__main__":
     download_models()
