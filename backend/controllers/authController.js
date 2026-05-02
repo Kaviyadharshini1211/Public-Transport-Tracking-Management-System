@@ -33,7 +33,7 @@ exports.register = async (req, res) => {
     );
 
     res.status(201).json({
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, baseLocation: user.baseLocation },
       token,
     });
   } catch (err) {
@@ -68,7 +68,7 @@ exports.login = async (req, res) => {
     );
 
     res.json({
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, baseLocation: user.baseLocation },
       token,
     });
   } catch (err) {

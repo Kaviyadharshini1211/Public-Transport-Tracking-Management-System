@@ -56,6 +56,12 @@ const userSchema = new mongoose.Schema({
     ref: 'Route'
   }],
 
+  baseLocation: {
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null },
+    city: { type: String, default: "" }
+  },
+
   settings: {
     emailNotifications: { type: Boolean, default: true },
     pushNotifications: { type: Boolean, default: true },

@@ -314,6 +314,7 @@
 .track-map-container {
   flex: 1;
   min-height: 400px;
+  position: relative; /* Ensure absolute overlays stay within bounds */
 }
 
 /* ========== RESPONSIVE ========== */

@@ -317,13 +317,6 @@ const Navbar = ({ user, setUser }) => {
                     >
                       Dashboard
                     </NavLink>
-                    <NavLink
-                      to="/vehicles"
-                      className={({ isActive }) => `navbar-link ${isActive ? "active" : ""}`}
-                      onClick={closeMobileMenu}
-                    >
-                      My Route
-                    </NavLink>
                   </>
                 )}
 

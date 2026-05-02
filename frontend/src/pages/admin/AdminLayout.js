@@ -43,8 +43,13 @@ export default function AdminDashboard() {
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [routes, setRoutes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [toastMsg, setToastMsg] = useState(null); // Renamed internal toast to avoid conflict
+  // Track which tabs have been loaded to avoid re-fetching
+  const [loadedTabs, setLoadedTabs] = useState({});
+  // Per-resource loading states
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
+  const [driversLoading, setDriversLoading] = useState(false);
+  const [routesLoading, setRoutesLoading] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null);
   const [sosCount, setSosCount] = useState(0);
   const [latestSosEvent, setLatestSosEvent] = useState(null);
 
@@ -79,7 +84,9 @@ export default function AdminDashboard() {
 
   // Fetch all data on mount
   useEffect(() => {
-    fetchAllData();
+    // Load data for the default tab (Vehicles) on mount
+    fetchVehicles();
+    fetchDrivers(); // Drivers are small ref data needed by other tabs too
 
     // Connect to global Socket.IO backend (Strip /api off URL)
     const baseServerUrl = (process.env.REACT_APP_API_URL || "").replace("/api", "");
@@ -131,24 +138,70 @@ export default function AdminDashboard() {
     };
   }, []);
 
-  const fetchAllData = async () => {
-    setLoading(true);
+  const fetchVehicles = async () => {
+    if (vehiclesLoading) return;
+    setVehiclesLoading(true);
     try {
-      const [vehiclesRes, driversRes, routesRes] = await Promise.all([
-        API.get("/vehicles"),
-        API.get("/auth/list-users?role=driver"),
-        API.get("/routes"),
-      ]);
-      setVehicles(vehiclesRes.data || []);
-      setDrivers(driversRes.data || []);
-      setRoutes(routesRes.data || []);
+      const res = await API.get("/vehicles");
+      setVehicles(res.data || []);
     } catch (error) {
-      console.error("Error fetching admin data:", error);
-      showToast("Failed to load data", "error");
+      console.error("Error fetching vehicles:", error);
+      showToast("Failed to load vehicles", "error");
     } finally {
-      setLoading(false);
+      setVehiclesLoading(false);
     }
   };
+
+  const fetchDrivers = async () => {
+    if (driversLoading) return;
+    setDriversLoading(true);
+    try {
+      const res = await API.get("/auth/list-users?role=driver");
+      setDrivers(res.data || []);
+    } catch (error) {
+      console.error("Error fetching drivers:", error);
+      showToast("Failed to load drivers", "error");
+    } finally {
+      setDriversLoading(false);
+    }
+  };
+
+  const fetchRoutes = async () => {
+    if (routesLoading) return;
+    setRoutesLoading(true);
+    try {
+      const res = await API.get("/routes");
+      setRoutes(res.data || []);
+    } catch (error) {
+      console.error("Error fetching routes:", error);
+      showToast("Failed to load routes", "error");
+    } finally {
+      setRoutesLoading(false);
+    }
+  };
+
+  // Lazy load per tab when tab changes
+  useEffect(() => {
+    if (tab === 0 && !loadedTabs[0]) {
+      fetchVehicles();
+      setLoadedTabs(p => ({ ...p, 0: true }));
+    }
+    if (tab === 1 && !loadedTabs[1]) {
+      if (!drivers.length) fetchDrivers();
+      setLoadedTabs(p => ({ ...p, 1: true }));
+    }
+    if (tab === 2 && !loadedTabs[2]) {
+      fetchRoutes();
+      setLoadedTabs(p => ({ ...p, 2: true }));
+    }
+    if (tab === 3 && !loadedTabs[3]) {
+      // Assign tab needs both
+      if (!vehicles.length) fetchVehicles();
+      if (!drivers.length) fetchDrivers();
+      setLoadedTabs(p => ({ ...p, 3: true }));
+    }
+    // eslint-disable-next-line
+  }, [tab]);
 
   // Internal Toast helper
   const showToast = (message, type = "info") => {
@@ -167,7 +220,8 @@ export default function AdminDashboard() {
       (v) =>
         v.regNumber?.toLowerCase().includes(q) ||
         v.model?.toLowerCase().includes(q) ||
-        v.driverName?.toLowerCase().includes(q)
+        v.driverName?.toLowerCase().includes(q) ||
+        v.route?.name?.toLowerCase().includes(q)
     );
   }, [vehicles, search]);
 
@@ -195,20 +249,20 @@ export default function AdminDashboard() {
   // Tab counts
   const tabCounts = [vehicles.length, drivers.length, routes.length, vehicles.length, sosCount > 0 ? sosCount : "-"];
 
+  // Inline skeleton for loading states
+  const skeletonGrid = (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 18 }}>
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="admin-skeleton skeleton-card" />
+      ))}
+    </div>
+  );
+
   // Render tab content
   const renderTabContent = () => {
-    if (loading) {
-      return (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 18 }}>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="admin-skeleton skeleton-card" />
-          ))}
-        </div>
-      );
-    }
-
     switch (tab) {
       case 0:
+        if (vehiclesLoading && !vehicles.length) return skeletonGrid;
         return (
           <AdminVehicles
             vehicles={filteredVehicles}
@@ -220,6 +274,7 @@ export default function AdminDashboard() {
           />
         );
       case 1:
+        if (driversLoading && !drivers.length) return skeletonGrid;
         return (
           <AdminDrivers
             drivers={filteredDrivers}
@@ -229,6 +284,7 @@ export default function AdminDashboard() {
           />
         );
       case 2:
+        if (routesLoading && !routes.length) return skeletonGrid;
         return (
           <AdminRoutes
             routes={filteredRoutes}
@@ -238,6 +294,7 @@ export default function AdminDashboard() {
           />
         );
       case 3:
+        if ((vehiclesLoading && !vehicles.length) || (driversLoading && !drivers.length)) return skeletonGrid;
         return (
           <AdminAssignDriver
             vehicles={filteredVehicles}
@@ -356,7 +413,7 @@ export default function AdminDashboard() {
 
         {/* ─── Stats Grid ─── */}
         <div className="admin-stats-grid">
-          {loading ? (
+          {(vehiclesLoading && !vehicles.length) ? (
             [1, 2, 3, 4].map((i) => (
               <div key={i} className="admin-skeleton skeleton-stat" />
             ))

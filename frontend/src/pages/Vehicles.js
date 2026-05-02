@@ -8,8 +8,15 @@ import "../styles/Vehicles.css";
 const Vehicles = ({ user }) => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
   const navigate = useNavigate();
   const { toasts, addToast, removeToast } = useToast();
+
+  useEffect(() => {
+    if (user && user.role === "driver") {
+      navigate("/driver", { replace: true });
+    }
+  }, [user, navigate]);
 
   const fetchVehicles = async () => {
     try {
@@ -60,8 +67,6 @@ const Vehicles = ({ user }) => {
       </div>
     );
   }
-
-  const [filter, setFilter] = useState("all");
 
   const filteredVehicles = vehicles.filter(v => {
     if (filter === "all") return true;

@@ -26,7 +26,7 @@ RUN mkdir -p /app/model
 RUN chmod +x startup.sh
 
 # Expose FastAPI port
-EXPOSE 8000
+EXPOSE 7860
 
 # Run the startup script which downloads the model and starts the server
 CMD ["./startup.sh"]

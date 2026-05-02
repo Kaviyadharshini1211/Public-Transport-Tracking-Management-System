@@ -1,6 +1,6 @@
 # Node modules
 node_modules/
-
+__pycache__/
 # Build output
 dist/
 build/
@@ -74,5 +74,5 @@ docs/
 
 # Scratch/dev files
 scratch/
-old_navbar*.txt
-ai/eta_model.pkl
+# AI Models
+*.pkl

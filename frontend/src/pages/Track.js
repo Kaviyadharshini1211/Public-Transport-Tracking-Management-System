@@ -15,6 +15,7 @@ import L from "leaflet";
 import polyline from "polyline";
 import "leaflet/dist/leaflet.css";
 import "../styles/Track.css";
+import MapWeatherOverlay from "../components/MapWeatherOverlay";
 
 // ---------------- FIX DEFAULT MARKERS ----------------
 delete L.Icon.Default.prototype._getIconUrl;
@@ -27,11 +28,25 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png",
 });
 
-// ---------------- BUS ICON ----------------
-const busIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61231.png",
-  iconSize: [45, 45],
-  iconAnchor: [22, 22],
+// ---------------- PREMIUM BUS ICON ----------------
+const busIcon = new L.DivIcon({
+  html: `
+    <div style="
+      background: linear-gradient(135deg, #ec4899, #7c3aed);
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.5);
+      border: 3px solid white;
+      font-size: 20px;
+    ">
+      🚌
+    </div>
+  `,
+  className: "",
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20],
 });
 
 // ---------------- HAVERSINE ----------------
@@ -141,8 +156,11 @@ export default function Track() {
   }, [vehicleId, isAuthorized]);
 
   // ---------- LOAD ROUTE FROM OSRM ----------
+  const routeLoadedFor = useRef(null);
+  
   useEffect(() => {
-    if (!vehicle?.route?.stops) return;
+    if (!vehicle?.route?.stops || !vehicle.route._id) return;
+    if (routeLoadedFor.current === vehicle.route._id) return;
 
     const stops = vehicle.route.stops;
     if (stops.length < 2) return;
@@ -163,6 +181,7 @@ export default function Track() {
         // Auto zoom to route
         if (mapRef.current) {
           mapRef.current.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
+          routeLoadedFor.current = vehicle.route._id;
         }
       } catch (e) {
         console.error("Route load failed:", e);
@@ -242,13 +261,18 @@ export default function Track() {
   // ---------- FOLLOW BUS AUTO ----------
   useEffect(() => {
     if (!vehicle?.currentLocation || !mapRef.current) return;
-
-    mapRef.current.setView(
-      [vehicle.currentLocation.lat, vehicle.currentLocation.lng],
-      15,
-      { animate: true }
-    );
-  }, [vehicle]);
+    
+    // We only want to pan initially if we haven't loaded a full route bounds yet
+    if (!routeCoords.length && mapRef.current) {
+      mapRef.current.setView(
+        [vehicle.currentLocation.lat, vehicle.currentLocation.lng],
+        14,
+        { animate: true }
+      );
+    }
+    // Intentionally omitted the aggressive setView on every location update
+    // as it interrupts the user's manual zooming and panning.
+  }, [vehicle?.currentLocation]);
 
   // ---------- LOADING STATE ----------
   if (loading) {
@@ -369,6 +393,7 @@ export default function Track() {
 
       {/* Map */}
       <div className="track-map-container">
+        <MapWeatherOverlay lat={vehicle.currentLocation.lat} lng={vehicle.currentLocation.lng} />
         <MapContainer
           center={[vehicle.currentLocation.lat, vehicle.currentLocation.lng]}
           zoom={14}
@@ -382,16 +407,16 @@ export default function Track() {
             attribution="&copy; Google Maps"
           />
 
-          {/* Covered route (dark grey) */}
+          {/* Covered route (dark purple) */}
           <Polyline
             positions={coveredCoords}
-            pathOptions={{ color: "#555", weight: 8, opacity: 0.9 }}
+            pathOptions={{ color: "#7c3aed", weight: 8, opacity: 0.9 }}
           />
 
-          {/* Remaining route (blue) */}
+          {/* Remaining route (neon pink) */}
           <Polyline
             positions={remainingCoords}
-            pathOptions={{ color: "blue", weight: 6 }}
+            pathOptions={{ color: "#ec4899", weight: 6, opacity: 0.8 }}
           />
 
           {/* Stops */}
