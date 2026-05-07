@@ -10,6 +10,14 @@ This system aims to bring **transparency, efficiency, and convenience** to rural
 
 ---
 
+## 🆕 Recent Updates
+
+- **Added AI Route Optimization**: Implemented a GradientBoosting model to predict optimal detour scores based on traffic and weather conditions.
+- **Improved Code Documentation**: Added comprehensive JSDoc and Python docstrings across the vehicle controller and AI models.
+- **Enhanced Live Tracking**: Integrated AI prediction directly into the live tracking proxy.
+
+---
+
 ## 🎯 Objectives
 
 - Provide **real-time bus and route tracking** with accurate ETA predictions
