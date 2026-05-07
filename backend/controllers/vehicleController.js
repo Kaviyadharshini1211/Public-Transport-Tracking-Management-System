@@ -55,9 +55,13 @@ exports.createVehicle = async (req, res) => {
   }
 };
 
-// ===============================
-// UPDATE vehicle
-// ===============================
+/**
+ * Updates an existing vehicle's information.
+ *
+ * @param {Object} req - The Express request object, containing the vehicle ID in `req.params.id` and update data in `req.body`.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON representation of the updated vehicle or a 404 error if not found.
+ */
 exports.updateVehicle = async (req, res) => {
   try {
     const updated = await Vehicle.findByIdAndUpdate(req.params.id, req.body, {
@@ -72,9 +76,13 @@ exports.updateVehicle = async (req, res) => {
   }
 };
 
-// ===============================
-// DELETE vehicle
-// ===============================
+/**
+ * Deletes a vehicle from the database.
+ *
+ * @param {Object} req - The Express request object, containing the vehicle ID in `req.params.id`.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON object indicating success status.
+ */
 exports.deleteVehicle = async (req, res) => {
   try {
     await Vehicle.findByIdAndDelete(req.params.id);
@@ -85,9 +93,13 @@ exports.deleteVehicle = async (req, res) => {
   }
 };
 
-// ===============================
-// ASSIGN ROUTE
-// ===============================
+/**
+ * Assigns a specific route to a vehicle.
+ *
+ * @param {Object} req - The Express request object, containing the vehicle ID in `req.params.id` and the `routeId` in `req.body`.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON representation of the vehicle with its assigned route.
+ */
 exports.assignRoute = async (req, res) => {
   try {
     const { routeId } = req.body;
