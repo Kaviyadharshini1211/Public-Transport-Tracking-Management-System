@@ -120,9 +120,13 @@ exports.assignRoute = async (req, res) => {
   }
 };
 
-// ===============================
-// UPDATE TRACKING (USED BY BOTH)
-// ===============================
+/**
+ * Updates a vehicle's tracking location and status.
+ *
+ * @param {Object} req - The Express request object, containing `lat` and `lng` in `req.body` and the vehicle ID in `req.params.id`.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON containing the updated vehicle data and success status.
+ */
 exports.updateTracking = async (req, res) => {
   try {
     const { lat, lng } = req.body;
@@ -144,9 +148,13 @@ exports.updateTracking = async (req, res) => {
   }
 };
 
-// ===============================
-// STOP TRACKING
-// ===============================
+/**
+ * Stops tracking for a specific vehicle by updating its tracking status.
+ *
+ * @param {Object} req - The Express request object, containing the vehicle ID in `req.params.id`.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON containing the updated vehicle data and success status.
+ */
 exports.stopTracking = async (req, res) => {
   try {
     const updated = await Vehicle.findByIdAndUpdate(
@@ -162,9 +170,13 @@ exports.stopTracking = async (req, res) => {
   }
 };
 
-// ===============================
-// ALL TRACKED VEHICLES
-// ===============================
+/**
+ * Retrieves a list of all currently tracked vehicles.
+ *
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON array of all tracked vehicles.
+ */
 exports.getTrackedVehicles = async (req, res) => {
   try {
     const vehicles = await Vehicle.find().populate("route");
