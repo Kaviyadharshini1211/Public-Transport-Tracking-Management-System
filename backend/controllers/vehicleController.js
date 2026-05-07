@@ -3,9 +3,13 @@ const Route = require("../models/Route");
 const User = require("../models/User");
 const axios = require("axios");
 
-// ===============================
-// GET all vehicles
-// ===============================
+/**
+ * Retrieves a list of all vehicles along with their associated routes.
+ *
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON array of vehicle objects.
+ */
 exports.listVehicles = async (req, res) => {
   try {
     const vehicles = await Vehicle.find().populate("route");
@@ -16,9 +20,13 @@ exports.listVehicles = async (req, res) => {
   }
 };
 
-// ===============================
-// GET single vehicle
-// ===============================
+/**
+ * Retrieves a single vehicle by its ID, including its associated route.
+ *
+ * @param {Object} req - The Express request object, containing the vehicle ID in `req.params.id`.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON representation of the requested vehicle or a 404 error if not found.
+ */
 exports.getVehicle = async (req, res) => {
   try {
     const vehicle = await Vehicle.findById(req.params.id).populate("route");
@@ -29,9 +37,13 @@ exports.getVehicle = async (req, res) => {
   }
 };
 
-// ===============================
-// CREATE vehicle
-// ===============================
+/**
+ * Creates a new vehicle in the database.
+ *
+ * @param {Object} req - The Express request object containing vehicle data in `req.body`.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON representation of the newly created vehicle with a 201 status code.
+ */
 exports.createVehicle = async (req, res) => {
   try {
     const vehicle = await Vehicle.create(req.body);
