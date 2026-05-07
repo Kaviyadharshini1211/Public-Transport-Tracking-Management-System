@@ -5,6 +5,7 @@ from typing import Optional, List
 from models.eta import ETAPredictor
 from models.assignment import AssignmentPredictor
 from models.route_optimizer import RouteOptimizerPredictor
+from models.crowd_predictor import CrowdPredictor
 from datetime import datetime
 import math
 import numpy as np
@@ -29,6 +30,7 @@ app.add_middleware(
 eta_predictor = ETAPredictor()
 assignment_predictor = AssignmentPredictor()
 route_optimizer_predictor = RouteOptimizerPredictor()
+crowd_predictor = CrowdPredictor()
 
 class ETARequest(BaseModel):
     distance_remaining_km: float = Field(..., gt=0, description="Remaining distance in kilometers")
@@ -368,3 +370,71 @@ def optimize_live_route(req: RouteOptimizationRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Route optimization failed: {str(e)}")
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CROWD PREDICTION — Models & Endpoint
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CrowdPredictionRequest(BaseModel):
+    """
+    Input schema for the /predict_crowd endpoint.
+
+    All fields map directly to features used by the trained CrowdPredictor
+    GradientBoosting models.
+    """
+    hour_of_day:       int   = Field(..., ge=0, le=23,  description="Hour of the day (0–23)")
+    day_of_week:       int   = Field(..., ge=0, le=6,   description="Day of week (0=Mon … 6=Sun)")
+    stop_index:        int   = Field(..., ge=0,          description="Zero-based stop position along the route")
+    total_stops:       int   = Field(..., ge=1,          description="Total stops on the route")
+    route_type:        int   = Field(0,  ge=0, le=2,   description="0=urban_core, 1=suburban, 2=feeder")
+    bus_capacity:      int   = Field(50, ge=1,          description="Max passenger capacity of the bus")
+    weather_condition: int   = Field(0,  ge=0, le=3,   description="0=clear, 1=rain, 2=fog, 3=storm")
+    traffic_index:     int   = Field(5,  ge=1, le=10,  description="Traffic severity (1=clear, 10=standstill)")
+    is_holiday:        int   = Field(0,  ge=0, le=1,   description="1 if today is a public holiday")
+
+
+class CrowdPredictionResponse(BaseModel):
+    """
+    Output schema for the /predict_crowd endpoint.
+
+    Returns a crowd level label, estimated passenger count, capacity ratio,
+    and the classifier's confidence in its prediction.
+    """
+    crowd_level:          int
+    crowd_label:          str
+    estimated_passengers: int
+    capacity_ratio:       float
+    confidence:           float
+    status:               str
+
+
+@app.post("/predict_crowd", response_model=CrowdPredictionResponse)
+def predict_crowd(req: CrowdPredictionRequest):
+    """
+    Predicts the crowd density level for a local bus at a given stop and time.
+
+    Uses the trained CrowdPredictor (GradientBoostingClassifier + Regressor)
+    to output:
+      - crowd_level          : 0 (empty) → 4 (overcrowded)
+      - crowd_label          : human-readable label for crowd_level
+      - estimated_passengers : approximate number of passengers on board
+      - capacity_ratio       : passengers / bus_capacity (e.g. 1.2 = 120% full)
+      - confidence           : classifier's probability for the predicted class
+
+    Falls back to a heuristic calculation if the model files are not present.
+    """
+    try:
+        result = crowd_predictor.predict(
+            hour_of_day       = req.hour_of_day,
+            day_of_week       = req.day_of_week,
+            stop_index        = req.stop_index,
+            total_stops       = req.total_stops,
+            route_type        = req.route_type,
+            bus_capacity      = req.bus_capacity,
+            weather_condition = req.weather_condition,
+            traffic_index     = req.traffic_index,
+            is_holiday        = req.is_holiday,
+        )
+        return CrowdPredictionResponse(**result, status="success")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Crowd prediction failed: {str(e)}")
