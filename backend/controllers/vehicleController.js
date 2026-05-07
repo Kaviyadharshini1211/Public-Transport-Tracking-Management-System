@@ -187,9 +187,13 @@ exports.getTrackedVehicles = async (req, res) => {
   }
 };
 
-// ===============================
-// PUBLIC BUSES ONLY
-// ===============================
+/**
+ * Retrieves a list of public (local) buses.
+ *
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON array of public bus vehicles.
+ */
 exports.getPublicBuses = async (req, res) => {
   try {
     const buses = await Vehicle.find({ isPublic: true }).populate("route");
@@ -200,9 +204,13 @@ exports.getPublicBuses = async (req, res) => {
   }
 };
 
-// ===============================
-// INTERCITY BUSES ONLY
-// ===============================
+/**
+ * Retrieves a list of intercity (long-haul) buses.
+ *
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON array of intercity bus vehicles.
+ */
 exports.getIntercityBuses = async (req, res) => {
   try {
     const buses = await Vehicle.find({ isPublic: false }).populate("route");
@@ -213,9 +221,13 @@ exports.getIntercityBuses = async (req, res) => {
   }
 };
 
-// ===============================
-// PREDICT ETA (AI PROXY)
-// ===============================
+/**
+ * Predicts the Estimated Time of Arrival (ETA) using an AI service.
+ *
+ * @param {Object} req - The Express request object, containing variables like `distance_remaining_km`, `avg_speed_kmh`, `traffic_index`, `weather_condition`, and `bus_type`.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON response containing the predicted ETA from the AI service.
+ */
 exports.predictETA = async (req, res) => {
   try {
     const { distance_remaining_km, avg_speed_kmh, traffic_index, weather_condition, bus_type } = req.body;
