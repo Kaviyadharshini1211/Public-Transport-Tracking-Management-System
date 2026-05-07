@@ -27,6 +27,16 @@ MODELS = [
         "filename": "route_optimizer_reg.pkl",
         "path": os.path.join(os.path.dirname(__file__), "models", "route_optimizer", "route_optimizer_reg.pkl"),
         "root_fallback": os.path.join(os.path.dirname(__file__), "route_optimizer_reg.pkl")
+    },
+    {
+        "filename": "crowd_predictor_clf.pkl",
+        "path": os.path.join(os.path.dirname(__file__), "models", "crowd_predictor", "crowd_predictor_clf.pkl"),
+        "root_fallback": os.path.join(os.path.dirname(__file__), "crowd_predictor_clf.pkl")
+    },
+    {
+        "filename": "crowd_predictor_reg.pkl",
+        "path": os.path.join(os.path.dirname(__file__), "models", "crowd_predictor", "crowd_predictor_reg.pkl"),
+        "root_fallback": os.path.join(os.path.dirname(__file__), "crowd_predictor_reg.pkl")
     }
 ]
 
