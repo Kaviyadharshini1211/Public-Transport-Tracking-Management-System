@@ -249,9 +249,13 @@ exports.predictETA = async (req, res) => {
   }
 };
 
-// ===============================
-// AUTO-ASSIGN DRIVERS VIA AI
-// ===============================
+/**
+ * Automatically assigns drivers to vehicles based on location and type using an AI service.
+ *
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON containing assignments mapped by the AI service.
+ */
 exports.autoAssignDrivers = async (req, res) => {
   try {
     // 1. Get all drivers (we assume 'baseLocation' is available)
@@ -310,9 +314,13 @@ exports.autoAssignDrivers = async (req, res) => {
   }
 };
 
-// ===============================
-// LIVE ROUTE OPTIMIZATION PROXY
-// ===============================
+/**
+ * Optimizes a live route using an AI service based on real-time traffic, weather, and distance.
+ *
+ * @param {Object} req - The Express request object, containing `traffic_index`, `weather_condition`, and `avg_speed_kmh` in `req.body`, and the vehicle ID in `req.params.id`.
+ * @param {Object} res - The Express response object.
+ * @returns {Promise<void>} JSON response containing optimized route instructions from the AI service.
+ */
 exports.optimizeRoute = async (req, res) => {
   try {
     const { traffic_index, weather_condition, avg_speed_kmh } = req.body;
