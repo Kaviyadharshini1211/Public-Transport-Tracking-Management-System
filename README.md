@@ -13,6 +13,7 @@ This system aims to bring **transparency, efficiency, and convenience** to rural
 ## 🆕 Recent Updates
 
 - **Added AI Route Optimization**: Implemented a GradientBoosting model to predict optimal detour scores based on traffic and weather conditions.
+- **Added AI Crowd Prediction**: New GradientBoosting classifier + regressor predicts crowd level (empty → overcrowded) and estimated passenger count for local buses.
 - **Improved Code Documentation**: Added comprehensive JSDoc and Python docstrings across the vehicle controller and AI models.
 - **Enhanced Live Tracking**: Integrated AI prediction directly into the live tracking proxy.
 
@@ -111,7 +112,8 @@ This system aims to bring **transparency, efficiency, and convenience** to rural
 |----------------|----------------|--------------|
 | **AI Chatbot** | Groq Llama 3 | Understands complex natural language queries, parses intent, filters buses, and bridges users to the booking flow with preserved conversational context. |
 | **ETA Predictor** | Scikit-Learn (Random Forest) via FastAPI | Predicts highly accurate bus arrival times by modeling non-linear relationships between distance, speed, time of day, and traffic severity. |
-| **Route Optimizer** | Custom Graph Alg (Future) | Recommends efficient routes and handles dynamic rerouting. |
+| **Route Optimizer** | GradientBoosting (Classifier + Regressor) via FastAPI | Detects when a detour is needed based on live traffic, weather, and distance; recommends an alternate waypoint and estimates time saved. |
+| **Crowd Predictor** | GradientBoosting (Classifier + Regressor) via FastAPI | Predicts crowd density level (empty→overcrowded) and estimated passenger count for local buses based on time, route, stop position, weather, and traffic. |
 | **Anomaly Detector** | Time-series Analysis (Future)| Identifies unusual route deviation or unexpected delays to alert admins. |
 
 ---
