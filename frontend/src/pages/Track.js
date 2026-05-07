@@ -149,7 +149,7 @@ export default function Track() {
 
   useEffect(() => {
     if (!vehicleId || isAuthorized === false) return;
-    
+
     fetchVehicle();
     const iv = setInterval(fetchVehicle, 3000);
     return () => clearInterval(iv);
@@ -157,7 +157,7 @@ export default function Track() {
 
   // ---------- LOAD ROUTE FROM OSRM ----------
   const routeLoadedFor = useRef(null);
-  
+
   useEffect(() => {
     if (!vehicle?.route?.stops || !vehicle.route._id) return;
     if (routeLoadedFor.current === vehicle.route._id) return;
@@ -227,7 +227,7 @@ export default function Track() {
     }
 
     const speed = vehicle.route.avgSpeedKmph || 50;
-    
+
     vehicleService.getVehicleETA(vehicle._id, { distance_remaining_km: km, avg_speed_kmh: speed })
       .then(res => setEtaFinal(formatETA(res.estimated_minutes)))
       .catch(err => {
@@ -261,7 +261,7 @@ export default function Track() {
   // ---------- FOLLOW BUS AUTO ----------
   useEffect(() => {
     if (!vehicle?.currentLocation || !mapRef.current) return;
-    
+
     // We only want to pan initially if we haven't loaded a full route bounds yet
     if (!routeCoords.length && mapRef.current) {
       mapRef.current.setView(

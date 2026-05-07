@@ -183,7 +183,7 @@ exports.getIntercityBuses = async (req, res) => {
 exports.predictETA = async (req, res) => {
   try {
     const { distance_remaining_km, avg_speed_kmh, traffic_index, weather_condition, bus_type } = req.body;
-    
+
     // Call Python FastAPI
     const aiUrl = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
     const aiRes = await axios.post(`${aiUrl}/predict_eta`, {
@@ -241,7 +241,7 @@ exports.autoAssignDrivers = async (req, res) => {
     });
 
     const { assignments, status } = aiRes.data;
-    
+
     // 5. Update Database with AI mappings
     let updatedCount = 0;
     for (const match of assignments) {
@@ -259,5 +259,46 @@ exports.autoAssignDrivers = async (req, res) => {
   } catch (err) {
     console.error("autoAssignDrivers Error:", err.message);
     res.status(500).json({ message: "AI Auto-Assignment failed" });
+  }
+};
+
+// ===============================
+// LIVE ROUTE OPTIMIZATION PROXY
+// ===============================
+exports.optimizeRoute = async (req, res) => {
+  try {
+    const { traffic_index, weather_condition, avg_speed_kmh } = req.body;
+    
+    // Fetch the vehicle and its route
+    const vehicle = await Vehicle.findById(req.params.id).populate("route");
+    if (!vehicle || !vehicle.route) {
+      return res.status(404).json({ message: "Vehicle or Route not found" });
+    }
+
+    // Determine current location and next stop
+    const current_lat = vehicle.currentLocation?.lat || vehicle.route.stops?.[0]?.lat || 12.9716;
+    const current_lng = vehicle.currentLocation?.lng || vehicle.route.stops?.[0]?.lng || 77.5946;
+    
+    // For simplicity, just pick the last stop as the "next stop" if not tracked
+    const stops = vehicle.route.stops || [];
+    const nextStop = stops.length > 1 ? stops[stops.length - 1] : { lat: 12.9716, lng: 77.5946 };
+
+    // Call Python FastAPI
+    const aiUrl = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
+    const aiRes = await axios.post(`${aiUrl}/optimize_live_route`, {
+      current_lat,
+      current_lng,
+      next_stop_lat: nextStop.lat,
+      next_stop_lng: nextStop.lng,
+      avg_speed_kmh: parseFloat(avg_speed_kmh) || 30.0,
+      traffic_index: parseInt(traffic_index) || 5,
+      weather_condition: parseInt(weather_condition) || 0,
+      bus_type: vehicle.type === 'long-haul' ? 1 : 0
+    });
+
+    res.json(aiRes.data);
+  } catch (err) {
+    console.error("optimizeRoute:", err.message);
+    res.status(500).json({ message: "Failed to optimize route using AI" });
   }
 };

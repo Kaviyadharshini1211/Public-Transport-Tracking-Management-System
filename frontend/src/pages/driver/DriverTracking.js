@@ -93,7 +93,7 @@ export default function DriverTracking({ vehicle, loading }) {
         async (pos) => {
           const { latitude, longitude, accuracy } = pos.coords;
           setCoords({ lat: latitude, lng: longitude });
-          
+
           // Calculate signal (0-100) based on accuracy meters
           let strength = 0;
           if (accuracy < 10) strength = 100;
@@ -211,7 +211,7 @@ export default function DriverTracking({ vehicle, loading }) {
         <div className="drv-tracking__warning-card">
           <div className="drv-tracking__warning-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
           <h3 className="drv-tracking__warning-title">
@@ -227,8 +227,8 @@ export default function DriverTracking({ vehicle, loading }) {
           {locationState === "denied" && (
             <button className="drv-tracking__enable-btn" onClick={handleEnableLocation}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
-                <circle cx="12" cy="10" r="3"/>
+                <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" />
+                <circle cx="12" cy="10" r="3" />
               </svg>
               Enable Location
             </button>
@@ -243,10 +243,10 @@ export default function DriverTracking({ vehicle, loading }) {
     <div className="drv-tracking">
       {/* Map Implementation */}
       <div className="drv-tracking__map-container" style={{ position: 'relative', width: '100%', minHeight: '400px', height: '100%', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--drv-border)' }}>
-        <MapContainer 
-          center={coords ? [coords.lat, coords.lng] : [28.6139, 77.2090]} 
-          zoom={15} 
-          scrollWheelZoom={true} 
+        <MapContainer
+          center={coords ? [coords.lat, coords.lng] : [28.6139, 77.2090]}
+          zoom={15}
+          scrollWheelZoom={true}
           style={{ height: "400px", minHeight: "100%", width: "100%", zIndex: 0 }}
         >
           {/* Elegant Dark Map Tiles */}
@@ -258,7 +258,7 @@ export default function DriverTracking({ vehicle, loading }) {
             <>
               <Marker position={[coords.lat, coords.lng]} icon={driverIcon}>
                 <Popup>
-                  <strong>{vehicle?.regNumber}</strong><br/>
+                  <strong>{vehicle?.regNumber}</strong><br />
                   Current assigned vehicle.
                 </Popup>
               </Marker>
@@ -292,7 +292,7 @@ export default function DriverTracking({ vehicle, loading }) {
         {error && (
           <div className="drv-tracking__error-banner">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             {error}
           </div>
@@ -330,14 +330,14 @@ export default function DriverTracking({ vehicle, loading }) {
             disabled={locationState === "checking"}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"/>
+              <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
             Start Sharing Location
           </button>
         ) : (
           <button className="drv-tracking__btn drv-tracking__btn--stop" onClick={stopTracking}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="6" y="6" width="12" height="12" rx="2"/>
+              <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
             Stop Tracking
           </button>

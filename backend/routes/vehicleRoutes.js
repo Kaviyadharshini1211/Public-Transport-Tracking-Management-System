@@ -11,7 +11,8 @@ const {
   updateTracking,
   stopTracking,
   predictETA,
-  autoAssignDrivers
+  autoAssignDrivers,
+  optimizeRoute
 } = require("../controllers/vehicleController");
 
 const router = express.Router();
@@ -42,5 +43,6 @@ router.patch("/:id/tracking/stop", stopTracking);
 // AI ETA & Optimization
 router.post("/:id/eta", predictETA);
 router.post("/auto-assign", autoAssignDrivers);
+router.post("/:id/optimize-route", optimizeRoute);
 
 module.exports = router;

@@ -11,12 +11,12 @@ const locationSchema = new mongoose.Schema({
 }, { _id: false });
 
 const vehicleSchema = new mongoose.Schema({
-  regNumber:  { type: String, required: true, unique: true },
-  model:      String,
-  capacity:   Number,
-  route:      { type: mongoose.Schema.Types.ObjectId, ref: "Route", default: null },
+  regNumber: { type: String, required: true, unique: true },
+  model: String,
+  capacity: Number,
+  route: { type: mongoose.Schema.Types.ObjectId, ref: "Route", default: null },
   driverName: String,
-  status:     { type: String, default: "active" },
+  status: { type: String, default: "active" },
 
   // "long-haul" = booked intercity buses (existing behaviour)
   //   "local"     = city route buses, no booking needed
@@ -27,9 +27,9 @@ const vehicleSchema = new mongoose.Schema({
   },
 
   // Tracking (shared by both types)
-  isTracking:       { type: Boolean, default: false },
-  currentLocation:  { type: locationSchema, default: null },
-  lastSeenAt:       { type: Date, default: null },
+  isTracking: { type: Boolean, default: false },
+  currentLocation: { type: locationSchema, default: null },
+  lastSeenAt: { type: Date, default: null },
 
   // For local buses — index inside route.stops[] the bus is nearest to
   nearestStopIndex: { type: Number, default: null },

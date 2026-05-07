@@ -15,6 +15,14 @@ MODELS = [
     {
         "filename": "assignment_model.pkl",
         "path": os.path.join(os.path.dirname(__file__), "models", "assignment", "assignment_model.pkl")
+    },
+    {
+        "filename": "route_optimizer_clf.pkl",
+        "path": os.path.join(os.path.dirname(__file__), "models", "route_optimizer", "route_optimizer_clf.pkl")
+    },
+    {
+        "filename": "route_optimizer_reg.pkl",
+        "path": os.path.join(os.path.dirname(__file__), "models", "route_optimizer", "route_optimizer_reg.pkl")
     }
 ]
 

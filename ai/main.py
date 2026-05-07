@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from models.eta import ETAPredictor
 from models.assignment import AssignmentPredictor
+from models.route_optimizer import RouteOptimizerPredictor
 from datetime import datetime
 import math
 import numpy as np
@@ -15,9 +17,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Initialize the ML predictors
 eta_predictor = ETAPredictor()
 assignment_predictor = AssignmentPredictor()
+route_optimizer_predictor = RouteOptimizerPredictor()
 
 class ETARequest(BaseModel):
     distance_remaining_km: float = Field(..., gt=0, description="Remaining distance in kilometers")
@@ -219,3 +230,141 @@ def optimize_assignments(req: OptimizationRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Optimization failed: {str(e)}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LIVE ROUTE OPTIMIZATION — Models & Endpoint
+# ─────────────────────────────────────────────────────────────────────────────
+
+class RouteOptimizationRequest(BaseModel):
+    current_lat: float       = Field(..., description="Current vehicle latitude")
+    current_lng: float       = Field(..., description="Current vehicle longitude")
+    next_stop_lat: float     = Field(..., description="Next stop latitude")
+    next_stop_lng: float     = Field(..., description="Next stop longitude")
+    avg_speed_kmh: float     = Field(30.0, gt=0, description="Current average speed km/h")
+    traffic_index: int       = Field(5, ge=1, le=10, description="Traffic severity (1=clear, 10=standstill)")
+    weather_condition: int   = Field(0, ge=0, le=3, description="0=clear 1=rain 2=fog 3=storm")
+    bus_type: int            = Field(0, ge=0, le=1, description="0=standard 1=express")
+
+class RouteOptimizationResponse(BaseModel):
+    detour_needed: bool
+    detour_lat: Optional[float] = None
+    detour_lng: Optional[float] = None
+    original_eta_minutes: float
+    optimized_eta_minutes: float
+    reason: str
+    traffic_severity: str
+    model_confidence: Optional[float] = None
+
+
+@app.post("/optimize_live_route", response_model=RouteOptimizationResponse)
+def optimize_live_route(req: RouteOptimizationRequest):
+    """
+    Uses the trained RouteOptimizerPredictor (GradientBoosting) to decide
+    whether a detour is needed, then computes a perpendicular waypoint and
+    estimates time savings using the ETA model.
+    """
+    try:
+        dist_km = haversine_distance(
+            req.current_lat, req.current_lng,
+            req.next_stop_lat, req.next_stop_lng
+        )
+
+        if dist_km < 0.01:
+            return RouteOptimizationResponse(
+                detour_needed=False,
+                original_eta_minutes=0.0,
+                optimized_eta_minutes=0.0,
+                reason="Vehicle is already at the next stop.",
+                traffic_severity="none",
+                model_confidence=None
+            )
+
+        hour = datetime.now().hour
+
+        # ── ML Model decision ────────────────────────────────────────────────
+        ml_result = route_optimizer_predictor.predict(
+            dist_to_next_stop_km=dist_km,
+            traffic_index=req.traffic_index,
+            avg_speed_kmh=req.avg_speed_kmh,
+            weather_condition=req.weather_condition,
+            time_of_day=hour,
+            bus_type=req.bus_type
+        )
+        detour_needed = ml_result["detour_needed"]
+        confidence    = ml_result["confidence"]
+
+        # ── ETA estimates via existing ETA model ─────────────────────────────
+        actual_eta = eta_predictor.predict(
+            distance_km=dist_km,
+            speed_kmh=req.avg_speed_kmh,
+            traffic_index=req.traffic_index,
+            weather=req.weather_condition,
+            time_of_day=hour,
+            bus_type=req.bus_type
+        )
+        reduced_traffic  = max(1, req.traffic_index - 3)
+        optimized_speed  = min(req.avg_speed_kmh * 1.2, 50.0)
+        optimized_eta    = eta_predictor.predict(
+            distance_km=dist_km * 1.05,
+            speed_kmh=optimized_speed,
+            traffic_index=reduced_traffic,
+            weather=req.weather_condition,
+            time_of_day=hour,
+            bus_type=req.bus_type
+        )
+
+        # ── Traffic severity label ───────────────────────────────────────────
+        if req.traffic_index >= 9:
+            traffic_severity = "standstill"
+        elif req.traffic_index >= 7:
+            traffic_severity = "heavy"
+        elif req.traffic_index >= 5:
+            traffic_severity = "moderate"
+        else:
+            traffic_severity = "light"
+
+        if not detour_needed:
+            return RouteOptimizationResponse(
+                detour_needed=False,
+                original_eta_minutes=round(actual_eta, 1),
+                optimized_eta_minutes=round(actual_eta, 1),
+                reason=f"Traffic is {traffic_severity}. ML model says current route is optimal.",
+                traffic_severity=traffic_severity,
+                model_confidence=confidence
+            )
+
+        # ── Compute perpendicular detour waypoint ────────────────────────────
+        mid_lat = (req.current_lat + req.next_stop_lat) / 2
+        mid_lng = (req.current_lng + req.next_stop_lng) / 2
+        dlat    = req.next_stop_lat - req.current_lat
+        dlng    = req.next_stop_lng - req.current_lng
+        length  = math.sqrt(dlat ** 2 + dlng ** 2) or 1e-9
+        perp_lat = -dlng / length
+        perp_lng =  dlat / length
+        OFFSET_DEG = 0.0014   # ~150 metres
+        detour_lat = round(mid_lat + perp_lat * OFFSET_DEG, 7)
+        detour_lng = round(mid_lng + perp_lng * OFFSET_DEG, 7)
+
+        savings = round(actual_eta - optimized_eta, 1)
+        reason  = (
+            f"ML model detected {traffic_severity} traffic (index {req.traffic_index}/10, "
+            f"confidence {confidence:.0%}). "
+            f"Alternate route recommended — est. {savings} min saved. "
+            f"All stops remain unchanged."
+        )
+
+        return RouteOptimizationResponse(
+            detour_needed=True,
+            detour_lat=detour_lat,
+            detour_lng=detour_lng,
+            original_eta_minutes=round(actual_eta, 1),
+            optimized_eta_minutes=round(optimized_eta, 1),
+            reason=reason,
+            traffic_severity=traffic_severity,
+            model_confidence=confidence
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Route optimization failed: {str(e)}")
+
