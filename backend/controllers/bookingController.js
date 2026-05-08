@@ -53,16 +53,31 @@ exports.createBooking = async (req, res) => {
     // ==============================
     // SEND SMS + EMAIL
     // ==============================
-    const message = `Booking Confirmed!
-Route: ${populated.routeId?.name}
-Vehicle: ${populated.vehicleId?.regNumber}
-Seats: ${seatNumbers.join(", ")}
-Boarding Stop: ${boardingStop?.name || "N/A"}
-Thank you for choosing our service!`;
+    const routeName = populated.routeId?.name || "N/A";
+    const regNum   = populated.vehicleId?.regNumber || "N/A";
+    const seats_str = seatNumbers?.length > 0 ? seatNumbers.join(", ") : `${seats} seat(s)`;
+    const stop     = boardingStop?.name || "N/A";
+    const fare     = totalFare ? `₹${totalFare}` : "N/A";
 
-    // SMS
-    if (populated.userId?.phone) {
-      await sendSMS(populated.userId.phone, message);
+    const smsBody = `✅ Booking Confirmed!
+Route: ${routeName}
+Vehicle: ${regNum}
+Seats: ${seats_str}
+Boarding: ${stop}
+Fare: ${fare}
+Have a safe journey! 🚌`;
+
+    // SMS — normalise to E.164 (+91XXXXXXXXXX for Indian numbers)
+    const rawPhone = populated.userId?.phone;
+    if (rawPhone) {
+      let e164Phone = rawPhone.trim();
+      // If stored as 10-digit Indian number, prepend +91
+      if (/^[6-9]\d{9}$/.test(e164Phone)) e164Phone = `+91${e164Phone}`;
+      // If stored as 0XXXXXXXXXX, strip leading 0 and add +91
+      if (/^0[6-9]\d{9}$/.test(e164Phone)) e164Phone = `+91${e164Phone.slice(1)}`;
+      await sendSMS(e164Phone, smsBody);
+    } else {
+      console.warn(`[SMS] No phone on user ${populated.userId?._id} — skipping SMS`);
     }
 
     // Email

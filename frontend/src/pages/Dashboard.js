@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
+import CrowdWidget from "../components/CrowdWidget";
 import "../styles/Dashboard.css";
 
 const Dashboard = ({ user }) => {
@@ -111,6 +112,9 @@ const Dashboard = ({ user }) => {
             </span>
           </div>
         </div>
+
+        {/* ===== AI CROWD PREDICTION ===== */}
+        <CrowdWidget role="passenger" compact={true} />
 
         {/* ===== STAT CARDS ===== */}
         <div className="dash-stats">

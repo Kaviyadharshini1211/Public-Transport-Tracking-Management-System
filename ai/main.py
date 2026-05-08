@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from models.eta import ETAPredictor
 from models.assignment import AssignmentPredictor
@@ -249,6 +249,7 @@ class RouteOptimizationRequest(BaseModel):
     bus_type: int            = Field(0, ge=0, le=1, description="0=standard 1=express")
 
 class RouteOptimizationResponse(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     detour_needed: bool
     detour_lat: Optional[float] = None
     detour_lng: Optional[float] = None
@@ -400,6 +401,7 @@ class CrowdPredictionResponse(BaseModel):
     Returns a crowd level label, estimated passenger count, capacity ratio,
     and the classifier's confidence in its prediction.
     """
+    model_config = ConfigDict(protected_namespaces=())
     crowd_level:          int
     crowd_label:          str
     estimated_passengers: int

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import DriverNoAssignment from "./DriverNoAssignment";
 import API from "../../api/api";
+import CrowdWidget from "../../components/CrowdWidget";
 import "../../styles/DriverDashboard.css";
 import {
   MapContainer,
@@ -333,19 +334,7 @@ export default function DriverDashboard({ user, vehicle, loading, onRefresh }) {
 
   return (
     <div className="drv-dash" style={{ position: "relative" }}>
-      {/* Rain Effect overlay if it's raining */}
-      {weatherData?.isRaining && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          pointerEvents: 'none',
-          zIndex: 9999,
-          background: 'url("https://cdn.pixabay.com/photo/2015/06/08/14/53/rain-801755_960_720.jpg")',
-          backgroundSize: 'cover',
-          opacity: 0.15,
-          mixBlendMode: 'screen'
-        }} />
-      )}
+      {/* Rain overlay removed — weather shown via badge in map only */}
 
       {/* Map modal and SOS modal */}
       {toast && (
@@ -460,9 +449,12 @@ export default function DriverDashboard({ user, vehicle, loading, onRefresh }) {
         </div>
       )}
 
+      {/* Crowd Prediction Widget for Driver */}
+      <CrowdWidget role="driver" compact={true} />
+
       {/* Map visualization for Live Location & Detour */}
       {activeTrip && (
-        <div style={{ background: 'var(--drv-surface)', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--drv-border)', marginBottom: '24px', height: '350px', position: 'relative' }}>
+        <div style={{ background: 'var(--drv-surface)', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--drv-border)', marginBottom: '24px', height: '500px', position: 'relative' }}>
           <MapContainer
             center={liveCoords ? [liveCoords.lat, liveCoords.lng] : [routeOptData?.detour_lat || 12.9716, routeOptData?.detour_lng || 77.5946]}
             zoom={14}
@@ -474,19 +466,26 @@ export default function DriverDashboard({ user, vehicle, loading, onRefresh }) {
               subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
               attribution="&copy; Google Maps"
             />
-            {/* Original Route (Red/Faint) */}
+            {/* Original Route — grey dashed (greyed out old route) */}
             {originalRouteCoords.length > 0 && (
               <Polyline
                 positions={originalRouteCoords}
-                pathOptions={{ color: "#ef4444", weight: 6, opacity: 0.5, dashArray: "10, 10" }}
+                pathOptions={{ color: "#9ca3af", weight: 4, opacity: 0.6, dashArray: "8, 8" }}
               />
             )}
             
-            {/* Optimized Detour Route (Green/Bright) */}
+            {/* Optimized Detour Route — vivid orange (clearly distinct from green road tiles) */}
             {routeOptData?.detour_needed && optimizedRouteCoords.length > 0 && (
               <Polyline
                 positions={optimizedRouteCoords}
-                pathOptions={{ color: "#10b981", weight: 8, opacity: 0.9 }}
+                pathOptions={{ color: "#f97316", weight: 7, opacity: 1 }}
+              />
+            )}
+            {/* If no detour needed, show original route in blue as the active route */}
+            {!routeOptData?.detour_needed && originalRouteCoords.length > 0 && (
+              <Polyline
+                positions={originalRouteCoords}
+                pathOptions={{ color: "#3b82f6", weight: 5, opacity: 0.85 }}
               />
             )}
 
@@ -495,16 +494,41 @@ export default function DriverDashboard({ user, vehicle, loading, onRefresh }) {
               position={liveCoords ? [liveCoords.lat, liveCoords.lng] : [vehicle?.currentLocation?.lat || vehicle?.route?.stops?.[0]?.lat || 12.9716, vehicle?.currentLocation?.lng || vehicle?.route?.stops?.[0]?.lng || 77.5946]} 
               icon={busIcon}
             >
-              <Popup>Current Location</Popup>
+              <Popup>Your Current Location</Popup>
             </Marker>
 
             {/* Detour Waypoint */}
             {routeOptData?.detour_lat && routeOptData?.detour_lng && (
               <Marker position={[routeOptData.detour_lat, routeOptData.detour_lng]} icon={detourIcon}>
-                <Popup>Detour Waypoint</Popup>
+                <Popup>🚧 Detour Waypoint</Popup>
               </Marker>
             )}
           </MapContainer>
+
+          {/* Map Legend */}
+          <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', borderRadius: 10, padding: '8px 12px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {routeOptData?.detour_needed ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, color: '#fff' }}>
+                  <span style={{ width: 20, height: 3, background: '#9ca3af', display: 'inline-block', borderRadius: 2 }} />
+                  Old Route
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, color: '#fff' }}>
+                  <span style={{ width: 20, height: 3, background: '#f97316', display: 'inline-block', borderRadius: 2 }} />
+                  Optimized Route
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, color: '#fff' }}>
+                  <span style={{ fontSize: 12 }}>🚧</span>
+                  Detour Point
+                </div>
+              </>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, color: '#fff' }}>
+                <span style={{ width: 20, height: 3, background: '#3b82f6', display: 'inline-block', borderRadius: 2 }} />
+                Active Route
+              </div>
+            )}
+          </div>
         </div>
       )}
 

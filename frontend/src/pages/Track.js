@@ -15,6 +15,7 @@ import L from "leaflet";
 import polyline from "polyline";
 import "leaflet/dist/leaflet.css";
 import "../styles/Track.css";
+import API from "../api/api";
 import MapWeatherOverlay from "../components/MapWeatherOverlay";
 
 // ---------------- FIX DEFAULT MARKERS ----------------
@@ -86,8 +87,11 @@ export default function Track() {
   const [remainingCoords, setRemainingCoords] = useState([]);
 
   const [etaBoarding, setEtaBoarding] = useState(null);
-  const [etaFinal, setEtaFinal] = useState(null); // Fixed missing state
-  const [isAuthorized, setIsAuthorized] = useState(null); // NEW: null=checking, true/false
+  const [etaFinal, setEtaFinal] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(null);
+  const [routeOptData, setRouteOptData] = useState(null);  // AI route optimization
+  const [optimizedCoords, setOptimizedCoords] = useState([]);
+  const routeOptPollRef = useRef(null);
 
   const mapRef = useRef(null);
 
@@ -261,8 +265,6 @@ export default function Track() {
   // ---------- FOLLOW BUS AUTO ----------
   useEffect(() => {
     if (!vehicle?.currentLocation || !mapRef.current) return;
-
-    // We only want to pan initially if we haven't loaded a full route bounds yet
     if (!routeCoords.length && mapRef.current) {
       mapRef.current.setView(
         [vehicle.currentLocation.lat, vehicle.currentLocation.lng],
@@ -270,9 +272,48 @@ export default function Track() {
         { animate: true }
       );
     }
-    // Intentionally omitted the aggressive setView on every location update
-    // as it interrupts the user's manual zooming and panning.
   }, [vehicle?.currentLocation]);
+
+  // ---------- ROUTE OPTIMIZATION (every 30s) ----------
+  useEffect(() => {
+    if (!vehicle || !isAuthorized) return;
+
+    const runOpt = async () => {
+      try {
+        const res = await API.post(`/vehicles/${vehicle._id}/optimize-route`, {
+          traffic_index: 5,
+          weather_condition: 0,
+          avg_speed_kmh: vehicle.route?.avgSpeedKmph || 35,
+        });
+        setRouteOptData(res.data);
+
+        // Load optimized polyline via OSRM if detour needed
+        if (res.data.detour_needed && res.data.detour_lat && res.data.detour_lng) {
+          const stops = vehicle.route?.stops || [];
+          const curLat = vehicle.currentLocation?.lat || stops[0]?.lat || 12.97;
+          const curLng = vehicle.currentLocation?.lng || stops[0]?.lng || 77.59;
+          const endLat = stops.length > 0 ? stops[stops.length - 1].lat : 12.97;
+          const endLng = stops.length > 0 ? stops[stops.length - 1].lng : 77.59;
+
+          const url = `https://router.project-osrm.org/route/v1/driving/${curLng},${curLat};${res.data.detour_lng},${res.data.detour_lat};${endLng},${endLat}?overview=full&geometries=polyline`;
+          const geo = await fetch(url);
+          const geoData = await geo.json();
+          if (geoData.routes?.[0]) {
+            const decoded = polyline.decode(geoData.routes[0].geometry);
+            setOptimizedCoords(decoded.map(([lat, lng]) => [lat, lng]));
+          }
+        } else {
+          setOptimizedCoords([]);
+        }
+      } catch (e) {
+        console.warn("Route optimization unavailable:", e.message);
+      }
+    };
+
+    runOpt();
+    routeOptPollRef.current = setInterval(runOpt, 30000);
+    return () => clearInterval(routeOptPollRef.current);
+  }, [vehicle?._id, isAuthorized]);
 
   // ---------- LOADING STATE ----------
   if (loading) {
@@ -391,6 +432,24 @@ export default function Track() {
         </div>
       </div>
 
+      {/* Route Optimization Banner (passenger) */}
+      {routeOptData?.detour_needed && (
+        <div style={{ background: "linear-gradient(90deg, #065f46, #047857)", padding: "10px 20px", display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
+          <span style={{ fontSize: 18 }}>🚦</span>
+          <div>
+            <span style={{ fontWeight: 700, color: "#d1fae5" }}>Route Optimized by AI </span>
+            <span style={{ color: "#a7f3d0" }}>
+              — A smarter path has been calculated.
+              {routeOptData.time_saved_minutes > 0 && ` Saves ~${Math.round(routeOptData.time_saved_minutes)} min.`}
+            </span>
+          </div>
+          <span style={{ marginLeft: "auto", background: "rgba(255,255,255,0.15)", color: "#d1fae5", padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ width: 8, height: 8, background: "#f97316", borderRadius: "50%", display: "inline-block" }} />
+            Orange = New Route
+          </span>
+        </div>
+      )}
+
       {/* Map */}
       <div className="track-map-container">
         <MapWeatherOverlay lat={vehicle.currentLocation.lat} lng={vehicle.currentLocation.lng} />
@@ -407,17 +466,32 @@ export default function Track() {
             attribution="&copy; Google Maps"
           />
 
-          {/* Covered route (dark purple) */}
+          {/* Route covered (purple) */}
           <Polyline
             positions={coveredCoords}
             pathOptions={{ color: "#7c3aed", weight: 8, opacity: 0.9 }}
           />
 
-          {/* Remaining route (neon pink) */}
-          <Polyline
-            positions={remainingCoords}
-            pathOptions={{ color: "#ec4899", weight: 6, opacity: 0.8 }}
-          />
+          {/* Remaining route — grey dashed if detour active, pink if normal */}
+          {routeOptData?.detour_needed ? (
+            <Polyline
+              positions={remainingCoords}
+              pathOptions={{ color: "#9ca3af", weight: 4, opacity: 0.55, dashArray: "8, 8" }}
+            />
+          ) : (
+            <Polyline
+              positions={remainingCoords}
+              pathOptions={{ color: "#ec4899", weight: 6, opacity: 0.8 }}
+            />
+          )}
+
+          {/* Optimized route overlay — orange (distinct from road/map green) */}
+          {routeOptData?.detour_needed && optimizedCoords.length > 0 && (
+            <Polyline
+              positions={optimizedCoords}
+              pathOptions={{ color: "#f97316", weight: 7, opacity: 1 }}
+            />
+          )}
 
           {/* Stops */}
           {vehicle.route?.stops?.map((stop, i) => (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import DriverDashboard from "./DriverDashboard";
 import DriverMyVehicle from "./DriverMyVehicle";
 import DriverTracking from "./DriverTracking";
@@ -24,6 +25,7 @@ export default function DriverLayout() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [triggeringPanic, setTriggeringPanic] = useState(false);
+  const [crowdAlert, setCrowdAlert] = useState(null); // crowd_alert socket event
 
   // Load user from localStorage
   useEffect(() => {
@@ -60,6 +62,30 @@ export default function DriverLayout() {
   useEffect(() => {
     fetchVehicle();
   }, [fetchVehicle]);
+
+  // Listen for crowd_alert events from admin
+  useEffect(() => {
+    const baseServerUrl = (process.env.REACT_APP_API_URL || "").replace("/api", "");
+    const socket = io(baseServerUrl);
+    socket.on("crowd_alert", (payload) => {
+      setCrowdAlert(payload);
+      toast(
+        (t) => (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ fontWeight: 700, color: "#f59e0b", fontSize: 15 }}>🚌 Crowd Alert — Extra Bus Deployed</div>
+            <div style={{ fontSize: 13, color: "#e2e8f0" }}>{payload.message}</div>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>Route: {payload.routeName} · {new Date(payload.timestamp).toLocaleTimeString()}</div>
+          </div>
+        ),
+        {
+          duration: 15000,
+          position: "top-center",
+          style: { background: "#1e1e2f", color: "#fff", borderLeft: "4px solid #f59e0b", minWidth: 320, padding: "14px 16px" },
+        }
+      );
+    });
+    return () => socket.disconnect();
+  }, []);
 
   // Close mobile menu when tab changes
   useEffect(() => {

@@ -17,6 +17,16 @@ const distance = (lat1, lon1, lat2, lon2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
+// Normalise Indian phone numbers to E.164
+const toE164 = (phone) => {
+  if (!phone) return null;
+  let p = phone.trim();
+  if (/^[6-9]\d{9}$/.test(p)) return `+91${p}`;           // 9876543210 → +919876543210
+  if (/^0[6-9]\d{9}$/.test(p)) return `+91${p.slice(1)}`; // 09876543210 → +919876543210
+  if (p.startsWith("+")) return p;                         // already E.164
+  return null; // unrecognised format — skip
+};
+
 // ---------------- CRON ----------------
 cron.schedule("*/1 * * * *", async () => {
   console.log("📱 Running ETA SMS Job");
@@ -31,13 +41,13 @@ cron.schedule("*/1 * * * *", async () => {
       .populate("routeId", "avgSpeedKmph");
 
     for (const booking of bookings) {
-      const phone = booking?.userId?.phone;
+      const rawPhone = booking?.userId?.phone;
+      const e164Phone = toE164(rawPhone);
 
-      if (!phone) continue;
+      if (!e164Phone) continue;
       if (!booking.boardingStop) continue;
 
       const stop = booking.boardingStop;
-
       const busLoc = booking?.vehicleId?.currentLocation;
       const lastSeen = booking?.vehicleId?.lastSeenAt;
 
@@ -59,16 +69,14 @@ cron.schedule("*/1 * * * *", async () => {
 
       // SEND SMS
       await sendSMS(
-        phone,
-        `Bus arriving in ${Math.round(minutes)} minutes.
-Stop: ${stop.name}
-Vehicle: ${booking.vehicleId?.regNumber || "N/A"}`
+        e164Phone,
+        `⏰ Bus arriving in ~${Math.round(minutes)} min!\nStop: ${stop.name}\nVehicle: ${booking.vehicleId?.regNumber || "N/A"}\nBe ready at your stop! 🚌`
       );
 
       booking.etaSmsSent = true;
       await booking.save();
 
-      console.log("📩 Sent ETA SMS to:", phone);
+      console.log("📩 Sent ETA SMS to:", e164Phone);
     }
   } catch (err) {
     console.error("SMS Cron Error:", err);

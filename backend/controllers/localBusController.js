@@ -247,3 +247,153 @@ exports.getFleetStats = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch fleet stats" });
   }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/local-buses/crowd-predict   (admin)
+// Calls the AI crowd predictor for a specific route
+// ─────────────────────────────────────────────────────────────────────────────
+exports.predictCrowd = async (req, res) => {
+  try {
+    const { routeId, stop_index = 0, weather_condition = 0, traffic_index = 5, is_holiday = 0 } = req.body;
+
+    const route = await Route.findById(routeId);
+    if (!route) return res.status(404).json({ message: "Route not found" });
+
+    const now = new Date();
+    const hour_of_day = now.getHours();
+    const day_of_week = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const total_stops = route.stops?.length || 10;
+
+    const busCount = await Vehicle.countDocuments({ type: "local", route: routeId, isTracking: true });
+    const capacityAgg = await Vehicle.aggregate([
+      { $match: { type: "local", route: route._id } },
+      { $group: { _id: null, avgCap: { $avg: "$capacity" } } },
+    ]);
+    const bus_capacity = Math.round(capacityAgg[0]?.avgCap || 50);
+
+    const aiUrl = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
+    const aiRes = await axios.post(`${aiUrl}/predict_crowd`, {
+      hour_of_day, day_of_week, stop_index, total_stops,
+      route_type: 0, bus_capacity, weather_condition, traffic_index, is_holiday,
+    });
+
+    const prediction = aiRes.data;
+    res.json({
+      route: { _id: route._id, name: route.name || route.routeName, origin: route.origin, destination: route.destination },
+      activeBuses: busCount,
+      prediction,
+      recommendation: prediction.crowd_level >= 3 ? "HIGH_CROWD" : prediction.crowd_level >= 2 ? "MODERATE" : "NORMAL",
+    });
+  } catch (err) {
+    console.error("predictCrowd:", err.message);
+    res.status(500).json({ message: "Crowd prediction failed: " + err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/local-buses/crowd-status   (admin)
+// Returns crowd predictions for ALL local routes at once
+// ─────────────────────────────────────────────────────────────────────────────
+exports.getCrowdStatus = async (req, res) => {
+  try {
+    const routeIds = await Vehicle.find({ type: "local", route: { $ne: null } }).distinct("route");
+    const routes = await Route.find({ _id: { $in: routeIds } });
+    const now = new Date();
+    const hour_of_day = now.getHours();
+    const day_of_week = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const aiUrl = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
+
+    const results = await Promise.all(routes.map(async (route) => {
+      try {
+        const [busCount, totalBuses] = await Promise.all([
+          Vehicle.countDocuments({ type: "local", route: route._id, isTracking: true }),
+          Vehicle.countDocuments({ type: "local", route: route._id }),
+        ]);
+        const aiRes = await axios.post(`${aiUrl}/predict_crowd`, {
+          hour_of_day, day_of_week,
+          stop_index: Math.floor((route.stops?.length || 10) / 2),
+          total_stops: route.stops?.length || 10,
+          route_type: 0, bus_capacity: 50, weather_condition: 0, traffic_index: 5, is_holiday: 0,
+        });
+        const lvl = aiRes.data.crowd_level;
+        return {
+          route: { _id: route._id, name: route.name || route.routeName || `Route ${route._id.toString().slice(-5)}`, origin: route.origin, destination: route.destination },
+          activeBuses: busCount, totalBuses,
+          prediction: aiRes.data,
+          recommendation: lvl >= 3 ? "HIGH_CROWD" : lvl >= 2 ? "MODERATE" : "NORMAL",
+        };
+      } catch (e) {
+        return {
+          route: { _id: route._id, name: route.name || `Route ${route._id.toString().slice(-5)}` },
+          activeBuses: 0, totalBuses: 0, prediction: null, recommendation: "UNKNOWN", error: e.message,
+        };
+      }
+    }));
+
+    res.json(results);
+  } catch (err) {
+    console.error("getCrowdStatus:", err.message);
+    res.status(500).json({ message: "Failed to fetch crowd status" });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/local-buses/deploy-spare/:routeId   (admin)
+// Assigns a spare bus to a crowded route and emits crowd_alert to drivers
+// ─────────────────────────────────────────────────────────────────────────────
+exports.deploySpareBus = async (req, res) => {
+  try {
+    const { routeId } = req.params;
+    const { vehicleId, reason } = req.body;
+
+    const route = await Route.findById(routeId);
+    if (!route) return res.status(404).json({ message: "Route not found" });
+
+    const vehicle = await Vehicle.findById(vehicleId);
+    if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });
+
+    vehicle.route = routeId;
+    vehicle.status = "active";
+    await vehicle.save();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("crowd_alert", {
+        routeId,
+        routeName: route.name || route.routeName,
+        vehicleId: vehicle._id,
+        regNumber: vehicle.regNumber,
+        driverName: vehicle.driverName || "Unassigned",
+        message: reason || `High crowd on ${route.name || route.routeName}. Extra bus deployed — be prepared for higher passenger load.`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Bus ${vehicle.regNumber} deployed to ${route.name || route.routeName}`,
+      vehicle,
+      route,
+    });
+  } catch (err) {
+    console.error("deploySpareBus:", err.message);
+    res.status(500).json({ message: "Failed to deploy spare bus" });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/local-buses/spare-buses   (admin)
+// Unassigned local buses available for deployment
+// ─────────────────────────────────────────────────────────────────────────────
+exports.getSpareBuses = async (req, res) => {
+  try {
+    const spare = await Vehicle.find({
+      type: "local",
+      $or: [{ route: null }, { route: { $exists: false } }],
+    }).select("regNumber model capacity driverName status");
+    res.json(spare);
+  } catch (err) {
+    console.error("getSpareBuses:", err.message);
+    res.status(500).json({ message: "Failed to fetch spare buses" });
+  }
+};

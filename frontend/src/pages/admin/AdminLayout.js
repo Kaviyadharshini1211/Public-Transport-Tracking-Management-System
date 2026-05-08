@@ -3,6 +3,7 @@ import { io } from "socket.io-client";
 import { toast } from "react-hot-toast";
 
 import API from "../../api/api";
+import CrowdWidget from "../../components/CrowdWidget";
 import "../../styles/AdminLayout.css";
 import AdminVehicles from "./AdminVehicles";
 import AdminDrivers from "./AdminDrivers";
@@ -29,12 +30,21 @@ const SOSAlertMessage = ({ driverName, message, lat, lng }) => (
   </div>
 );
 
+const CROWD_LEVEL_CONFIG = [
+  { label: "Empty",       color: "#6b7280", bg: "rgba(107,114,128,0.12)",  icon: "😴" },
+  { label: "Low",         color: "#10b981", bg: "rgba(16,185,129,0.12)",   icon: "😊" },
+  { label: "Moderate",    color: "#f59e0b", bg: "rgba(245,158,11,0.12)",   icon: "😐" },
+  { label: "Crowded",     color: "#ef4444", bg: "rgba(239,68,68,0.12)",    icon: "😰" },
+  { label: "Overcrowded", color: "#dc2626", bg: "rgba(220,38,38,0.18)",    icon: "🚨" },
+];
+
 const TAB_CONFIG = [
-  { key: "vehicles", label: "Vehicles", icon: "🚐" },
-  { key: "drivers", label: "Drivers", icon: "👤" },
-  { key: "routes", label: "Routes", icon: "🗺️" },
-  { key: "assign", label: "Assign Driver", icon: "🔗" },
-  { key: "sos", label: "Emergencies", icon: "🚨" },
+  { key: "vehicles",  label: "Vehicles",         icon: "🚐" },
+  { key: "drivers",   label: "Drivers",           icon: "👤" },
+  { key: "routes",    label: "Routes",            icon: "🗺️" },
+  { key: "assign",    label: "Assign Driver",     icon: "🔗" },
+  { key: "sos",       label: "Emergencies",       icon: "🚨" },
+  { key: "crowd",     label: "AI Crowd Intel",    icon: "🤖" },
 ];
 
 export default function AdminDashboard() {
@@ -43,15 +53,23 @@ export default function AdminDashboard() {
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [routes, setRoutes] = useState([]);
-  // Track which tabs have been loaded to avoid re-fetching
   const [loadedTabs, setLoadedTabs] = useState({});
-  // Per-resource loading states
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [driversLoading, setDriversLoading] = useState(false);
   const [routesLoading, setRoutesLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
   const [sosCount, setSosCount] = useState(0);
   const [latestSosEvent, setLatestSosEvent] = useState(null);
+
+  // ── Crowd Intelligence state ──────────────────────────────────────────────
+  const [crowdData, setCrowdData] = useState([]);
+  const [crowdLoading, setCrowdLoading] = useState(false);
+  const [spareBuses, setSpareBuses] = useState([]);
+  const [deployModal, setDeployModal] = useState(null); // { routeId, routeName }
+  const [selectedSpare, setSelectedSpare] = useState("");
+  const [deploying, setDeploying] = useState(false);
+  const crowdPollRef = useRef(null);
+  const [deployedLog, setDeployedLog] = useState([]); // { routeName, time }
 
   
   // Modal states
@@ -180,6 +198,42 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchCrowdStatus = async () => {
+    setCrowdLoading(true);
+    try {
+      const [crowdRes, spareRes] = await Promise.all([
+        API.get("/local-buses/crowd-status"),
+        API.get("/local-buses/spare-buses"),
+      ]);
+      setCrowdData(crowdRes.data || []);
+      setSpareBuses(spareRes.data || []);
+    } catch (err) {
+      console.error("Crowd fetch error:", err);
+    } finally {
+      setCrowdLoading(false);
+    }
+  };
+
+  const handleDeploySpareBus = async () => {
+    if (!selectedSpare || !deployModal) return;
+    setDeploying(true);
+    try {
+      await API.post(`/local-buses/deploy-spare/${deployModal.routeId}`, {
+        vehicleId: selectedSpare,
+        reason: `Admin deployed extra bus to ${deployModal.routeName} due to high crowd prediction.`,
+      });
+      showToast(`Extra bus deployed to ${deployModal.routeName}!`, "success");
+      setDeployedLog(prev => [...prev, { routeName: deployModal.routeName, time: new Date().toISOString() }]);
+      setDeployModal(null);
+      setSelectedSpare("");
+      fetchCrowdStatus(); // refresh
+    } catch (err) {
+      showToast("Failed to deploy bus", "error");
+    } finally {
+      setDeploying(false);
+    }
+  };
+
   // Lazy load per tab when tab changes
   useEffect(() => {
     if (tab === 0 && !loadedTabs[0]) {
@@ -195,10 +249,16 @@ export default function AdminDashboard() {
       setLoadedTabs(p => ({ ...p, 2: true }));
     }
     if (tab === 3 && !loadedTabs[3]) {
-      // Assign tab needs both
       if (!vehicles.length) fetchVehicles();
       if (!drivers.length) fetchDrivers();
       setLoadedTabs(p => ({ ...p, 3: true }));
+    }
+    if (tab === 5) {
+      fetchCrowdStatus();
+      clearInterval(crowdPollRef.current);
+      crowdPollRef.current = setInterval(fetchCrowdStatus, 60000); // refresh every 60s
+    } else {
+      clearInterval(crowdPollRef.current);
     }
     // eslint-disable-next-line
   }, [tab]);
@@ -247,7 +307,7 @@ export default function AdminDashboard() {
   }, [routes, search]);
 
   // Tab counts
-  const tabCounts = [vehicles.length, drivers.length, routes.length, vehicles.length, sosCount > 0 ? sosCount : "-"];
+  const tabCounts = [vehicles.length, drivers.length, routes.length, vehicles.length, sosCount > 0 ? sosCount : "-", crowdData.filter(c => c.recommendation === "HIGH_CROWD").length || ""];
 
   // Inline skeleton for loading states
   const skeletonGrid = (
@@ -311,6 +371,158 @@ export default function AdminDashboard() {
             showToast={showToast}
           />
         );
+      case 5: {
+        // ── AI CROWD INTELLIGENCE TAB ─────────────────────────────────────────────
+        const highCrowdRoutes = crowdData.filter(c => c.recommendation === "HIGH_CROWD");
+        return (
+          <div>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, color: "var(--admin-text)" }}>🤖 AI Crowd Intelligence</h2>
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--admin-text-muted)" }}>
+                  Real-time crowd predictions powered by Gradient Boosting ML model. Refreshes every 60s.
+                </p>
+              </div>
+              <button
+                onClick={fetchCrowdStatus}
+                disabled={crowdLoading}
+                style={{ padding: "8px 16px", background: "var(--admin-primary)", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}
+              >
+                {crowdLoading ? "⏳ Loading..." : "🔄 Refresh Now"}
+              </button>
+            </div>
+
+            {/* Alert banner for high-crowd routes */}
+            {highCrowdRoutes.length > 0 && (
+              <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: 12, padding: "14px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 22 }}>🚨</span>
+                <div>
+                  <div style={{ fontWeight: 700, color: "#ef4444", fontSize: 14 }}>High Crowd Alert — {highCrowdRoutes.length} route(s) need extra buses!</div>
+                  <div style={{ fontSize: 12, color: "var(--admin-text-muted)", marginTop: 2 }}>
+                    {highCrowdRoutes.map(r => r.route.name).join(" · ")}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Crowd cards grid */}
+            {crowdLoading && crowdData.length === 0 ? skeletonGrid : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+                {crowdData.map((item) => {
+                  const lvl = item.prediction?.crowd_level ?? 1;
+                  const cfg = CROWD_LEVEL_CONFIG[Math.min(lvl, 4)];
+                  const capRatio = item.prediction?.capacity_ratio ?? 0;
+                  const capPct = Math.min(Math.round(capRatio * 100), 100);
+                  const passengerEst = item.prediction?.estimated_passengers ?? 0;
+                  const confidence = item.prediction?.confidence ?? 0;
+                  const isHigh = item.recommendation === "HIGH_CROWD";
+
+                  return (
+                    <div
+                      key={item.route._id}
+                      style={{ background: "var(--admin-surface)", border: `1px solid ${isHigh ? cfg.color : "var(--admin-border)"}`, borderRadius: 14, padding: 20, position: "relative", overflow: "hidden", transition: "box-shadow 0.2s" }}
+                    >
+                      {/* Colored accent bar */}
+                      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: cfg.color }} />
+
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: "var(--admin-text)", marginBottom: 2 }}>{item.route.name}</div>
+                          {item.route.origin && item.route.destination && (
+                            <div style={{ fontSize: 11, color: "var(--admin-text-muted)" }}>{item.route.origin} → {item.route.destination}</div>
+                          )}
+                        </div>
+                        <span style={{ background: cfg.bg, color: cfg.color, fontWeight: 700, fontSize: 12, padding: "4px 10px", borderRadius: 20, display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                          {cfg.icon} {cfg.label}
+                        </span>
+                      </div>
+
+                      {/* Capacity bar */}
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--admin-text-muted)", marginBottom: 4 }}>
+                          <span>Capacity Usage</span>
+                          <span style={{ fontWeight: 700, color: cfg.color }}>{capPct}%</span>
+                        </div>
+                        <div style={{ height: 6, background: "var(--admin-border)", borderRadius: 3, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${capPct}%`, background: cfg.color, borderRadius: 3, transition: "width 0.5s" }} />
+                        </div>
+                      </div>
+
+                      {/* Stats row */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+                        <div style={{ textAlign: "center", background: "var(--admin-surface-2)", padding: "8px 4px", borderRadius: 8 }}>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: cfg.color }}>{passengerEst}</div>
+                          <div style={{ fontSize: 10, color: "var(--admin-text-muted)" }}>Passengers</div>
+                        </div>
+                        <div style={{ textAlign: "center", background: "var(--admin-surface-2)", padding: "8px 4px", borderRadius: 8 }}>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: "var(--admin-text)" }}>{item.activeBuses}</div>
+                          <div style={{ fontSize: 10, color: "var(--admin-text-muted)" }}>Active Buses</div>
+                        </div>
+                        <div style={{ textAlign: "center", background: "var(--admin-surface-2)", padding: "8px 4px", borderRadius: 8 }}>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: "#3b82f6" }}>{Math.round(confidence * 100)}%</div>
+                          <div style={{ fontSize: 10, color: "var(--admin-text-muted)" }}>AI Confidence</div>
+                        </div>
+                      </div>
+
+                      {/* Deploy button only for high/crowded */}
+                      {(isHigh || item.recommendation === "MODERATE") && (
+                        <button
+                          onClick={() => { setDeployModal({ routeId: item.route._id, routeName: item.route.name }); setSelectedSpare(""); }}
+                          style={{ width: "100%", padding: "9px 0", background: isHigh ? "#ef4444" : "var(--admin-primary)", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                        >
+                          🚌 Deploy Extra Bus
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {crowdData.length === 0 && !crowdLoading && (
+                  <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px 20px", color: "var(--admin-text-muted)" }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🤖</div>
+                    <p>No local routes found. Ensure local buses are seeded and running.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Deploy Modal */}
+            {deployModal && (
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setDeployModal(null)}>
+                <div style={{ background: "var(--admin-surface)", borderRadius: 16, padding: 28, width: 400, border: "1px solid var(--admin-border)" }} onClick={e => e.stopPropagation()}>
+                  <h3 style={{ margin: "0 0 6px", color: "var(--admin-text)" }}>🚌 Deploy Extra Bus</h3>
+                  <p style={{ fontSize: 13, color: "var(--admin-text-muted)", marginBottom: 20 }}>Route: <strong>{deployModal.routeName}</strong></p>
+
+                  {spareBuses.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "20px 0", color: "var(--admin-text-muted)", fontSize: 13 }}>No spare buses available right now.</div>
+                  ) : (
+                    <>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-text-muted)", display: "block", marginBottom: 6 }}>Select Spare Bus</label>
+                      <select
+                        value={selectedSpare}
+                        onChange={e => setSelectedSpare(e.target.value)}
+                        style={{ width: "100%", padding: "10px 12px", background: "var(--admin-surface-2)", border: "1px solid var(--admin-border)", borderRadius: 8, color: "var(--admin-text)", fontSize: 14, marginBottom: 20 }}
+                      >
+                        <option value="">-- Choose a bus --</option>
+                        {spareBuses.map(b => (
+                          <option key={b._id} value={b._id}>{b.regNumber} — {b.model || "Bus"} (cap: {b.capacity || "N/A"})</option>
+                        ))}
+                      </select>
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <button onClick={() => setDeployModal(null)} style={{ flex: 1, padding: "10px", background: "var(--admin-surface-2)", border: "1px solid var(--admin-border)", borderRadius: 8, color: "var(--admin-text)", cursor: "pointer", fontWeight: 600 }}>Cancel</button>
+                        <button onClick={handleDeploySpareBus} disabled={!selectedSpare || deploying} style={{ flex: 1, padding: "10px", background: "#ef4444", color: "white", border: "none", borderRadius: 8, cursor: selectedSpare ? "pointer" : "not-allowed", fontWeight: 600, opacity: selectedSpare ? 1 : 0.5 }}>
+                          {deploying ? "Deploying..." : "🚀 Deploy Now"}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
       default:
         return null;
     }
@@ -452,6 +664,27 @@ export default function AdminDashboard() {
               </div>
             </>
           )}
+        </div>
+
+        {/* ─── AI Crowd Widget (always visible) ─── */}
+        <CrowdWidget role="admin" compact={false} deployedLog={deployedLog} />
+
+        {/* ─── Live City Bus Map (full width) ─── */}
+        <div style={{
+          borderRadius: 16, overflow: 'hidden', marginBottom: 24,
+          border: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        }}>
+          <div style={{ background: '#1a1d2e', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <span style={{ fontSize: 18 }}>🗺️</span>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#f1f5f9' }}>Live City Bus Map</span>
+            <a href="/local-buses/map" target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontSize: 12, color: '#6366f1', textDecoration: 'none', fontWeight: 600 }}>Open Full Screen ↗</a>
+          </div>
+          <iframe
+            src="/local-buses/map"
+            title="Live City Bus Map"
+            style={{ width: '100%', height: 520, border: 'none', display: 'block' }}
+          />
         </div>
 
         {/* ─── Tab Navigation ─── */}

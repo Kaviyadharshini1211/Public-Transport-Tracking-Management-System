@@ -6,7 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import * as localBusService from "../api/localBus";
 import "../styles/localBusMap.css";
-import MapWeatherOverlay from "../components/MapWeatherOverlay";
+
 
 // ── Fix default icons ─────────────────────────────────────────────────────────
 delete L.Icon.Default.prototype._getIconUrl;
@@ -356,7 +356,6 @@ export default function LocalBusMap() {
 
       {/* ── Map ──────────────────────────────────────────────────────────────── */}
       <div className="lbm-map-wrap">
-        <MapWeatherOverlay lat={mapCenter[0]} lng={mapCenter[1]} />
         <MapContainer center={mapCenter} zoom={13} className="lbm-map">
           <MapController selectedRoute={selectedRoute} flyTarget={flyTarget} mapRef={mapRef} />
 

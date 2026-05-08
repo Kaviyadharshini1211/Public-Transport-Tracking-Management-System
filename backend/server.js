@@ -57,6 +57,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false })); // required for Twilio form-POST bodies
 app.use(morgan("dev"));
 app.use(passport.initialize());
 
@@ -72,7 +73,10 @@ app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/sos", require("./routes/sosRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/local-buses", require("./routes/localBusRoutes"));
-app.use("/api/chatbot", require("./routes/chatbotRoutes"));
+app.use("/api/chatbot",     require("./routes/chatbotRoutes"));
+
+// IVR — Twilio Voice webhooks (public, no auth, URL-encoded body)
+app.use("/api/ivr",         require("./routes/ivrRoutes"));
 
 const PORT = process.env.PORT || 5000;
 
