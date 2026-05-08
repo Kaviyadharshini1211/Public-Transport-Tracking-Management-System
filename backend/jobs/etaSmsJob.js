@@ -33,8 +33,8 @@ cron.schedule("*/1 * * * *", async () => {
 
   try {
     const bookings = await Booking.find({
-      emailAlerts: true,
-      etaSmsSent: false,
+      etaSmsSent: false,    // only send once per booking
+      status: "Confirmed",  // only active bookings
     })
       .populate("userId", "phone name")
       .populate("vehicleId", "currentLocation driverName lastSeenAt regNumber")

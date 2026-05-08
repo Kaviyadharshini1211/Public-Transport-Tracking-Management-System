@@ -39,8 +39,8 @@ exports.createBooking = async (req, res) => {
       totalFare,
       boardingStop: boardingStop || null,
 
-      // Alerts enabled by default
-      emailAlerts: true,
+      // Alerts start disabled — user can enable from MyBookings
+      emailAlerts: false,
       etaAlertSent: false,
       etaSmsSent: false,
     });
@@ -80,12 +80,51 @@ Have a safe journey! 🚌`;
       console.warn(`[SMS] No phone on user ${populated.userId?._id} — skipping SMS`);
     }
 
-    // Email
+    // Email — build confirmation HTML
     if (populated.userId?.email) {
+      const confirmationHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="UTF-8"/>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; margin: 0; padding: 0; }
+          .wrapper { max-width: 520px; margin: 32px auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+          .header { background: linear-gradient(135deg, #10b981, #3b82f6); padding: 28px 32px; text-align: center; }
+          .header h1 { margin: 0; color: white; font-size: 22px; }
+          .header p { margin: 6px 0 0; color: rgba(255,255,255,0.85); font-size: 13px; }
+          .body { padding: 28px 32px; }
+          .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+          .info-row:last-child { border-bottom: none; }
+          .info-label { color: #64748b; }
+          .info-value { color: #0f172a; font-weight: 600; }
+          .footer { background: #f8fafc; padding: 16px 32px; text-align: center; font-size: 12px; color: #94a3b8; }
+        </style>
+        </head>
+        <body>
+          <div class="wrapper">
+            <div class="header">
+              <span style="font-size:40px;display:block;margin:0 auto 8px">🎟️</span>
+              <h1>Booking Confirmed!</h1>
+              <p>PT Tracker — Public Transport Tracking System</p>
+            </div>
+            <div class="body">
+              <p>Hello <strong>${populated.userId.name || "Passenger"}</strong>,</p>
+              <p>Your bus ticket has been booked successfully. Here are your details:</p>
+              <div class="info-row"><span class="info-label">🛤️ Route</span><span class="info-value">${routeName}</span></div>
+              <div class="info-row"><span class="info-label">🚌 Vehicle</span><span class="info-value">${regNum}</span></div>
+              <div class="info-row"><span class="info-label">💺 Seats</span><span class="info-value">${seats_str}</span></div>
+              <div class="info-row"><span class="info-label">📍 Boarding Stop</span><span class="info-value">${stop}</span></div>
+              <div class="info-row"><span class="info-label">📅 Journey Date</span><span class="info-value">${journeyDate}</span></div>
+              <div class="info-row"><span class="info-label">💰 Total Fare</span><span class="info-value">${fare}</span></div>
+            </div>
+            <div class="footer">Have a safe journey! 🚌<br/>PT Tracker — Public Transport Tracking System</div>
+          </div>
+        </body></html>`;
+
       await sendEmail(
         populated.userId.email,
-        "Booking Confirmation",
-        message
+        `✅ Booking Confirmed — ${routeName}`,
+        confirmationHtml
       );
     }
 
