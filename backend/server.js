@@ -9,8 +9,8 @@ const dotenv = require("dotenv");
 dotenv.config();                        // Load env FIRST
 
 const connectDB = require("./config/db");
-const cors      = require("cors");
-const morgan    = require("morgan");
+const cors = require("cors");
+const morgan = require("morgan");
 
 const passport = require("passport");
 require("./config/passport");
@@ -43,10 +43,10 @@ const corsOptions = {
   },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: [
-    "Content-Type", 
-    "Authorization", 
-    "X-Requested-With", 
-    "Accept", 
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
     "Origin"
   ],
   credentials: true,
@@ -73,10 +73,10 @@ app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/sos", require("./routes/sosRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/local-buses", require("./routes/localBusRoutes"));
-app.use("/api/chatbot",     require("./routes/chatbotRoutes"));
+app.use("/api/chatbot", require("./routes/chatbotRoutes"));
 
 // IVR — Twilio Voice webhooks (public, no auth, URL-encoded body)
-app.use("/api/ivr",         require("./routes/ivrRoutes"));
+app.use("/api/ivr", require("./routes/ivrRoutes"));
 
 const PORT = process.env.PORT || 5000;
 

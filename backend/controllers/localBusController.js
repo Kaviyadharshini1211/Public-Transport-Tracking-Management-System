@@ -1,6 +1,6 @@
 const Vehicle = require("../models/Vehicle");
-const Route   = require("../models/Route");
-const axios   = require("axios");
+const Route = require("../models/Route");
+const axios = require("axios");
 
 // ─── Haversine distance (km) ──────────────────────────────────────────────────
 const haversine = (lat1, lon1, lat2, lon2) => {
@@ -10,8 +10,8 @@ const haversine = (lat1, lon1, lat2, lon2) => {
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
@@ -105,7 +105,7 @@ exports.getETAForStop = async (req, res) => {
     }
 
     const targetStop = route.stops[targetIdx];
-    const avgSpeed   = route.avgSpeedKmph || 40;
+    const avgSpeed = route.avgSpeedKmph || 40;
 
     const buses = await Vehicle.find({
       type: "local",
@@ -120,7 +120,7 @@ exports.getETAForStop = async (req, res) => {
     const arrivalPromises = activeBuses.map(async (bus) => {
       const { lat, lng } = bus.currentLocation;
       const distKm = haversine(lat, lng, targetStop.lat, targetStop.lng);
-      
+
       let etaMin = 0;
       if (distKm > 0.15) {
         try {
@@ -142,13 +142,13 @@ exports.getETAForStop = async (req, res) => {
       }
 
       return {
-        vehicleId:   bus._id,
-        regNumber:   bus.regNumber,
-        driverName:  bus.driverName || "—",
-        etaMinutes:  etaMin,
-        distanceKm:  parseFloat(distKm.toFixed(2)),
-        status:      etaMin === 0 ? "arriving" : "en-route",
-        lastSeenAt:  bus.lastSeenAt,
+        vehicleId: bus._id,
+        regNumber: bus.regNumber,
+        driverName: bus.driverName || "—",
+        etaMinutes: etaMin,
+        distanceKm: parseFloat(distKm.toFixed(2)),
+        status: etaMin === 0 ? "arriving" : "en-route",
+        lastSeenAt: bus.lastSeenAt,
       };
     });
 
@@ -157,8 +157,8 @@ exports.getETAForStop = async (req, res) => {
     arrivals.sort((a, b) => a.etaMinutes - b.etaMinutes);
 
     res.json({
-      stop:             { ...targetStop.toObject(), index: targetIdx },
-      route:            { id: route._id, name: route.name },
+      stop: { ...targetStop.toObject(), index: targetIdx },
+      route: { id: route._id, name: route.name },
       arrivals,
       totalBusesTracked: arrivals.length,
     });
@@ -189,8 +189,8 @@ exports.updateLocalTracking = async (req, res) => {
 
     await Vehicle.findByIdAndUpdate(vehicleId, {
       currentLocation: { lat, lng },
-      lastSeenAt:      new Date(),
-      isTracking:      true,
+      lastSeenAt: new Date(),
+      isTracking: true,
       nearestStopIndex,
     });
 

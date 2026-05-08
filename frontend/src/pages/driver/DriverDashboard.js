@@ -449,8 +449,12 @@ export default function DriverDashboard({ user, vehicle, loading, onRefresh }) {
         </div>
       )}
 
-      {/* Crowd Prediction Widget for Driver */}
-      <CrowdWidget role="driver" compact={true} />
+      {/* Crowd Prediction Widget — shows only this driver's route */}
+      <CrowdWidget
+        role="driver"
+        compact={true}
+        routeId={vehicle?.route?._id || vehicle?.route}
+      />
 
       {/* Map visualization for Live Location & Detour */}
       {activeTrip && (

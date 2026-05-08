@@ -295,7 +295,7 @@ export default function MyBookings() {
                     onClick={() => handleDownloadTicket(booking)}
                     style={{ marginBottom: "0.5rem", width: "100%" }}
                   >
-                    Download Beautiful Ticket PDF
+                    Download Ticket PDF
                   </Button>
 
                   <Button
