@@ -58,6 +58,7 @@ cron.schedule("*/1 * * * *", async () => {
         !lastSeen ||
         Date.now() - new Date(lastSeen).getTime() > 5 * 60 * 1000
       ) {
+        console.log(`[SMS Job] Skipping ${booking._id}: Bus offline/stale.`);
         continue;
       }
 
@@ -65,7 +66,10 @@ cron.schedule("*/1 * * * *", async () => {
       const speed = booking.routeId?.avgSpeedKmph || 50;
       const minutes = (km / speed) * 60;
 
-      if (minutes > 10) continue;
+      if (minutes > 10) {
+        console.log(`[SMS Job] ${booking._id}: Bus is ${Math.round(minutes)} min away. Skipping.`);
+        continue;
+      }
 
       // SEND SMS
       await sendSMS(

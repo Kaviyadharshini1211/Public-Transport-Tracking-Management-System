@@ -103,7 +103,8 @@ cron.schedule("*/1 * * * *", async () => {
     // Only fetch bookings that HAVEN'T had an alert sent yet
     const bookings = await Booking.find({
       emailAlerts: true,
-      etaAlertSent: false,      // ← one-time guard: already sent = skip forever
+      status: "Confirmed",
+      etaAlertSent: false,
     })
       .populate("userId", "email name")
       .populate("vehicleId", "currentLocation driverName lastSeenAt regNumber")

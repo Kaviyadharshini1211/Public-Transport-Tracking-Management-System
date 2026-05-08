@@ -2,7 +2,8 @@ const RazorpayModule = require("razorpay");
 const crypto = require("crypto");
 const Booking = require("../models/Booking");
 const Vehicle = require("../models/Vehicle");
-const nodemailer = require("nodemailer");
+const sendEmail = require("../services/emailService");
+const sendSMS = require("../services/smsService");
 
 // Extremely robust Razorpay instantiation
 let Razorpay;
@@ -92,12 +93,67 @@ exports.verifyPayment = async (req, res) => {
     });
 
     const populatedBooking = await Booking.findById(booking._id)
-      .populate("userId", "name email")
+      .populate("userId", "name email phone")
       .populate("vehicleId")
       .populate("routeId");
 
-    // Optional: Send Email Confirmation
-    sendConfirmationEmail(populatedBooking);
+    // ── Send Notifications (Email + SMS) ─────────────────────────
+    const routeName = populatedBooking.routeId?.name || "N/A";
+    const regNum   = populatedBooking.vehicleId?.regNumber || "N/A";
+    const seats_str = seatNumbers?.length > 0 ? seatNumbers.join(", ") : `${seats} seat(s)`;
+    const stop     = boardingStop?.name || "As selected";
+    const fare     = totalFare ? `₹${totalFare}` : "N/A";
+
+    // 1. Send SMS
+    const rawPhone = populatedBooking.userId?.phone;
+    if (rawPhone) {
+      let e164Phone = rawPhone.trim();
+      if (/^[6-9]\d{9}$/.test(e164Phone)) e164Phone = `+91${e164Phone}`;
+      if (/^0[6-9]\d{9}$/.test(e164Phone)) e164Phone = `+91${e164Phone.slice(1)}`;
+      
+      const smsBody = `✅ Booking Confirmed!
+Route: ${routeName}
+Vehicle: ${regNum}
+Seats: ${seats_str}
+Boarding: ${stop}
+Fare: ${fare}
+Have a safe journey! 🚌`;
+      
+      await sendSMS(e164Phone, smsBody);
+    }
+
+    // 2. Send Email
+    if (populatedBooking.userId?.email) {
+      const emailHtml = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); padding: 30px; text-align: center;">
+            <h2 style="color: white; margin: 0; font-size: 24px;">Booking Confirmed! 🚍</h2>
+          </div>
+          <div style="padding: 30px; background-color: white;">
+            <p style="font-size: 16px; color: #1e293b;">Hi <strong>${populatedBooking.userId.name}</strong>,</p>
+            <p style="color: #475569; line-height: 1.6;">Your journey is successfully booked. Get ready for a comfortable ride!</p>
+            
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 25px 0;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 8px 0; color: #64748b; width: 40%;">Booking ID</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${populatedBooking._id}</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Route</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${routeName}</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Vehicle</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${regNum}</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Seats</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${seats_str}</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Boarding Stop</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${stop}</td></tr>
+                <tr><td style="padding: 8px 0; color: #64748b;">Fare Paid</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${fare}</td></tr>
+              </table>
+            </div>
+            
+            <p style="text-align: center; color: #64748b; font-size: 14px; margin-top: 30px;">Thank you for choosing PT Tracker. Have a safe journey!</p>
+          </div>
+          <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #94a3b8;">
+            &copy; ${new Date().getFullYear()} PT Tracker System. All rights reserved.
+          </div>
+        </div>
+      `;
+
+      await sendEmail(populatedBooking.userId.email, `✅ Booking Confirmed — ${routeName}`, emailHtml);
+    }
 
     res.status(201).json({
       success: true,
@@ -109,49 +165,3 @@ exports.verifyPayment = async (req, res) => {
     res.status(500).json({ message: "Payment verification failed" });
   }
 };
-
-// Utility function to send confirmation email
-async function sendConfirmationEmail(booking) {
-  try {
-    if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
-      console.warn("Email credentials missing, skipping confirmation email.");
-      return;
-    }
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
-    });
-
-    const mailOptions = {
-      from: `"PT Tracker" <${process.env.MAIL_USER}>`,
-      to: booking.userId.email,
-      subject: "Booking Confirmed! 🚍 Ticket Details",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px;">
-          <h2 style="color: #1a73e8; text-align: center;">Booking Confirmed!</h2>
-          <p>Hi <strong>${booking.userId.name}</strong>,</p>
-          <p>Your journey from <strong>${booking.routeId.origin}</strong> to <strong>${booking.routeId.destination}</strong> is successfully booked.</p>
-          
-          <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p><strong>Booking ID:</strong> ${booking._id}</p>
-            <p><strong>Vehicle:</strong> ${booking.vehicleId.model} (${booking.vehicleId.regNumber})</p>
-            <p><strong>Seats:</strong> ${booking.seatNumbers.join(", ")} (${booking.seats} seats)</p>
-            <p><strong>Total Fare:</strong> ₹${booking.totalFare}</p>
-            <p><strong>Boarding Point:</strong> ${booking.boardingStop?.name || "As selected"}</p>
-          </div>
-          
-          <p style="text-align: center; color: #666; font-size: 14px;">Thank you for choosing PT Tracker. Have a safe journey! 🚍</p>
-        </div>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log(`Confirmation email sent to ${booking.userId.email}`);
-  } catch (err) {
-    console.error("Email sending error:", err);
-  }
-}

@@ -27,9 +27,11 @@ if (TWILIO_SID && TWILIO_AUTH_TOKEN && TWILIO_PHONE) {
  */
 const sendSMS = async (to, message) => {
   if (!client) {
-    console.log(`[SMS skipped — no Twilio credentials] To: ${to} | ${message.slice(0, 60)}`);
+    console.warn(`[SMS skipped] No Twilio credentials. To: ${to} | Msg: ${message.slice(0, 30)}...`);
     return;
   }
+
+  console.log(`[SMS] Attempting to send to ${to}...`);
 
   if (!to || !to.startsWith("+")) {
     console.warn(`[SMS] Invalid phone number: "${to}" — must be E.164 format (+countryCode...)`);
